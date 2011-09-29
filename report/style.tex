@@ -1,0 +1,251 @@
+% *************** Load packages ***************
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{amsmath, amsfonts ,amssymb} % matematikksymboler
+\usepackage{amsthm}                   % Teoremer og lignende.
+\usepackage[amssymb]{SIunits}
+\usepackage{longtable,lscape}
+\usepackage{listings}
+\usepackage{rotating}
+\usepackage{pdfpages}
+\usepackage{float}
+\usepackage[utf8]{inputenc}
+
+% *************** Table setting ***************
+%set the height of each row, 1*default 12pt
+\renewcommand\arraystretch{1}
+
+% *************** Enable index generation ***************
+\makeindex
+
+% *************** Add reference to page number at which bibliography entry is cited ***************
+\usepackage{citeref}
+\renewcommand{\bibitempages}[1]{\newblock {\scriptsize [\mbox{cited at p.\ }#1]}}
+
+
+% *************** Another command ***************
+% Perintah untuk membuat perintah/variabel baru. 
+\newcommand{\var}[2]{\newcommand{#1}{#2}}
+% 
+% Perintah untuk membuat perintah/variabel baru. Teks yang ditulis dalam 
+% perintah ini akan diformat ulang menggunakan huruf kapital. 
+\newcommand{\Var}[2]{\newcommand{#1}{\uppercase{#2}}}
+
+% Tambahkan kata-kata yang dimasukan kedalam Table of Contents. 
+\newcommand{\addChapter}[1]{\phantomsection \addcontentsline{toc}{chapter}{#1}}
+
+\renewcommand{\bibname}{References}
+
+% *************** Some colour definitions ***************
+\usepackage{color}
+
+\definecolor{greenyellow}   {cmyk}{0.15, 0   , 0.69, 0   }
+\definecolor{yellow}        {cmyk}{0   , 0   , 1   , 0   }
+\definecolor{goldenrod}     {cmyk}{0   , 0.10, 0.84, 0   }
+\definecolor{dandelion}     {cmyk}{0   , 0.29, 0.84, 0   }
+\definecolor{apricot}       {cmyk}{0   , 0.32, 0.52, 0   }
+\definecolor{peach}         {cmyk}{0   , 0.50, 0.70, 0   }
+\definecolor{melon}         {cmyk}{0   , 0.46, 0.50, 0   }
+\definecolor{yelloworange}  {cmyk}{0   , 0.42, 1   , 0   }
+\definecolor{orange}        {cmyk}{0   , 0.61, 0.87, 0   }
+\definecolor{burntorange}   {cmyk}{0   , 0.51, 1   , 0   }
+\definecolor{bittersweet}   {cmyk}{0   , 0.75, 1   , 0.24}
+\definecolor{redorange}     {cmyk}{0   , 0.77, 0.87, 0   }
+\definecolor{mahogany}      {cmyk}{0   , 0.85, 0.87, 0.35}
+\definecolor{maroon}        {cmyk}{0   , 0.87, 0.68, 0.32}
+\definecolor{brickred}      {cmyk}{0   , 0.89, 0.94, 0.28}
+\definecolor{red}           {cmyk}{0   , 1   , 1   , 0   }
+\definecolor{orangered}     {cmyk}{0   , 1   , 0.50, 0   }
+\definecolor{rubinered}     {cmyk}{0   , 1   , 0.13, 0   }
+\definecolor{wildstrawberry}{cmyk}{0   , 0.96, 0.39, 0   }
+\definecolor{salmon}        {cmyk}{0   , 0.53, 0.38, 0   }
+\definecolor{carnationpink} {cmyk}{0   , 0.63, 0   , 0   }
+\definecolor{magenta}       {cmyk}{0   , 1   , 0   , 0   }
+\definecolor{violetred}     {cmyk}{0   , 0.81, 0   , 0   }
+\definecolor{rhodamine}     {cmyk}{0   , 0.82, 0   , 0   }
+\definecolor{mulberry}      {cmyk}{0.34, 0.90, 0   , 0.02}
+\definecolor{redviolet}     {cmyk}{0.07, 0.90, 0   , 0.34}
+\definecolor{fuchsia}       {cmyk}{0.47, 0.91, 0   , 0.08}
+\definecolor{lavender}      {cmyk}{0   , 0.48, 0   , 0   }
+\definecolor{thistle}       {cmyk}{0.12, 0.59, 0   , 0   }
+\definecolor{orchid}        {cmyk}{0.32, 0.64, 0   , 0   }
+\definecolor{darkorchid}    {cmyk}{0.40, 0.80, 0.20, 0   }
+\definecolor{purple}        {cmyk}{0.45, 0.86, 0   , 0   }
+\definecolor{plum}          {cmyk}{0.50, 1   , 0   , 0   }
+\definecolor{violet}        {cmyk}{0.79, 0.88, 0   , 0   }
+\definecolor{royalpurple}   {cmyk}{0.75, 0.90, 0   , 0   }
+\definecolor{blueviolet}    {cmyk}{0.86, 0.91, 0   , 0.04}
+\definecolor{periwinkle}    {cmyk}{0.57, 0.55, 0   , 0   }
+\definecolor{cadetblue}     {cmyk}{0.62, 0.57, 0.23, 0   }
+\definecolor{cornflowerblue}{cmyk}{0.65, 0.13, 0   , 0   }
+\definecolor{midnightblue}  {cmyk}{0.98, 0.13, 0   , 0.43}
+\definecolor{navyblue}      {cmyk}{0.94, 0.54, 0   , 0   }
+\definecolor{royalblue}     {cmyk}{1   , 0.50, 0   , 0   }
+\definecolor{blue}          {cmyk}{1   , 1   , 0   , 0   }
+\definecolor{cerulean}      {cmyk}{0.94, 0.11, 0   , 0   }
+\definecolor{cyan}          {cmyk}{1   , 0   , 0   , 0   }
+\definecolor{processblue}   {cmyk}{0.96, 0   , 0   , 0   }
+\definecolor{skyblue}       {cmyk}{0.62, 0   , 0.12, 0   }
+\definecolor{turquoise}     {cmyk}{0.85, 0   , 0.20, 0   }
+\definecolor{tealblue}      {cmyk}{0.86, 0   , 0.34, 0.02}
+\definecolor{aquamarine}    {cmyk}{0.82, 0   , 0.30, 0   }
+\definecolor{bluegreen}     {cmyk}{0.85, 0   , 0.33, 0   }
+\definecolor{emerald}       {cmyk}{1   , 0   , 0.50, 0   }
+\definecolor{junglegreen}   {cmyk}{0.99, 0   , 0.52, 0   }
+\definecolor{seagreen}      {cmyk}{0.69, 0   , 0.50, 0   }
+\definecolor{green}         {cmyk}{1   , 0   , 1   , 0   }
+\definecolor{forestgreen}   {cmyk}{0.91, 0   , 0.88, 0.12}
+\definecolor{pinegreen}     {cmyk}{0.92, 0   , 0.59, 0.25}
+\definecolor{limegreen}     {cmyk}{0.50, 0   , 1   , 0   }
+\definecolor{yellowgreen}   {cmyk}{0.44, 0   , 0.74, 0   }
+\definecolor{springgreen}   {cmyk}{0.26, 0   , 0.76, 0   }
+\definecolor{olivegreen}    {cmyk}{0.64, 0   , 0.95, 0.40}
+\definecolor{rawsienna}     {cmyk}{0   , 0.72, 1   , 0.45}
+\definecolor{sepia}         {cmyk}{0   , 0.83, 1   , 0.70}
+\definecolor{brown}         {cmyk}{0   , 0.81, 1   , 0.60}
+\definecolor{tan}           {cmyk}{0.14, 0.42, 0.56, 0   }
+\definecolor{gray}          {cmyk}{0   , 0   , 0   , 0.50}
+\definecolor{black}         {cmyk}{0   , 0   , 0   , 1   }
+\definecolor{white}         {cmyk}{0   , 0   , 0   , 0   } 
+
+% *************** Enable hyperlinks in PDF documents ***************
+\ifpdf
+    \pdfcompresslevel=9
+    \usepackage[plainpages=false,pdfpagelabels,bookmarksnumbered,%
+        colorlinks=true,%
+        linkcolor=black,%
+        citecolor=black,%
+        filecolor=black,%
+        pagecolor=black,%
+        urlcolor=black,%
+        pdftex,%
+        unicode]{hyperref} 
+    \pdfimageresolution=600
+    \usepackage{thumbpdf} 
+\else
+    \usepackage{hyperref}
+\fi
+
+\usepackage{memhfixc}
+
+% *************** Page layout ***************
+\settypeblocksize{*}{35pc}{1.618}
+
+\setlrmargins{1.4in}{*}{*}
+\setulmargins{1.2in}{*}{*}
+
+\setheadfoot{\onelineskip}{2\onelineskip}
+\setheaderspaces{*}{2\onelineskip}{*}
+
+\def\baselinestretch{1.1}
+
+\checkandfixthelayout
+
+\setlength{\parindent}{0.35in}
+\setlength{\parskip}{0.03in}
+\renewcommand{\bf}{\bfseries}
+
+% *************** Font style ***************
+\usepackage[T1]{fontenc}
+\usepackage{palatino}
+
+% *************** Chapter and section style ***************
+\makechapterstyle{mychapterstyle}{%
+    \renewcommand{\chapnamefont}{\Huge\normalfont\bfseries}%
+    \renewcommand{\chapnumfont}{\Huge\normalfont\bfseries}%
+    \renewcommand{\chaptitlefont}{\normalfont\huge\bfseries}%
+    \renewcommand{\parttitlefont}{\normalfont\Huge\bfseries}%
+    \renewcommand{\printchaptertitle}[1]{%
+        \chaptitlefont\hrule height 0.5pt \vspace{0.75em}%
+        \raggedright {##1}\vspace{0.75em}\hrule height 0.5pt%
+        }%
+    \renewcommand{\printchapternum}{%
+    	\ifanappendix
+			\raggedleft\space\thechapter%
+		\else%
+			\raggedleft\space\chapnumfont\thechapter%
+		\fi%        
+     }%     
+}
+
+\chapterstyle{mychapterstyle}
+
+\setsecheadstyle{\Large\normalfont\bfseries}
+\setsubsecheadstyle{\large\normalfont\bfseries}
+\setsubsubsecheadstyle{\normalfont\bfseries}
+\setparaheadstyle{\normalfont}
+
+\makeevenhead{headings}{\thepage}{}{\small\slshape\leftmark}
+\makeoddhead{headings}{\small\slshape\rightmark}{}{\thepage}
+
+% *************** Table of contents style ***************
+\setsecnumdepth{subsection}
+\maxsecnumdepth{subsection}
+\settocdepth{subsection}
+\maxtocdepth{subsection}
+
+% *************** Figure ***************
+
+% *************** addfigure ***************
+\newcommand{\addSimpleFigure}[2]{
+	 \begin{figure}[h!]
+		\begin{center}
+		\includegraphics[#1]{#2}
+		\end{center}
+		%\vspace{-15pt}	
+	\end{figure}
+}
+
+\newcommand{\addFigure}[4]{
+	 \begin{figure}[h!]
+		\begin{center}
+		%\setlength{\fboxsep}{-\fboxrule}
+		%\fbox{
+		\includegraphics[#1]{#2}
+		%}
+		\end{center}
+		\vspace{-10pt}
+		\caption{#4}
+		\label{#3}
+		\vspace{-15pt}	
+	\end{figure}
+}
+
+% *************** addtable ***************
+\newcommand{\addTableFromFigure}[2]{
+	 \begin{table}[h!]
+		\begin{center}
+		\includegraphics[#1]{#2}
+		\end{center}
+		\vspace{-15pt}	
+	\end{table}
+}
+
+\newcommand{\addTableFromFigures}[4]{
+	 \begin{table}[h!]
+		\begin{center}
+		\vspace{-10pt}
+		\caption{#4}
+		\label{#3}
+		\includegraphics[#1]{#2}
+		\end{center}
+		\vspace{-15pt}	
+	\end{table}
+}
+
+
+%%%%%%%%%%%%%%% Glossaries package %%%%%%%%%%%%%%%%%
+\usepackage[acronym,shortcuts]{glossaries}
+\renewcommand{\glossarysection}[4]{}
+
+\makeglossaries
+
+% how to use
+%\printglossary[type=main,title={Glossary},toctitle={Glossary}]
+%\thispagestyle{empty}\cleardoublepage
+%\printglossary[type=\acronymtype,title={List of Abbreviations},toctitle={List of Abbreviations}]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
