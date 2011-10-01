@@ -11,8 +11,8 @@
 
 using namespace std;
 
-float weight_slope = 10.f,
-      weight_curvature = 0.f,
+float weight_slope = 200.f,
+      weight_curvature = 200.f,
       weight_road = 1.f;
 
 template<class T>
@@ -523,7 +523,7 @@ int main(int argc, char** argv)
     }
 
     float step = (1./(float)grid_density)/5.;
-    for (float t = 0; t < path.size(); t+= step)
+    for (float t = 2; t < path.size(); t+= step)
     {
         RGBQUAD rgb;
         rgb.rgbGreen = rgb.rgbBlue = 0;
@@ -532,7 +532,7 @@ int main(int argc, char** argv)
         float x = 0, y = 0;
 
 //        for (size_t i = t-2; i < t+1; i++)
-        if (t >= 2 && t < path.size() - 2)
+//        if (t >= 2 && t < path.size() - 2)
         {
             for (size_t i = 0; i < path.size(); i++)
             {
@@ -542,10 +542,10 @@ int main(int argc, char** argv)
                       t_2 = t_j+2,
                       t_3 = t_j+3;
 
-                if (t_j < 0) t_j = 0;
-                if (t_1 < 0) t_1 = 0;
-                if (t_2 < 0) t_2 = 0;
-                if (t_3 < 0) t_3 = 0;
+//                if (t_j < 1) t_j = 1;
+//                if (t_1 < 1) t_1 = 1;
+//                if (t_2 < 1) t_2 = 1;
+//                if (t_3 < 1) t_3 = 1;
 
                 if (t <= t_1 && t >= t_j)
                     b = 0.5*pow(t-t_j, 2.);
@@ -560,23 +560,6 @@ int main(int argc, char** argv)
         }
         printf("Setting %f,%f\n", x,y);
 
-
-//        for (size_t i = t-1; i <= t+1; i++)
-//        {
-//            float b = 0;
-//            float t_j = i;
-//            float t_1 = t_j-1,
-//                  t_2 = t_j+1;
-//
-//            if (t > t_1 && t < t_j)
-//                b = 1.-(t_j-t)/(t_j-t_1);
-//            else if (t < t_2 && t >= t_j)
-//                b = 1.-(t-t_j)/(t_2-t_j);
-//
-//            x += ((float)path[i].x)*b;
-//            y += ((float)path[i].y)*b;
-//
-//        }
         FreeImage_SetPixelColor(bm, (int)round(x), (int)round(y), &rgb);
     }
 
