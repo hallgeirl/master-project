@@ -1,0 +1,14 @@
+Algorithm for generating roads, using A*. Main way of controlling the algorithm is the cost function.
+
+Anisotropic shortest path: Find the path P that minimizes the line integral of the cost function, i.e. int_P c(x,x',x''). Optimization: Use paths formed by concatenated line segments. Use a k-neighborhood connectivity mask (i.e. use more than the nearest neighbors) in the computation of the shortest path. M(p) subset of {q, where ||p-q|| <= r}.
+
+A*:
+1. When priority queue Q is not empty, select the point p with the smallest cost value.
+2. If p == final destination, we're done.
+3. For all points q in M(p), evaluate c(p,q) (that is, the cost to go to p, then to q). If c(p,q) < c(q), then we have found a shorter path to q, and we set the predecessor of q to p.
+
+In step 3: Compute M(p). Also: Compute line integral from p to q. Discretizize into n intervals then integrate.
+
+Cost function: c(p,p',p''). We have functions k_i(p,p',p'') that evaluate different characterisitics of the terrain, and output a number. E.g. slopes and curvatures. u_i weights this number. Then we sum over all i to find the cost.
+
+Path segment masks: Choose path segments with length <= k such that gcd(i,j) = 1. 
