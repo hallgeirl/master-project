@@ -1,4 +1,5 @@
 #include <FreeImage.h>
+#include <string>
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -8,8 +9,17 @@
 #include <assert.h>
 #include <limits>
 #include <unordered_map>
+#include <sstream>
 
 using namespace std;
+
+#ifndef PI
+#ifdef M_PI
+#define PI M_PI
+#else
+#define PI 3.14159265358979323846
+#endif
+#endif
 
 float weight_slope = 200.f,
       weight_curvature = 200.f,
@@ -33,7 +43,7 @@ struct vec2_t
         return sqrt(x*x+y*y);
     }
 
-    T dot(vec2_t& v)
+    T dot(vec2_t<T> v)
     {
         return x*v.x+y*v.y;
     }
@@ -51,6 +61,11 @@ struct vec2_t
     vec2_t operator*(float b) const
     {
         return vec2_t(x*b, y*b);
+    }
+
+    vec2_t operator/(float b) const
+    {
+        return vec2_t(x/b, y/b);
     }
     
     bool operator< (const vec2_t& n2) const 
@@ -196,11 +211,17 @@ inline float h(const terrain_t& terrain, const vec2f& a, const vec2f& b)
     return sqrt(dx*dx+dy*dy+dz*dz);
 }
 
-inline float transfer_slope(const terrain_t& terrain, const vec2f& a, const vec2f& b)
+inline float get_slope(const terrain_t& terrain, const vec2f& a, const vec2f& b)
 {
     float dx = a.x-b.x, dy = a.y-b.y;
     float dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
     float slope = fabs(dz/sqrt(dx*dx+dy*dy));
+
+    return slope;
+}
+
+inline float transfer_slope(const terrain_t& terrain, const vec2f& a, const vec2f& b)
+{
 //    float k0 = 0.5;
     
 //    if (slope > k0)
@@ -209,7 +230,8 @@ inline float transfer_slope(const terrain_t& terrain, const vec2f& a, const vec2
 //        fflush(stdout);
 //        return numeric_limits<float>::infinity();
 //    }
-
+    float slope = get_slope(terrain, a, b);
+    
     return weight_slope*(slope+slope*slope);
 }
 
@@ -236,8 +258,6 @@ inline float transfer_curvature(const terrain_t& terrain, const vec2f& a, const 
         fflush(stdout);
     }
     
-//    printf("curvature %f\n", 2.f*sin(theta/2.f)/sqrt(lenA*lenB));
-
     return weight_curvature*2.f*sin(theta/2.f)/sqrt(lenA*lenB);
 }
 
@@ -257,7 +277,8 @@ inline float cost(const terrain_t& terrain, const vec2f& a, const vec2f& b, cons
     float i = 0;
     float cost_slope = 0;
     vec2f dir = b-a;
-    const float step = 1./dir.length();
+
+    const float step = 1.*terrain.point_spacing/dir.length();
 
     for (float t = 0; t < 1.f; t = i*step, i++)
     {
@@ -282,7 +303,7 @@ inline float cost(const terrain_t& terrain, const vec2f& a, const vec2f& b, cons
     return cost_road + cost_slope + cost_curvature;
 }
 
-vector<vec2i> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density)
+vector<vec2f> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density)
 {
     map<vec2i, vec2i> predecessor;
     unordered_map<vec2i, pair<bool,float> > in_open;
@@ -438,26 +459,112 @@ vector<vec2i> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
     cout << "Backtracing" << endl;
 
     //Backtrace
-    vector<vec2i> result;
+    vector<vec2f> result;
 
     vec2i current_pos = predecessor[end];
-    result.push_back(end);
+    result.push_back(terrain.gridToPoint(end));
 
     while (!(current_pos == start))
     {
 //        printf("current %d %d\n", current_pos.x, current_pos.y);
-        result.push_back(current_pos);
+        result.push_back(terrain.gridToPoint(current_pos));
         current_pos = predecessor[current_pos];
         //Get next one in line
     }
-    result.push_back(start);
+    result.push_back(terrain.gridToPoint(start));
     for (size_t i = 0; i < result.size(); i++)
     {
-        printf("%d, %d\n", result[i].x, result[i].y);
+        printf("%lf, %lf\n", result[i].x, result[i].y);
     }
     fflush(stdout);
 
     return result;
+}
+
+long filesize(ifstream& f)
+{
+    long current = f.tellg();
+    f.seekg(0, ios::beg);
+    long beg = f.tellg();
+    f.seekg(0, ios::end);
+    long end = f.tellg();
+    f.seekg(current, ios::beg);
+
+    return end-beg;
+}
+
+void writeRoadXML(string filename, const vector<vec2f>& controlPoints, const terrain_t& terrain)
+{
+    vec2f startDirV = controlPoints[1] - controlPoints[0];
+    startDirV = startDirV * (1./startDirV.length());
+    double startDir = acos(fmin(fmax(startDirV.dot(vec2f(1.,0.)),-1), 1));
+
+    // Determine which quadrant the direction is in
+    if (startDirV.y < 0)
+        startDir = 2.*PI - startDir;
+
+    ifstream head_f("roadxml_template_head.rnd");
+    ifstream tail_f("roadxml_template_tail.rnd");
+
+//    long beg,end;
+//    beg = head_f.tellg();
+//    head_f.seekg(0, ios::end);
+//    end = head_f.tellg();
+//    head_f.seekg(0, ios::beg);
+
+    int head_size = filesize(head_f);
+    char* head_buf = new char[head_size];
+    head_f.read(head_buf, head_size);
+
+    int tail_size = filesize(tail_f);
+    char* tail_buf = new char[tail_size];
+    tail_f.read(tail_buf, tail_size);
+
+    ofstream output(filename.c_str());
+    output.write(head_buf, head_size);
+    output << "        <XYCurve direction=\"" << startDir << "\" x=\"" << (float)controlPoints[0].x << "\" y=\"" << (float)controlPoints[0].y << "\">\n";
+    output << "          <ClothoidSpline type=\"spline\">\n";
+    for (size_t i = 0; i < controlPoints.size(); i++)
+    {
+        output << "            <Vectord2 x=\"" << controlPoints[i].x << "\" y=\"" << controlPoints[i].y << "\" />\n";
+    }
+    output << "          </ClothoidSpline>\n";
+    output << "        </XYCurve>\n";
+
+    // Form the polynomials needed for the SZCurve
+    double length = 0;
+    output << "        <SZCurve>\n";
+    output << "          <Polynomial>\n";
+    output << "            <begin direction=\"" << get_slope(terrain, controlPoints[0], controlPoints[1]) << "\" x=\"0\" y=\"" << terrain.getPointBilinear(controlPoints[0].x, controlPoints[0].y) << "\" />\n";
+
+    for (size_t i = 1; i < controlPoints.size()-1; i++)
+    {
+        length += (controlPoints[i]-controlPoints[i-1]).length();
+        stringstream ss_point;
+        ss_point <<  "direction=\"" << get_slope(terrain, controlPoints[i], controlPoints[i+1]) << "\" x=\"" << length << "\" y=\"" << terrain.getPointBilinear(controlPoints[i].x, controlPoints[i].y) << "\"";
+        output << "            <end " << ss_point.str() << " />\n";
+        output << "          </Polynomial>\n";
+        output << "          <Polynomial>\n";
+        output << "            <begin " << ss_point.str() << " />\n";
+    }
+    vec2f last = controlPoints.back(), secondLast = controlPoints[controlPoints.size()-2];
+    length += (last-secondLast).length();
+    output <<  "            <end direction=\"0\" x=\"" << length << "\" y=\"" << terrain.getPointBilinear(last.x, last.y) << "\" />\n";
+    output << "          </Polynomial>\n";
+    output << "        </SZCurve>\n";
+    output << "        <BankingCurve>\n";
+    output << "          <Polynomial>\n";
+    output << "            <begin direction=\"0\" x=\"0\" y=\"0\" />\n";
+    output << "            <end direction=\"0\" x=\"" << length << "\" y=\"0\" />\n";
+    output << "          </Polynomial>\n";
+    output << "        </BankingCurve>\n";
+    output << "        <Portion endDistance=\"" << length << "\" endProfile=\"defaultNoMotorvei\" name=\"\" startProfile=\"defaultNoMotorvei\"/>\n";
+    output.write(tail_buf, tail_size);
+
+    output.close();
+
+    delete[] head_buf;
+    delete[] tail_buf;
 }
 
 
@@ -466,8 +573,8 @@ int main(int argc, char** argv)
     //Terrain dimensions
     int h = 1024, w = 1024;
 //    int h = 300, w = 300;
-    float spacing = 1.;
-    int grid_density = 8;
+    float spacing = 10.;
+    int grid_density = 4;
 
     //Terrain storage
     unsigned short* terrain_raw = new unsigned short[h*w];
@@ -504,7 +611,9 @@ int main(int argc, char** argv)
         }
     }
 
-    vector<vec2i> path = pathFind(terrain, start, end, grid_density);
+    vector<vec2f> path = pathFind(terrain, start, end, grid_density);
+
+    writeRoadXML("someroadxml.rnd", path, terrain);
 
     FreeImage_Initialise();
 
@@ -554,8 +663,8 @@ int main(int argc, char** argv)
                 else if (t >= t_2 && t <= t_3)
                     b = 0.5*pow(1-(t-t_2), 2.);
 
-                x += ((float)path[i].x)*b;
-                y += ((float)path[i].y)*b;
+                x += ((float)path[i].x)*b/terrain.point_spacing;
+                y += ((float)path[i].y)*b/terrain.point_spacing;
             }
         }
         printf("Setting %f,%f\n", x,y);
@@ -568,7 +677,7 @@ int main(int argc, char** argv)
         RGBQUAD rgb;
         rgb.rgbRed = rgb.rgbBlue = 0;
         rgb.rgbGreen = 255;
-        FreeImage_SetPixelColor(bm, path[i].x, path[i].y, &rgb);
+        FreeImage_SetPixelColor(bm, path[i].x/terrain.point_spacing, path[i].y/terrain.point_spacing, &rgb);
     }
 
     //Save image

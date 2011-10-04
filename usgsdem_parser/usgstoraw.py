@@ -27,7 +27,7 @@ def parse_A_record(record):
         unit_plane = arcsec
 
     # Get the elevation units
-    tmp = int(record[528:534])
+    tmp = int(record[534:540])
     if tmp == 1:
         unit_elevation = foot
 
@@ -40,8 +40,8 @@ def parse_A_record(record):
 
     # Get minimum and maximum elevation
     tmp = record[738:786].replace("D", "E").split()
-    elevation_min = float(tmp[0])
-    elevation_max = float(tmp[1])
+    elevation_min = float(tmp[0])*unit_elevation
+    elevation_max = float(tmp[1])*unit_elevation
 
     # Get spatial resolution
     tmp = record[816:852]
@@ -97,9 +97,13 @@ def parse_B_record(a_record_dict, file_ptr):
 
 def main(argv):
     parser = argparse.ArgumentParser(description="Converts the USGS DEM format to a 16bit (unsigned short) RAW format.")
-    parser.add_argument("-f", "--inputfile", type=str, nargs=1)
-    parser.add_argument("-o", "--outputfile", type=str, nargs=1)
-    parser.add_argument("--format", type=str, nargs=1)
+    parser.add_argument("-f", "--inputfile", type=str, help="Input USGS DEM file")
+    parser.add_argument("-o", "--outputfile", type=str, help="Output RAW file")
+    parser.add_argument("-x", "--cropwidth", default=0, type=int, help="Crop to width (if possible)")
+    parser.add_argument("-y", "--cropheight", default=0, type=int, help="Crop to height (if possible)")
+    parser.add_argument("--cropx", type=int, default=0, help="Side that gets cropped. 0 for both, 1 for left, 2 for right.")
+    parser.add_argument("--cropy", type=int, default=0, help="Side that gets cropped. 0 for both, 1 for top, 2 for bottom.")
+#    parser.add_argument("--format", type=str, nargs=1)
 
     args = vars(parser.parse_args(argv))
  
@@ -109,12 +113,18 @@ def main(argv):
     inputstream = sys.stdin
 
     if args['inputfile']:
-        inputstream = file(args['inputfile'][0], "r")
+        inputstream = file(args['inputfile'], "r")
         must_close_input = True
 
     if args['outputfile']:
-        outputstream = file(args['outputfile'][0], "wb")
+        outputstream = file(args['outputfile'], "wb")
         must_close_output = True
+
+    cropwidth = args["cropwidth"]
+    cropheight = args["cropheight"]
+
+    cropx = args["cropx"]
+    cropy = args["cropy"]
 
     #Parse A record (header)
     a_record_dict = parse_A_record(inputstream.read(1024))
@@ -188,18 +198,50 @@ def main(argv):
 
         cropped = not not_cropped
 
+    # Crop to desired size
+    height = max_y - min_y
+    width = max_x - min_x
+
+    if cropwidth > width or cropheight > height:
+        sys.stderr.write("Crop size is larger than actual size (Cropped size: %d, %d, actual size: %d, %d).\n" % (cropwidth, cropheight, width, height))
+        return 1;
+
+    alt = 0
+    while cropwidth < width and cropwidth > 0:
+        if (cropx == 0 and alt == 0) or cropx == 1:
+            min_x += 1
+        else: max_x -= 1
+        alt = (alt + 1) % 2
+        width = max_x - min_x
+            
+    alt = 0
+    while cropheight < height and cropheight > 0:
+        if (cropy == 0 and alt == 0) or cropy == 1:
+            min_y += 1
+        else: max_y -= 1
+        alt = (alt + 1) % 2
+        height = max_y - min_y
+
     # Write output
     for i in xrange(min_y, max_y):
         for j in xrange(min_x, max_x):
             #e = int(heightmap[i][j]/a_record_dict["elevation_bounds"][1]*256.)
             e = (heightmap[i][j]-a_record_dict["elevation_bounds"][0])/(a_record_dict["elevation_bounds"][1] - a_record_dict["elevation_bounds"][0])
-            # Map to a 16 bit float
+            # Map to a 16 bit integer
             e *= 2**16
             if e >= 2**16:
                 e = 2**16-1
+            e = int(e)
+            # Pack height into 16 bit integer and write it
             outputstream.write(struct.pack("H", int(e)))
-            # Pack height into 16 bit float
+            #e *= 256
+            #if e > 255:
+            #    e = 255
 #            outputstream.write('%c%c%c' % (e,e,e))
+
+    sys.stderr.write("Min/max elevation: %d,%d Resolution: %dx%dx%f\n" % (a_record_dict["elevation_bounds"][0], a_record_dict["elevation_bounds"][1], a_record_dict["resolution"][0], a_record_dict["resolution"][1], a_record_dict["resolution"][2]))
+
+#    print max_y-min_y, max_x-min_x
 
     if must_close_output:
         outputstream.close()
