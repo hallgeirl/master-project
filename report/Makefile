@@ -24,3 +24,6 @@ main.pdf: $(TEXFILES) $(FIGURES)
 
 clean:
 	rm -f *.aux *.nav *.out *.snm *.toc *.log *.bbl *.idx *.ind *.ilg *.blg *.lot *.lof *~ *.ist *.acn *.glo *.gls *.acr *.alg *.backup *.pdf
+
+test:
+	evince main.pdf

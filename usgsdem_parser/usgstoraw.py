@@ -126,10 +126,12 @@ def main(argv):
     cropx = args["cropx"]
     cropy = args["cropy"]
 
+    sys.stderr.write("Parsing A record...\n")
     #Parse A record (header)
     a_record_dict = parse_A_record(inputstream.read(1024))
     b_records = []
 
+    sys.stderr.write("Parsing B records...\n")
     #Read and parse all B records
     for i in xrange(a_record_dict["dimensions"][1]):
         b_records.append(parse_B_record(a_record_dict, inputstream))
@@ -143,6 +145,7 @@ def main(argv):
         if v[1] > max_ypos: max_ypos = v[1]
         if v[1] < min_ypos: min_ypos = v[1]
     
+    sys.stderr.write("Placing points in grid...\n")
     heightmap = []
     for i in xrange(int((max_ypos - min_ypos)/a_record_dict["resolution"][1])+1):
         heightmap.append([])
@@ -157,6 +160,7 @@ def main(argv):
             heightmap[row][col] = e
             row += 1
     
+    sys.stderr.write("Cropping incomplete rows and columns...\n")
     # Crop incomplete rows and columns
     min_x = min_y = 0 
     max_x = len(heightmap[0])
@@ -207,6 +211,7 @@ def main(argv):
         return 1;
 
     alt = 0
+    sys.stderr.write("Cropping to specified size...\n")
     while cropwidth < width and cropwidth > 0:
         if (cropx == 0 and alt == 0) or cropx == 1:
             min_x += 1
@@ -241,7 +246,7 @@ def main(argv):
 
     sys.stderr.write("Min/max elevation: %d,%d Resolution: %dx%dx%f\n" % (a_record_dict["elevation_bounds"][0], a_record_dict["elevation_bounds"][1], a_record_dict["resolution"][0], a_record_dict["resolution"][1], a_record_dict["resolution"][2]))
 
-#    print max_y-min_y, max_x-min_x
+    sys.stderr.write("Dimensions: %d, %d\n" % (max_y-min_y, max_x-min_x))
 
     if must_close_output:
         outputstream.close()
