@@ -1,0 +1,29 @@
+% Packages
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel} % Change to the wanted language, i.e. "norsk" or "english"
+\usepackage{graphicx}
+%\usepackage{subfig}
+\usepackage{multirow}
+%\usepackage[hmargin=3cm,vmargin=3.5cm]{geometry}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{beamerarticle}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\setbeamercovered{transparent}
+%\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{footline}{
+     \raisebox{5pt}{\makebox[\textwidth]{\insertframenumber}}
+}
+
+\usetheme{PaloAlto}
+%\usetheme{Warsaw}
+
+% Paragraphs
+%\setlength{\parskip}{5pt plus3pt minus3pt}
+%\setlength{\parindent}{0pt}
+\renewcommand{\algorithmiccomment}[1]{{\tt //}{\em #1}}

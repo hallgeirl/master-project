@@ -2,7 +2,7 @@
 
 # Converts files from 16bit raw heightmap to 24bit rgb normal map
 
-import argparse, sys, struct
+import argparse, sys, struct, array
 from math import sqrt
 from time import sleep
 
@@ -15,6 +15,7 @@ def main(argv):
 
     args = vars(parser.parse_args(argv))
  
+
     must_close_input = False
     must_close_output = False
     outputstream = sys.stdout
@@ -36,27 +37,28 @@ def main(argv):
         return 1
 
     # Read heightmap data
-    heightmap = []
-    data = inputstream.read(height*width*2)
-    for i in xrange(height):
-        heightmap.append([])
-        for j in xrange(width):
-            base = i*width*2+j*2
-            e = float(struct.unpack("H",data[base:base+2])[0]) / 65536. * 256.;
-            heightmap[i].append(e)
-
-    del data
+    heightmap = array.array('H')
+    heightmap.fromfile(inputstream, width*height)
+    tmp = array.array('B', [0] * width*3)
 
     # Write output
-    for i in xrange(0, height):
-        for j in xrange(0, width):
-            h = min(heightmap[i][j], 255);
-            rgb = "%c%c%c" % (h, h, h)
+    for i in xrange(height):
+        ii = 0
+        if i % 100 == 0:
+            sys.stderr.write("Writing line %d...\r" % i);
+        base = i*width
+        for j in xrange(width):
+           # heightmap[i*width+j] = int(float(heightmap[i*width+j])/65536.*256.)
+            #c = chr(heightmap[base+j] >> 8)
+            c = heightmap[base+j] >> 8
+            tmp[ii*3] = c
+            tmp[ii*3+1] = c
+            tmp[ii*3+2] = c
+            ii+=1
 
-            # Pack height into 3 8 bit integers and write it
-            outputstream.write(rgb)
+        tmp.tofile(outputstream)
 
-#    print max_y-min_y, max_x-min_x
+    sys.stderr.write("\n")
 
     if must_close_output:
         outputstream.close()

@@ -2,7 +2,7 @@
 
 # Converts files from the USGS DEM format to 16 bit RAW 
 
-import argparse, sys, struct
+import argparse, sys, struct, itertools
 
 # Some unit conversion constants
 foot = 0.3048
@@ -72,6 +72,8 @@ def parse_B_record(a_record_dict, file_ptr):
     tmp = record[12:24].split()
     dimensions = (int(tmp[0]), int(tmp[1]))
 
+    data = [0] * (dimensions[0]*dimensions[1])
+
     # Get the x,y coordinates of the first point in the profile
     tmp = record[24:72].replace("D","E").split()
     first_point = (float(tmp[0]), float(tmp[1]))
@@ -84,14 +86,16 @@ def parse_B_record(a_record_dict, file_ptr):
 
     # Read the elevation data
     elevations = record[144:].split()
+    i = 0
     while elevations_read < dimensions[0]*dimensions[1]:
         for e in elevations:
-            data.append(float(e)*a_record_dict["resolution"][2]*a_record_dict["unit_elevation"] + elevation_datum)
+#;            data.append(float(e)*a_record_dict["resolution"][2]*a_record_dict["unit_elevation"] + elevation_datum)
+            data[i] = (float(e)*a_record_dict["resolution"][2]*a_record_dict["unit_elevation"] + elevation_datum)
+            i += 1
         elevations_read += len(elevations)        
 
         if elevations_read < dimensions[0]*dimensions[1]:
-            record = file_ptr.read(1024)
-            elevations = record.split()
+            elevations = file_ptr.read(1024).split()
 
     return {"index": index, "dimensions": dimensions, "first_point": first_point, "elevation_bounds": elevation_bounds, "data": data}    
 
@@ -148,9 +152,9 @@ def main(argv):
     sys.stderr.write("Placing points in grid...\n")
     heightmap = []
     for i in xrange(int((max_ypos - min_ypos)/a_record_dict["resolution"][1])+1):
-        heightmap.append([])
-        for j in xrange(a_record_dict["dimensions"][1]):
-            heightmap[i].append(-1)
+        heightmap.append([-1]*(a_record_dict["dimensions"][1]))
+#        for j in xrange(a_record_dict["dimensions"][1]):
+#            heightmap[i].append(-1)
 
     # Organize the data in a height map
     for b in b_records:
@@ -227,24 +231,41 @@ def main(argv):
         alt = (alt + 1) % 2
         height = max_y - min_y
 
-    # Write output
+    min_elevation = a_record_dict["elevation_bounds"][1]
+    max_elevation = a_record_dict["elevation_bounds"][0]
+
     for i in xrange(min_y, max_y):
         for j in xrange(min_x, max_x):
-            #e = int(heightmap[i][j]/a_record_dict["elevation_bounds"][1]*256.)
-            e = (heightmap[i][j]-a_record_dict["elevation_bounds"][0])/(a_record_dict["elevation_bounds"][1] - a_record_dict["elevation_bounds"][0])
-            # Map to a 16 bit integer
-            e *= 2**16
-            if e >= 2**16:
-                e = 2**16-1
-            e = int(e)
-            # Pack height into 16 bit integer and write it
-            outputstream.write(struct.pack("H", int(e)))
-            #e *= 256
-            #if e > 255:
-            #    e = 255
-#            outputstream.write('%c%c%c' % (e,e,e))
+            e = heightmap[i][j]
+            if e < min_elevation:
+                min_elevation = e;
+            if e > max_elevation:
+                max_elevation = e;
+    
+    sys.stderr.write("Writing output...\n")
 
-    sys.stderr.write("Min/max elevation: %d,%d Resolution: %dx%dx%f\n" % (a_record_dict["elevation_bounds"][0], a_record_dict["elevation_bounds"][1], a_record_dict["resolution"][0], a_record_dict["resolution"][1], a_record_dict["resolution"][2]))
+    # Write output
+    for i in xrange(min_y, max_y):
+        sys.stderr.write("Writing row %d...\r" % (i - min_y+1))
+        outputstream.write(struct.pack("%dH" % (max_x-min_x), *(max(min(int((e-min_elevation)/(max_elevation-min_elevation)*2**16), 2**16-1), 0) for e in itertools.islice(heightmap[i], min_x,max_x))))
+
+
+#        for j in xrange(min_x, max_x):
+            #e = int(heightmap[i][j]/a_record_dict["elevation_bounds"][1]*256.)
+#            e = (heightmap[i][j]-a_record_dict["elevation_bounds"][0])/(a_record_dict["elevation_bounds"][1] - a_record_dict["elevation_bounds"][0])
+#            e = (heightmap[i][j]-min_elevation)/(max_elevation - min_elevation)
+
+            # Map to a 16 bit integer
+#            e *= 2**16
+#            if e >= 2**16: e = 2**16-1
+#            if e < 0: e = 0;
+#            e = int(e)
+            # Pack height into 16 bit integer and write it
+#            outputstream.write(struct.pack("H", int(e)))
+    sys.stderr.write("\n")
+
+    sys.stderr.write("Min/max elevation: %d,%d Resolution: %dx%dx%f\n" % (min_elevation, max_elevation, a_record_dict["resolution"][0], a_record_dict["resolution"][1], a_record_dict["resolution"][2]))
+    #sys.stderr.write("Min/max elevation: %d,%d Resolution: %dx%dx%f\n" % (a_record_dict["elevation_bounds"][0], a_record_dict["elevation_bounds"][1], a_record_dict["resolution"][0], a_record_dict["resolution"][1], a_record_dict["resolution"][2]))
 
     sys.stderr.write("Dimensions: %d, %d\n" % (max_y-min_y, max_x-min_x))
 

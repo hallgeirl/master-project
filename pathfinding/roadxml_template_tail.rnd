@@ -1,0 +1,8 @@
+        <Portion endDistance="2531.87272362457" endProfile="defaultNoMotorvei" name="" startProfile="defaultNoMotorvei"/>
+      </Track>
+      <!-- <ExternalElement path="mesh/example.obj"/> -->
+    </SubNetwork>
+  </Network>
+
+</RoadXML>
+

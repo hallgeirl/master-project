@@ -8,6 +8,7 @@ all:${OBJ}
 
 .tex.pdf: style.sty document.tex
 	${TEX} $<
+	${TEX} $<
 
 handout.pdf: document.tex
 slides.pdf: document.tex

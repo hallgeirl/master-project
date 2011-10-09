@@ -1,0 +1,31 @@
+\documentclass{article}
+
+\usepackage{style}
+\usepackage{url}
+
+\title{Weeklie}
+\author{Hallgeir Lien}
+
+\begin{document}
+
+\maketitle
+
+After I sent my last weeklie, I spent a few hours on making a USGS DEM (Digital Elevation Map) format to raw converter, in order to use real world maps from Kartverket or the US. Related to this, I also made a normal map generator that takes a RAW file and outputs an RGB normal map.
+
+Of the things that has taken a lot of time this week was debugging the snow simulation code from earlier master projects. I have found various bugs. First of all, in the snow particle update kernel, the accelleration in the X direction was used to compute the new position for all directions, even Y and Z. Second, there was a bug with the function that calls the random number generator (rand()) that caused it to return a NEGATIVE number between -1 and 0, instead of between 0 and 1. In addition to this, I have fixed some ugly cases where there might be a division by 0.
+
+In addition to this, I have implemented a triangle mesh / model loader. This is for loading road models (and other models, like landmarks) for the snow simulator. This part is not completed yet; the mesh is loaded, but is not yet textured (but this will come shortly).
+
+Next, I wrote an annotated bibliography for the paper Procedural Generation of Roads by E. Galin et. al. This is included in this document. 
+
+Lastly, I created a presentation for Friday (TDT24), which I spent most of Thursday and Friday before 13:15. My presentation was postponed for Monday 17th, however.
+
+Next week I plan to first of all fix the terrain so that the heights in the terrain is correct proportional to the dimensions. Currently this is not the case at all. This will allow roads to be imported more seamlessly. I will also try to get textures working for meshes.
+
+Second of all, I will try to improve on the road generator I have made. Currently, it outputs a roadXML with slightly offset height values along the curve, because I need to compute the clothoid trajectory to know the height along the points on the curve, not only the control points.
+
+\appendix
+\section{Annotated bibliography of E. Galin et. al., Procedural Generation of Roads}
+\input{../report/annotated_bib/roadgen}
+
+\end{document}
