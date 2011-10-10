@@ -1,6 +1,14 @@
 \chapter{Background}
+This chapter will give some background on important algorithms and file formats used in this project. It will also give an introduction to the snow simulator.
 
-\section{A* Shortest Path Search Algorithm}
+\section{Search Algorithms and A* Shortest Path Search Algorithm}
+Finding the shortest path between nodes in a graph is an old and heavily researched problem. The problem can be stated like this: Given a weighted graph $G = (V,E)$ with edges $E$ and vertices $V$ where $w(e)$ is the weight of edge $i$, find the shortest path $\mbf{p}\in $     . 
+
+\section{Simulating snow}
+
+\section{GPU computing}
 
 \section{USGS DEM Format}
 
+\section{RoadXML}
+The RoadXML format is an XML based file format used to describe road networks. In addition to describing the trajectories, it also describes the profile of the road (i.e. width, markings, number of lanes, ...) and textures used for rendering.\cite{roadxml} RoadXML is an open format, developed in collaboration with the driving simulation industry and universities. Although RoadXML is a very powerful and extensive format used to describe complex systems with intersections, traffic information, grip, and much more, it is in this project only used as a road trajectory descriptor suitable for generating the road model.
