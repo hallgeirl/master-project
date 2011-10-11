@@ -2,7 +2,50 @@
 This chapter will give some background on important algorithms and file formats used in this project. It will also give an introduction to the snow simulator.
 
 \section{Search Algorithms and A* Shortest Path Search Algorithm}
-Finding the shortest path between nodes in a graph is an old and heavily researched problem. The problem can be stated like this: Given a weighted graph $G = (V,E)$ with edges $E$ and vertices $V$ where $w(e)$ is the weight of edge $i$, find the shortest path $\mbf{p}\in $     . 
+Finding the shortest path between nodes in a graph is an old and heavily researched problem. The problem can be stated like this: Given a weighted graph $G = (V,E)$ with edges $E$ and vertices $V$, and a weighting function $w(e) = w(v_i, v_j)$ of edge $e = (v_i, v_j)$, find the path from $v_a$ to $v_b$, that solves the minimization problem
+
+\begin{equation}
+\min_{\mbf P} \left\{ \sum_{e\in \mbf{p}} w(e) \right\}
+\end{equation}
+
+over all paths $\mbf P$ between nodes $v_a$ and $v_b$.
+
+\subsection{Solving shortest path problems}
+There are many algorithms to solve the minimization problem of finding the shortest path. There are two main categories: Single-source, and all-pairs. Single-source solves the shortest path algorithm for a single source node $a$, to one or all other nodes. All-pairs finds, as the name suggests, the shortest path between all the nodes in the graph. In this project, we are concerned about the single-source shortest path algorithms. In particular, we are interested in finding the shortest path between one node $v_a$ to another single node $v_b$.
+
+\subsubsection{Dijkstra's algorithm}
+One of the most well known and efficient single-source algorithms when we assume that we have no knowledge of the graph, is Dijkstra's algorithm. Dijkstra's algorithm is descriped in algorithm \ref{alg:dijkstra}.
+
+\begin{algorithm}
+\begin{algorithmic}
+\STATE Initially, set the distance to the source $d(v_a)=0$ and for all other nodes $d(v_i) = \infty$.
+\STATE Put all nodes $v_i$ in a priority queue, sorted on $d(v_i)$.
+\WHILE {$|Q| > 0$}
+    \STATE $v \gets \mbox{next node in Q}$
+    \FORALL{neighbors $w$ of $v$}
+        \IF{$d(v)+w(v,w) < d(w)$}
+            \STATE $d(w) \gets  d(v)+w(v, w)$.
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\end{algorithmic}
+\begin{enumerate}
+\item Put all nodes in a queue.
+\item Until the queue is empty or all nodes left have $dist(v)=\infty$: Pick the node $v_i$ with the smallest distance $dist(v_i)$. 
+\begin{itemize}
+\item For each neighbor $v_j$ of $v_i$, if $d(v_i)+w(v_i,v_j) < dist(v_j)$, set $d(v_j)=d(v_i)+w(v_i, v_j)$.
+\end{itemize}
+\end{enumerate}
+\end{algorithm}
+
+After the algorithm finishes, we have the total cost of the shortest paths from the source $v_a$ to all other nodes. The time complexity, when implemented efficiently with a fibonacci heap, is $O(|E|+|V|\log |V|)$\cite{fibodijkstra}. To retrieve the actual path, we can keep a pointer to the predecessor of each node, which is updated once a better path to that node has been found. One useful observation is that the shortest path to the node we pick from the queue is optimal; this is due to the fact that all other nodes in the queue has a larger or equal distance from $v_a$, and thus, assuming non-negative edges, we can not hope to find a better path.. Because of this, if we are only interested in the path from $v_a$ to $v_b$, we can stop the algorithm once we pick $v_b$ from the queue. 
+
+\subsubsection{Utilizing knowledge about graph topology: A*}
+In many practical cases, we have specific knowledge about the graph topology. For instance, if we seek to find the shortest path from the city of Oslo to Trondheim, we know, for instance, which direction we need to travel (north), and we know that we need to travel AT LEAST the straight line distance from Oslo to Trondheim. This kind of knowledge can be utilized in making more efficient single-source, single-destination shortest path algorithms, by computing heuristics on the cost from each node to the goal. One such algorithm is A*.
+
+A* is an extension of Dijkstra's algorithm. We define $g(x)$ as the distance from the start node $v_a$ to node $x$ ($g(x)$ is the same as $d(x)$ in Dijkstra's algorithm, but it is common to denote this function as $g(x)$ in literature). We also define the heuristic $h(x)$ as an {\textit optimistic} (admissive) estimate of the cost from node $x$ to the goal node $v_b$. That the heuristic is optimistic simply means that it never over-estimates the distance, i.e. $h(x) \leq h^*(x)$, where $h^*(x)$ is the {\textit optimal} heuristic function, that give the exact cost from node $x$ to the goal node $v_b$. Combining these values gives the {\textit f-cost} $f(x) = g(x)+h(x)$, which is the actual estimate on the distance from the start node $v_a$ to the goal node $v_b$.
+
+The main difference from the regular Dijkstra's algorithm, is when nodes are picked from the queue. Instead of picking the node with the lowest $g(x)$, we pick the node with the lowest $f(x) = g(x) + h(x)$. This way we prefer nodes that are "closer" to the goal. If we use the example 
 
 \section{Simulating snow}
 
@@ -12,3 +55,5 @@ Finding the shortest path between nodes in a graph is an old and heavily researc
 
 \section{RoadXML}
 The RoadXML format is an XML based file format used to describe road networks. In addition to describing the trajectories, it also describes the profile of the road (i.e. width, markings, number of lanes, ...) and textures used for rendering.\cite{roadxml} RoadXML is an open format, developed in collaboration with the driving simulation industry and universities. Although RoadXML is a very powerful and extensive format used to describe complex systems with intersections, traffic information, grip, and much more, it is in this project only used as a road trajectory descriptor suitable for generating the road model.
+
+

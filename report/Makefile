@@ -1,5 +1,6 @@
 TEXFILES=$(shell find . -type f -name '*.tex')
 #FIGURES=$(shell find figure/crop/ -type f -name '*.pdf' | awk '{gsub(/crop\//,"")}; 1')
+BIBFILES=$(shell ls *.bib)
 
 .PHONY: all
 
@@ -11,7 +12,7 @@ all: main.pdf
 #figure/%.pdf: figure/crop/%.ps
 #	cat $< | ps2eps -c -n -P | epstopdf --filter > $@
 
-main.pdf: $(TEXFILES) $(FIGURES)
+main.pdf: $(TEXFILES) $(FIGURES) $(BIBFILES)
 	pdflatex main
 	makeglossaries main
 	pdflatex main
