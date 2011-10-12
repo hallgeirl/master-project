@@ -107,22 +107,83 @@ All vector cores may access a global memory, analogous to a regular computer's m
 \subsection{CUDA}
 
 \section{Road generation}
-Generating 
+Generating realistic roads is more often than not non-trivial due to the many variables that determine if a road is "good" or not. For instance, different types of roads (e.g. highways, country roads) may have different tolerance to changes in elevation and curvature. 
+%A cost function controls the road trajectory we get
 
 \subsection{Formulating road generation as a shortest-path problem}
+Road generation can be formulated as a shortest-path problem in the following manner. First, discretize the terrain into a grid of elevation points. Each of these points is then a node in the graph. Conveniently enough, these points are also in $\mathbb{R}^3$ $(x,y,height)$, which makes designing heuristics for A* easier.
+
+Next, we must define the edges of the graph. Those edges define, naturally, which nodes that can be reached from each node. The most naive ways of defining this neighborhood is either to choose ALL nodes to be reachable from every other node, or only the immediate 8 neighbors. The first approach would be computationally infeasible due to the sheer amount of nodes in the graph. The other approach has a severe restriction on angles (the so-called limit on direction problem\cite{roadgen}), as the pathfinding algorithm can only take turns in multiples of 45 degrees, resulting in a fairly jagged path. 
+
+The solution to this problem of limit on direction, as presented in\cite{roadgen}, is to not only use the immediate neighbors, but use a neighborhood mask to define the neighbors. This mask is defined as follows: The neighbors of a point $p_{k,l}$ is defined as all points $p_{k+i,l+j}$ where $i,j$ is integers, $gcd(i,j) = 1$ and $i,j \in [-k,k]$. That $gcd(i,j)=1$ requirement is not a requirement for correctness, but to avoid unneccesary cost function evaluations for overlapping paths. Figure \ref{fig:neighbormask} illustrates the neighborhood of a grid point with a mask size of $k=2$.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{figure/neighbormask}
+\caption{Neighborhood of grid point (middle).}
+\label{fig:neighbormask}
+\end{figure}
+
+In order to define the weights of each edge, we define the cost of building an infinitesimal portion of road from point ${\mbf p}$, in the direction $\dot{\mbf p}$ and rate of change of the direction $\ddot{\mbf p}$ as $c({\mbf p}, \dot{{\mbf p}}, \ddot{{\mbf p}})$. Now, in order to evaluate the cost of a particular trajectory, simply integrate over the curve as shown in equation \ref{eq:roadcost}. Here, $t_1$ and $t_2$ define the segment end points of the parametric curve defined by the whole trajectory, as illustrated in figure \ref{fig:trajectory_segment}. $t_1$ and $t_2$ correspond to the grid points ${\mbf p}_{i_1,j_1}$ and ${\mbf p}_{i_2,j_2}$, respectively.
+
+\begin{equation}
+cost({\mbf p}_{i_1,j_1}, {\mbf p}_{i_2,j_2}) = \int_{t_1}^{t_2} c({\mbf p}(t), \dot{{\mbf p}}(t), \ddot{{\mbf p}})(t) dt
+\label{eq:roadcost}
+\end{equation}
+
+Evaluating this integral can be done numerically by discretizing the curve into intervals of length $\Delta t$ and using some numerical integration method like the midpoint rule or Simpson's rule.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{figure/trajectory_segment}
+\caption{Trajectory segment}
+\label{fig:trajectory_segment}
+\end{figure}
 
 \subsection{Cost functions}
+There are many potential contributing factors to the cost of a trajectory. One of them is of course road length, where the cost typically increases linearly with the length. In order to get realistic roads, however, using only road length as a cost function is not sufficient, because that would simply generate a nearly straight line from start to goal, which is suboptimal in e.g. a mountainous terrain. Adding an extra cost for slopes, or change in elevation, will cause the road to have curves around steep mountain sides, and roads will generally avoid bumpy terrain. However, this may result in sharp turns because curvature is not taken into account when attempting to avoid elevation changes. This may be alleviated by also taking curvature into account.
+
+Let each of the cost functions, for road length, elevation changes and curvature, and possibly more, be numbered $1, ..., n$ where $n$ is the number of cost functions. Also, let $\mu_i$ be a {\textit transfer function} that maps the measured values of slope, curvature and so on, to the actual cost value. It may be helpful to think of $\mu_i$ as a weighting function, although it may also be unlinear. Then, the cost function can be defined as
+$$
+C({\mbf p}, \dot{{\mbf p}}, \ddot{\mbf{p}}) = \sum_{i=1}^{n} \mu_i(c_i({\mbf p}, \dot{{\mbf p}}, \ddot{\mbf{p}}))
+$$
 
 \subsection{Trajectory computation}
 
 \subsection{Road model generation}
 
+
 \section{Clothoids and clothoid splines}
 
 \section{Simulating snow}
+A large part of this project is about extending the snow simulator 
+
+\subsection{Wind simulation}
+
+\subsection{Particle updates}
 
 
 \section{USGS DEM Format}
+USGS DEM is a file format for storing elevation data. It is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data.
+
+The data in a DEM is defined for a quadrangle; i.e. an arbitrary polygon of four vertices. The quadrangle may or may not be an axis-aligned rectangle, but most likely it will be {\textit close} to a rectangle. Oftentimes, the quadrangle attempts to follow the curvature of the earth mapped onto a plane, which gives slightly rotated and skewed rectangles.
+
+Next, I will give an overview of the A and B records of a DEM. The C-record is not relevant for this project.
+
+\subsection{A-record overview}
+The A-record is the header of the DEM file, containing data such as the vertices of the quadrangle in world coordinates, total number of columns of data, minimum and maximum elevation in the DEM, units used for the quantities in the file (feet, meters, arc seconds), and so on. It also stores information about resolution in all three dimensions. 
+
+\subsection{B-record overview}
+Each B-record stores one column of data for the height map along with a header for this data. However, since the quadrangle stored in a DEM file may not be quadratic, each column may have different number of elements. The position of the bottom-most point is specified in the header in world coordinates, along with the number of points. One B-block may span more than one 1024-byte block.
+
+Each elevation data point in the B-record is stored as an integer, and may be converted to an actual height value $h_i$ (in meters) by using the following formula for datapoint $y_i$:
+$$
+h_i = ((e_{max}-e_{min})\cdot y_i+ d_y)\cdot res_y \cdot unit
+$$
+
+where $d_y$ is the height datum and $e_{max}$ and $e_{min}$ is the maximum and minimum elevation, respectively. $unit$ is the number of meters per unit specified in the A-record; $unit=1$ for meters, or $0.3048$ for feet.
+
+Details about the layout of the USGS DEM file format can be found in appendix \ref{app:usgsdem}.
 
 \section{RoadXML}
 The RoadXML format is an XML based file format used to describe road networks. In addition to describing the trajectories, it also describes the profile of the road (i.e. width, markings, number of lanes, ...) and textures used for rendering.\cite{roadxml} RoadXML is an open format, developed in collaboration with the driving simulation industry and universities. Although RoadXML is a very powerful and extensive format used to describe complex systems with intersections, traffic information, grip, and much more, it is in this project only used as a road trajectory descriptor suitable for generating the road model.
