@@ -22,38 +22,105 @@ TODO
 
 \subsection{Other improvements}
 
-\section{USGS DEM converter and normal map generator}
-Real-world height maps are often stored in the USGS Digital Elevation Model (DEM) format. Among the users are Kartverket in Norway, who provides digital elevation maps of Norway. There is also a considerable amount of elevation data in the DEM format for the United States, although it has been superceded by the SDTS format, also developed by USGS\cite{wiki_usgsdem}. However, the snow simulator uses raw 16 bit integer heightmaps, for simplicity. Converting a USGS DEM map to 16 bit RAW takes time, and as such, it was decided that instead of directly supporting DEMs in the snow simulator, the best approach was to create a stand-alone converter from DEM to RAW.
+\section{USGS DEM converter}
+Real-world height maps are often stored in the USGS Digital Elevation Model (DEM) format. Among the users are Kartverket in Norway, who provides digital elevation maps of Norway. There is also a considerable amount of elevation data in the DEM format for the United States, although it has been mostly superceded by the SDTS format, also developed by the USGS\cite{wiki_usgsdem}. However, the snow simulator uses raw 16 bit integer heightmaps, for simplicity. Converting a USGS DEM map to 16 bit RAW takes time, and as such, it was decided that instead of directly supporting DEMs in the snow simulator, the best approach was to create a stand-alone converter from DEM to RAW.
+
 
 \subsection{Parsing the DEM file format}
+USGS DEM is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header, contained in one block; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data. We are here concerned about the A and B records since these contain the actual data and metadata. 
+
+Each data element in the DEM format is contained within two offsets in a record. For instance, the spatial resolutions are contained 816 bytes into the A-record, and ending at byte 851. This area contains three values, the x, y and z resolution of the DEM. Since the format is so regular, parsing each field is very straight forward. First, read the block from file (1024 bytes), and store it in a string. Then, with Python, this string is easily sliced at the field boundaries and then split into separate elements, and finally each element is parsed as numbers.
+
+For the elevation data in the B-record, the following conversion must be done, in order to map the data to actual heights, just as described in section \ref{sec:back_brecord}.
+$$
+h_i = ((e_{max}-e_{min})\cdot y_i+ d_y)\cdot res_y \cdot unit
+$$
+where $d_y$ is the height datum and $e_{max}$ and $e_{min}$ is the maximum and minimum elevation, respectively. $unit$ is the number of meters per unit specified in the A-record; $unit=1$ for meters, or $0.3048$ for feet.
 
 \subsection{Placing elevation data points and cropping}
-The DEM file format allows quadrangles that are not square or axis aligned. For instance, a DEM file may describe a heightmap of the shape shown in figure \ref{fig:dem_quadrangle}, or the quadrangle may be rectangular, or any other polygon described by four vertices. The goal is to convert the DEM to a rectangular heightmap that can be used in other applications, like the snow simulator. 
+The DEM file format allows quadrangles that are not square or axis aligned. For instance, a DEM file may describe a heightmap of the shape shown in figure \ref{fig:dem_quadrangle_raw}, or the quadrangle may be rectangular, or many other polygons described by four vertices. The goal is to convert the DEM to a rectangular heightmap that can be used in other applications, like the snow simulator; in other words, the data points from the heightmap must be aligned in a grid, and finally cropped, as shown in figure \ref{fig:dem_quadrangle_processed}. In this figure, the gray box represents the final grid. The points outside of this box are removed in the cropping process.
 
-FIGURE
+\begin{figure}[ht]
+\centering
+\subfloat[Example quadrangle, unprocessed]{
+\includegraphics[width=0.4\textwidth]{figure/quadrangle_skewed}
+\label{fig:dem_quadrangle_raw}
+}
+\qquad
+\subfloat[Example quadrangle, cropped]{
+\includegraphics[width=0.4\textwidth]{figure/quadrangle_cropped}
+\label{fig:dem_quadrangle_processed}
+}
+\caption{USGS DEM quadrangles; the small circles represent elevation data points}
+\label{fig:dem_quadrangle}
+\end{figure}
 
-The first step of generating the heightmap is to align each column from the B-records in a grid. In order to do this, we first must compute the dimensions of the bounding box of the quadrangle in order to hold all the data points. The number of B-records (width) is given by the A-record, but each B-record may differ in size, and even if they don't, datapoint $i$ from B-record 1 may not correspond to the same vertical position as datapoint $i$ in B-record 2. 
+The first step of generating the cropped heightmap is to align each column from the B-records in a grid. In order to do this, we first must compute the dimensions of the bounding box of the quadrangle in order to hold all the data points. The number of B-records (width) is given by the A-record, but each B-record may differ in size, and even if they don't, datapoint $i$ from B-record 1 may not correspond to the same vertical position as datapoint $i$ in B-record 2. 
 
-The corners of the quadrangle in world coordinates is described in the A-record (see appendix \ref{app:usgsdem}). The number of rows $m$ can therefore be computed as
+The corners of the quadrangle in world coordinates is described in the A-record (see appendix \ref{app:usgsdem}). Since we know the spacing between points, we can therefore compute the number of rows $m$ as
 $$
 m = \left\lceil\frac{y_{world,max}-y_{world,min}}{res_y}\right\rceil
 $$
-where $y_{world,max}$ and $y_{world,min}$ is the maximum and minimum quadrangle y-values in world coordinates, and $res_y$ is the resolution in the $y$ direction in meters. Now, after generating a grid of $m\times n$ elements that can hold all datapoints, for each B-record, we compute the starting row as
+where $y_{world,max}$ and $y_{world,min}$ is the maximum and minimum quadrangle y-values in world coordinates, and $res_y$ is the resolution in the $y$ direction in meters. This is illustrated in figure \ref{fig:dem_quadrangle}. Now, after generating a grid of $m\times n$ elements that can hold all datapoints, for each B-record, we compute the starting row as
 
 $$
-i_{0,j} = \left\lfloor \frac{y_{0,j}-y_{world,min}}{res_y}\right\rfloor
+row_{0,j} = \left\lfloor \frac{y_{0,j}-y_{world,min}}{res_y}\right\rfloor
 $$
 where $y_{0,j}$ is the y-position in world coordinates of the first data point in the $j$'th B-record. After the first point, all other points come sequentially, so
 $$
-i_{k,j} = i_{k-1,j} + 1
+row_{k,j} = row_{k-1,j} + 1
 $$
-where $i_{k,j}$ is the row of the $k$'th data point in the $j$'th B-record.
+where $i_{k,j}$ is the row of the $k$'th data point in the $j$'th B-record. 
 
-Now, if the heightmap is not rectangular, it must be cropped in order to 
+If the heightmap from the DEM is not rectangular, it must be cropped in order to produce a rectangular map, as illustrated in \ref{fig:dem_quadrangle}; otherwise, we end up with a lot of bogus data points where the DEM does not contain any data. Another consideration is that we want to remove as few {\textit real} data points as possible. For instance, in figure \ref{fig:dem_quadrangle_raw}, in order to create a rectangular map, we may
+\begin{enumerate}
+\item Crop the left-most and right-most columns, and the two bottom-most rows (removing 23 data points)
+\item OR, crop the 8 bottom rows (removing 96 data points)
+\item OR, crop the top 7 rows, and bottom 2 rows
+\end{enumerate}
+or any other combination that produces a rectangular map. Here, number 1 is clearly preferrable. One way of finding the optimal way of cropping is representing this as a search in state space, and find a shortest path through the graph generated by the nodes (state, i.e. the intermediate grid) and the edges (removal of one row or column) with weights equal to the number of real data points being removed. However, this is time consuming, so a simpler method was used, where the row or column with the highest ratio of real data points over the length of the row or column was used. This appears to work very well in practice.
 
+The pseudocode for placing the DEM data points in a grid and outputing a RAW can be seen in algorithm \ref{alg:demtoraw}. Since the parsing itself is trivial (it's simply a string sliceing, splitting and casting operation), this is assumed to be done already.
 
-
-
-\subsection{Generating the normal map}
-
+\begin{algorithm}[ht]
+\begin{algorithmic}
+\REQUIRE One parsed A-record $A$, and a list of $n$ parsed B-records $B$
+\STATE Get $res_y$ and quadrangle vertices from A-record
+\STATE $y_{world,min}\gets \mbox{smallest y-coordinate of all quadrangle vertices}$
+\STATE $y_{world,max}\gets \mbox{largest y-coordinate of all quadrangle vertices}$
+\STATE $m \gets \left\lceil(y_{world,max}-y_{world,min})/res_y\right\rceil$
+\STATE $H\gets \mbox{empty $m\times n$ matrix}$
+\FORALL{$b \in B$}
+    \STATE Get $y_{0,j}$ from $b$
+    \STATE $col \gets \mbox{column index of $b$}$
+    \STATE $row \gets \left\lfloor (y_{0,j}-y_{world,min})/res_y\right\rfloor$
+    \FORALL{elevation $h\in b$}
+        \STATE $H(row,col) \gets h$
+        \STATE $row \gets row+1$
+    \ENDFOR
+\ENDFOR
+\STATE $x_{min}\gets 0$, $y_{min}\gets 0$
+\STATE $x_{max}\gets n$, $y_{max}\gets m$
+\WHILE{there are rows or columns left to crop}
+    \STATE $n_{left}\gets \mbox{\# of missing data points in the left column}$
+    \STATE $n_{right}\gets \mbox{\# of missing data points in the right column}$
+    \STATE $n_{top}\gets \mbox{\# of missing data points in the top row}$
+    \STATE $n_{bottom}\gets \mbox{\# of missing data points in the bottom row}$
+    \STATE $r_{left}\gets n_{left}/(y_{max}-y_{min})$, $r_{right}\gets n_{right}/(y_{max}-y_{min})$
+    \STATE $r_{top}\gets n_{top}/(x_{max}-x_{min})$, $r_{bottom}\gets n_{bottom}/(x_{max}-x_{min})$
+    \IF{$r_{top}$ is largest}
+        \STATE $y_{min} \gets y_{min}+1$
+    \ELSIF{$r_{bottom}$ is largest}
+        \STATE $y_{max} \gets y_{max}+1$
+    \ELSIF{$r_{left}$ is largest}
+        \STATE $x_{min} \gets x_{min}+1$
+    \ELSIF{$r_{right}$ is largest}
+        \STATE $x_{max} \gets x_{max}+1$
+    \ENDIF
+\ENDWHILE
+\STATE Write $H(y_min:y_max, x_min:x_max)$ to file.
+\end{algorithmic}
+\caption{Complete algorithm for aligning and cropping a USGS DEM}
+\label{alg:demtoraw}
+\end{algorithm}
 

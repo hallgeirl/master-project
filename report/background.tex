@@ -174,7 +174,7 @@ A major part of this project is to extending the snow simulator developed at the
 \subsection{Particle updates}
 
 \section{USGS DEM Format}
-USGS DEM is a file format for storing elevation data. It is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data.
+USGS DEM is a file format for storing elevation data. It is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data.\cite{usgsdem}
 
 The data in a DEM is defined for a quadrangle; i.e. an arbitrary polygon of four vertices. The quadrangle may or may not be an axis-aligned rectangle, but most likely it will be {\textit close} to a rectangle. Oftentimes, the quadrangle attempts to follow the curvature of the earth mapped onto a plane, which gives slightly rotated and skewed rectangles.
 
@@ -184,6 +184,7 @@ Next, I will give an overview of the A and B records of a DEM. The C-record is n
 The A-record is the header of the DEM file, containing data such as the vertices of the quadrangle in world coordinates, total number of columns of data, minimum and maximum elevation in the DEM, units used for the quantities in the file (feet, meters, arc seconds), and so on. It also stores information about resolution in all three dimensions. 
 
 \subsection{B-record overview}
+\label{sec:back_brecord}
 Each B-record stores one column of data for the height map along with a header for this data. However, since the quadrangle stored in a DEM file may not be quadratic, each column may have different number of elements. The position of the bottom-most point is specified in the header in world coordinates, along with the number of points. One B-block may span more than one 1024-byte block.
 
 Each elevation data point in the B-record is stored as an integer, and may be converted to an actual height value $h_i$ (in meters) by using the following formula for datapoint $y_i$:
