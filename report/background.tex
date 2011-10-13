@@ -107,7 +107,8 @@ All vector cores may access a global memory, analogous to a regular computer's m
 \subsection{CUDA}
 
 \section{Road generation}
-Generating realistic roads is more often than not non-trivial due to the many variables that determine if a road is "good" or not. For instance, different types of roads (e.g. highways, country roads) may have different tolerance to changes in elevation and curvature. 
+Roads can be generated in a number of ways; city street networks can be generated using using Lindenmayer systems\cite{citymodelling}, and shortest path algoriths like A* can be used to generate roads through a terrain, and this method may even be extended to generating hierarchical roads.\cite{roadgen}\cite{roadgen2}
+Generating realistic roads is more often than not non-trivial due to the many variables that determine if a road is "good" or not. For instance, different types of roads (e.g. highways, country roads) may have different tolerance to changes in elevation and curvature, and the tradeoffs of going up a steep slope or making a longer, more curvy road around that slope must be weighted. In this section we will first look at how we can formulate the problem of generating a road through a terrain as a shortest-path problem as described by \cite{roadgen}, and lastly we will discuss the details about the trajectory computation and road modelling given a discrete shortest path.
 %A cost function controls the road trajectory we get
 
 \subsection{Formulating road generation as a shortest-path problem}
@@ -156,12 +157,21 @@ $$
 \section{Clothoids and clothoid splines}
 
 \section{Simulating snow}
-A major part of this project is to extending the snow simulator developed at the HPC lab at NTNU, to support taking in meshes (mainly roads, but may be arbitrary meshes). 
+A major part of this project is to extending the snow simulator developed at the HPC lab at NTNU, to support loading meshes (mainly roads, but may be arbitrary meshes). In order to fully integrate the contributions from this project into the snow simulator, it is important to have some background on the way the snow simulator works. This section will first describe how the wind simulation is done, and then go into details of how the particles are updated. 
+
+%Also, a few other improvements, discussed in section \ref{sec:impl_snowsim}, have been done. 
+
+\subsection{Terrain}
 
 \subsection{Wind simulation}
 
-\subsection{Particle updates}
+\subsubsection{Modelling wind as a fluid}
 
+\subsubsection{Obstacles}
+
+\subsubsection{}
+
+\subsection{Particle updates}
 
 \section{USGS DEM Format}
 USGS DEM is a file format for storing elevation data. It is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data.

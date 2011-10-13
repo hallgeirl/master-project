@@ -1,18 +1,59 @@
 \chapter{Implementation}
+This chapter will describe my implementation of the procedural road generation algorithm, how the roads produced here is integrated with the snow simulator with all the changes to the snow simulator this entails, and lastly it describes the details about my implementation of the USGS DEM to height map converter application.
 
 \section{Procedural road generation}
+For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described.
 
 \subsection{Implementation of A*}
 
+
 \subsection{Clothoid spline generation}
+TODO
 
 \subsection{RoadXML generation}
 
 
 \section{Integration with snow simulator}
+\label{sec:impl_snowsim}
+
+\subsection{Scaling of terrain}
 
 \subsection{Model loader and format}
 
+\subsection{Other improvements}
 
 \section{USGS DEM converter and normal map generator}
+Real-world height maps are often stored in the USGS Digital Elevation Model (DEM) format. Among the users are Kartverket in Norway, who provides digital elevation maps of Norway. There is also a considerable amount of elevation data in the DEM format for the United States, although it has been superceded by the SDTS format, also developed by USGS\cite{wiki_usgsdem}. However, the snow simulator uses raw 16 bit integer heightmaps, for simplicity. Converting a USGS DEM map to 16 bit RAW takes time, and as such, it was decided that instead of directly supporting DEMs in the snow simulator, the best approach was to create a stand-alone converter from DEM to RAW.
+
+\subsection{Parsing the DEM file format}
+
+\subsection{Placing elevation data points and cropping}
+The DEM file format allows quadrangles that are not square or axis aligned. For instance, a DEM file may describe a heightmap of the shape shown in figure \ref{fig:dem_quadrangle}, or the quadrangle may be rectangular, or any other polygon described by four vertices. The goal is to convert the DEM to a rectangular heightmap that can be used in other applications, like the snow simulator. 
+
+FIGURE
+
+The first step of generating the heightmap is to align each column from the B-records in a grid. In order to do this, we first must compute the dimensions of the bounding box of the quadrangle in order to hold all the data points. The number of B-records (width) is given by the A-record, but each B-record may differ in size, and even if they don't, datapoint $i$ from B-record 1 may not correspond to the same vertical position as datapoint $i$ in B-record 2. 
+
+The corners of the quadrangle in world coordinates is described in the A-record (see appendix \ref{app:usgsdem}). The number of rows $m$ can therefore be computed as
+$$
+m = \left\lceil\frac{y_{world,max}-y_{world,min}}{res_y}\right\rceil
+$$
+where $y_{world,max}$ and $y_{world,min}$ is the maximum and minimum quadrangle y-values in world coordinates, and $res_y$ is the resolution in the $y$ direction in meters. Now, after generating a grid of $m\times n$ elements that can hold all datapoints, for each B-record, we compute the starting row as
+
+$$
+i_{0,j} = \left\lfloor \frac{y_{0,j}-y_{world,min}}{res_y}\right\rfloor
+$$
+where $y_{0,j}$ is the y-position in world coordinates of the first data point in the $j$'th B-record. After the first point, all other points come sequentially, so
+$$
+i_{k,j} = i_{k-1,j} + 1
+$$
+where $i_{k,j}$ is the row of the $k$'th data point in the $j$'th B-record.
+
+Now, if the heightmap is not rectangular, it must be cropped in order to 
+
+
+
+
+\subsection{Generating the normal map}
+
 
