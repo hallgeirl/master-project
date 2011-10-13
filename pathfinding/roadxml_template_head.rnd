@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <RoadXML version="2.2.1" versionRevision="2.2.1-$Revision: 21364 $-$Date: 2010-11-04 15:35:40 +0100 (jeu., 04 nov. 2010) $" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
   <Network name="" traffic="right-hand">
-    <Ground granulosity="0.5" grip="1" name="Asphalt" type="cobblestone"/>
+    <Ground granulosity="0.5" grip="1" name="Asphalt" type="asphalt"/>
     <Ground granulosity="0.5" grip="1" name="Concrete" type="concrete"/>
     <Ground granulosity="0.5" grip="1" name="Grass" type="grass"/>
     <Ground granulosity="0.5" grip="1" name="Cobblestone" type="cobblestone"/>
@@ -78,8 +79,26 @@
       </Material>
       <UVMapping leftU="0" lengthV="1" rightU="1"/>
     </Marking>
+    <Marking leftToRight="can" lineLength="3" name="1000_H_90" rightToLeft="can" totalLength="12" width="0.15">
+      <Material>
+        <Diffuse>
+          <Texture path="textures/marking.png"/>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Diffuse>
+        <Ambient>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Ambient>
+        <Specular>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Specular>
+        <Emissive>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Emissive>
+      </Material>
+      <UVMapping leftU="0" lengthV="1" rightU="1"/>
+    </Marking>
     <Profile name="defaultNoMotorvei" type="none">
-      <LaneBorder distance="-10.15" height="0" markingOffset="0.15"/>
+      <LaneBorder distance="-15.6" height="0" markingOffset="0.15"/>
       <Lane Ground="Asphalt 2" circulationWay="none" name="Lane" speedLimit="0" type="shoulder">
         <VehicleType categories="none"/>
         <Material>
@@ -99,8 +118,28 @@
         </Material>
         <UVMapping leftU="0" lengthV="1" rightU="1"/>
       </Lane>
-      <LaneBorder distance="-9.15" height="0.2" markingOffset="0"/>
+      <LaneBorder distance="-14.6" height="0.3" markingOffset="0"/>
       <Lane Ground="Asphalt" circulationWay="none" name="Lane 2" speedLimit="0" type="shoulder">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/sidewalkside.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="3" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="-14.55" height="0.2" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 3" speedLimit="0" type="shoulder">
         <VehicleType categories="none"/>
         <Material>
           <Diffuse>
@@ -117,10 +156,10 @@
             <Color alpha="1" blue="0" green="0" red="0"/>
           </Emissive>
         </Material>
-        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+        <UVMapping leftU="0" lengthV="20" rightU="1"/>
       </Lane>
-      <LaneBorder distance="-8.15" height="0.2" markingName="1012_20cm" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="inverse" name="Lane 3" speedLimit="25" type="paved">
+      <LaneBorder distance="-12.05" height="0.24" markingName="1012_20cm" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="inverse" name="Lane 4" speedLimit="25" type="paved">
         <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
         <Material>
           <Diffuse>
@@ -139,8 +178,8 @@
         </Material>
         <UVMapping leftU="0" lengthV="20" rightU="1"/>
       </Lane>
-      <LaneBorder distance="-4.65" height="0.2" markingName="1000_G_90" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="direct" name="Lane 4" speedLimit="25" type="paved">
+      <LaneBorder distance="-8.35" height="0.27" markingName="1000_H_90" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="inverse" name="Lane 5" speedLimit="25" type="paved">
         <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
         <Material>
           <Diffuse>
@@ -159,8 +198,8 @@
         </Material>
         <UVMapping leftU="0" lengthV="20" rightU="1"/>
       </Lane>
-      <LaneBorder distance="-1.15" height="0.2" markingName="1012_20cm" markingOffset="0"/>
-      <Lane Ground="Asphalt 2" circulationWay="none" name="Lane 5" speedLimit="0" type="median">
+      <LaneBorder distance="-4.65" height="0.3" markingName="1012_20cm" markingOffset="0"/>
+      <Lane Ground="Asphalt 2" circulationWay="none" name="Lane 6" speedLimit="0" type="median">
         <VehicleType categories="none"/>
         <Material>
           <Diffuse>
@@ -179,8 +218,8 @@
         </Material>
         <UVMapping leftU="0" lengthV="20" rightU="0.05"/>
       </Lane>
-      <LaneBorder distance="-0.95" height="0.2" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="both" name="Lane 6" speedLimit="3" type="sidewalk">
+      <LaneBorder distance="-4.45" height="0.3" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="both" name="Lane 7" speedLimit="3" type="sidewalk">
         <VehicleType categories="pedestrian,bicycle"/>
         <Material>
           <Diffuse>
@@ -197,10 +236,10 @@
             <Color alpha="1" blue="0" green="0" red="0"/>
           </Emissive>
         </Material>
-        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+        <UVMapping leftU="0" lengthV="3" rightU="1"/>
       </Lane>
-      <LaneBorder distance="-0.85" height="0.3" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="none" name="Lane 7" speedLimit="0" type="land">
+      <LaneBorder distance="-4.35" height="0.4" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 8" speedLimit="0" type="land">
         <VehicleType categories="none"/>
         <Material>
           <Diffuse>
@@ -219,8 +258,8 @@
         </Material>
         <UVMapping leftU="0" lengthV="10" rightU="1"/>
       </Lane>
-      <LaneBorder distance="0.65" height="0.3" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="both" name="Lane 8" speedLimit="3" type="sidewalk">
+      <LaneBorder distance="-2.85" height="0.4" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="both" name="Lane 9" speedLimit="3" type="sidewalk">
         <VehicleType categories="pedestrian,bicycle"/>
         <Material>
           <Diffuse>
@@ -237,10 +276,10 @@
             <Color alpha="1" blue="0" green="0" red="0"/>
           </Emissive>
         </Material>
-        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+        <UVMapping leftU="0" lengthV="3" rightU="1"/>
       </Lane>
-      <LaneBorder distance="0.75" height="0.2" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="none" name="Lane 9" speedLimit="0" type="median">
+      <LaneBorder distance="-2.75" height="0.3" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 10" speedLimit="0" type="median">
         <VehicleType categories="none"/>
         <Material>
           <Diffuse>
@@ -259,27 +298,7 @@
         </Material>
         <UVMapping leftU="0" lengthV="20" rightU="0.05"/>
       </Lane>
-      <LaneBorder distance="0.95" height="0.2" markingName="1012_20cm" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="direct" name="Lane 10" speedLimit="25" type="paved">
-        <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
-        <Material>
-          <Diffuse>
-            <Texture path="textures/macadam.png"/>
-            <Color alpha="1" blue="1" green="1" red="1"/>
-          </Diffuse>
-          <Ambient>
-            <Color alpha="1" blue="1" green="1" red="1"/>
-          </Ambient>
-          <Specular>
-            <Color alpha="1" blue="0" green="0" red="0"/>
-          </Specular>
-          <Emissive>
-            <Color alpha="1" blue="0" green="0" red="0"/>
-          </Emissive>
-        </Material>
-        <UVMapping leftU="0" lengthV="20" rightU="1"/>
-      </Lane>
-      <LaneBorder distance="4.45" height="0.2" markingName="1000_G_90" markingOffset="0"/>
+      <LaneBorder distance="-2.55" height="0.3" markingName="1012_20cm" markingOffset="0"/>
       <Lane Ground="Asphalt" circulationWay="direct" name="Lane 11" speedLimit="25" type="paved">
         <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
         <Material>
@@ -299,9 +318,9 @@
         </Material>
         <UVMapping leftU="0" lengthV="20" rightU="1"/>
       </Lane>
-      <LaneBorder distance="7.95" height="0.2" markingName="1012_20cm" markingOffset="0"/>
-      <Lane Ground="Asphalt" circulationWay="none" name="Lane 12" speedLimit="0" type="shoulder">
-        <VehicleType categories="none"/>
+      <LaneBorder distance="1.15" height="0.27" markingName="1000_H_90" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="direct" name="Lane 12" speedLimit="25" type="paved">
+        <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
         <Material>
           <Diffuse>
             <Texture path="textures/macadam.png"/>
@@ -317,10 +336,50 @@
             <Color alpha="1" blue="0" green="0" red="0"/>
           </Emissive>
         </Material>
-        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+        <UVMapping leftU="0" lengthV="20" rightU="1"/>
       </Lane>
-      <LaneBorder distance="8.95" height="0.2" markingOffset="0"/>
-      <Lane Ground="Asphalt 2" circulationWay="none" name="Lane 13" speedLimit="0" type="shoulder">
+      <LaneBorder distance="4.85" height="0.24" markingName="1012_20cm" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 13" speedLimit="28" type="emergency">
+        <VehicleType categories="police,firefighter,ambulance"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="20" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="7.35" height="0.2" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 14" speedLimit="0" type="shoulder">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/sidewalkside.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="3" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="7.4" height="0.3" markingOffset="0"/>
+      <Lane Ground="Asphalt 2" circulationWay="none" name="Lane 15" speedLimit="0" type="shoulder">
         <VehicleType categories="none"/>
         <Material>
           <Diffuse>
@@ -339,7 +398,7 @@
         </Material>
         <UVMapping leftU="1" lengthV="1" rightU="0"/>
       </Lane>
-      <LaneBorder distance="9.95" height="0" markingOffset="0"/>
+      <LaneBorder distance="8.4" height="0" markingOffset="0"/>
     </Profile>
     <SubNetwork heading="0" name="Sub Network" x="0" y="0" z="0">
       <Track endNode="" name="Track" startNode="">

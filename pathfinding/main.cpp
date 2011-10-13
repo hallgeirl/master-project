@@ -522,11 +522,14 @@ void writeRoadXML(string filename, const vector<vec2f>& controlPoints, const ter
 
     ofstream output(filename.c_str());
     output.write(head_buf, head_size);
-    output << "        <XYCurve direction=\"" << startDir << "\" x=\"" << (float)controlPoints[0].x << "\" y=\"" << (float)controlPoints[0].y << "\">\n";
+//    output << "        <XYCurve direction=\"" << startDir << "\" x=\"" << (float)controlPoints[0].x << "\" y=\"" << (float)controlPoints[0].y << "\">\n";
+    output << "        <XYCurve direction=\"0\" x=\"" << (float)controlPoints[0].x << "\" y=\"" << (float)controlPoints[0].y << "\">\n";
+//    output << "        <XYCurve direction=\"" << startDir << "\" x=\"0\" y=\"0\">\n";
+//    output << "        <XYCurve direction=\"0\" x=\"0\" y=\"0\">\n";
     output << "          <ClothoidSpline type=\"spline\">\n";
-    for (size_t i = 0; i < controlPoints.size(); i++)
+    for (size_t i = 1; i < controlPoints.size(); i++)
     {
-        output << "            <Vectord2 x=\"" << controlPoints[i].x << "\" y=\"" << controlPoints[i].y << "\" />\n";
+        output << "            <Vectord2 x=\"" << controlPoints[i].x-controlPoints[0].x << "\" y=\"" << controlPoints[i].y-controlPoints[0].y << "\" />\n";
     }
     output << "          </ClothoidSpline>\n";
     output << "        </XYCurve>\n";
