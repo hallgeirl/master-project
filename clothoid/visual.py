@@ -73,7 +73,6 @@ def dot(v1,v2):
 def fx(x, k,alpha):
     S = fresnelS2
     C = fresnelC2
-#    print x,k,alpha
     return sqrt(x)*(C(x)*sin(alpha) - S(x)*(k + cos(alpha))) + sqrt(alpha-x) * (S(alpha-x)*(1.+k*cos(alpha)) - k*C(alpha-x)*sin(alpha))
 
 def dfx(x,k,alpha):
@@ -103,34 +102,56 @@ def main(argv):
     S = fresnelS2
     n = 256
 #    ctrlpoints = [(50,50), (200, 50), (60, 200)]
-    ctrlpoints = [(0,0), (200, 0), (100, 200)]
+    #ctrlpoints = [(0,0), (200, 0), (100, 200)]
+    
+    ctrlpoints = [(0,0), (10, 100), (100, 100)]
+    ctrlpoints = [(0,0), (100, 10), (100, 100)]
+
+#    ctrlpoints = [(0,0), (150, 20), (100, 100)]
     #ctrlpoints = [(50,50), (80, 200), (200, 45)]
     img = [None]*n
     for i in xrange(len(img)):
         img[i] = [255]*n*3
 
     connectors = [ctrlpoints[0]]
-    for i in xrange(1,len(ctrlpoints)-1):
+    for i in xrange(1,len(ctrlpoints)-2):
+        print i
         connectors.append(((ctrlpoints[i+1][0] - ctrlpoints[i][0])/2., (ctrlpoints[i+1][1]- ctrlpoints[i][1])/2.))
     connectors.append(ctrlpoints[-1])
     print connectors
 
-    for i in xrange(1, len(ctrlpoints)-1):
-        va = (ctrlpoints[i][0]-ctrlpoints[i-1][0], ctrlpoints[i][1]-ctrlpoints[i-1][1])
-        vb = (ctrlpoints[i+1][0]-ctrlpoints[i][0], ctrlpoints[i+1][1]-ctrlpoints[i][1])
+    ctrlpoints = ctrlpoints[1:len(ctrlpoints)-1]
+
+    for i in xrange(len(ctrlpoints)):
+        v = ctrlpoints[i]
+        p0tmp = connectors[i]
+        p1tmp = connectors[i+1]
+        va = (v[0]-p0tmp[0], v[1]-p0tmp[1])
+        vb = (p1tmp[0]-v[0], p1tmp[1]-v[1])
         normva = norm(va)
         normvb = norm(vb)
         g = max(normva, normvb)
         h = min(normva, normvb)
 
-        dp = (-ctrlpoints[i+1][0], -ctrlpoints[i+1][1])
-        p0 = (0,0)
-        if normva < normvb:
-            p1 = va
+        if normva > normvb:
+            print "va"
+            p0 = p0tmp
+            p1 = p1tmp
+            vg = va
+            vh = vb
         else:
-            p1 = vb
+            print "vb"
+            p0 = p1tmp
+            p1 = p0tmp
+            vg = vb
+            vh = va
 
-        p1 = transrot(ctrlpoints[i+1], dp, acos(dot(ctrlpoints[i-1], ctrlpoints[i])/normva))
+        # Check if we need to flip on p0
+        flip0 = (vg[0]*vh[1]-vg[1]*vh[0]) < 0
+        print "Flip: %f\n" % flip0
+        print "p0:", p0, "p1:",p1
+    
+        #p1 = transrot(ctrlpoints[i+1], dp, acos(dot(ctrlpoints[i-1], ctrlpoints[i])/normva))
 
         va = (va[0]/normva, va[1]/normva)
         vb = (vb[0]/normvb, vb[1]/normvb)
@@ -166,6 +187,11 @@ def main(argv):
             img[int(y)][int(x)*3] = 255
 
     for c in ctrlpoints:
+        img[c[1]][c[0]*3] = 0
+        img[c[1]][c[0]*3+1] = 0
+        img[c[1]][c[0]*3+2] = 0
+
+    for c in connectors:
         img[c[1]][c[0]*3] = 0
         img[c[1]][c[0]*3+1] = 0
         img[c[1]][c[0]*3+2] = 0
