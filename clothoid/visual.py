@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys, subprocess, time
-from math import pi, sin, cos, sqrt, acos, tan
+from math import pi, sin, cos, sqrt, acos, tan, atan2
 from time import sleep
 import math
 import png
@@ -92,20 +92,27 @@ def newton(y, dy, init, err = 1e-5):
     return xnext
 
 def transrot(p,dp,rot):
-    return (cos(rot)*(p[0]+dp[0]) - sin(rot)*(p[1]+dp[1]), sin(rot)*(p[0]+dp[0]) + cos(rot)*(p[1]+dp[1]))
+    return [cos(rot)*(p[0]+dp[0]) - sin(rot)*(p[1]+dp[1]), sin(rot)*(p[0]+dp[0]) + cos(rot)*(p[1]+dp[1])]
 
 def rottrans(p,dp,rot):
-    return (cos(rot)*(p[0]) - sin(rot)*(p[1])+dp[0], sin(rot)*(p[0]) + cos(rot)*(p[1])+dp[1])
+    return [cos(rot)*(p[0]) - sin(rot)*(p[1])+dp[0], sin(rot)*(p[0]) + cos(rot)*(p[1])+dp[1]]
+
+def neg(p):
+    return [-p[0], -p[1]]
 
 def main(argv):
     C = fresnelC2
     S = fresnelS2
-    n = 256
+    n = 1024
 #    ctrlpoints = [(50,50), (200, 50), (60, 200)]
     #ctrlpoints = [(0,0), (200, 0), (100, 200)]
     
-    ctrlpoints = [(0,0), (10, 100), (100, 100)]
-    ctrlpoints = [(0,0), (100, 10), (100, 100)]
+    #ctrlpoints = [[0,0], [10, 100], [100, 100]]
+    #ctrlpoints = [[0,0], [100, 10], [100, 100], [150,0]]
+    #ctrlpoints = [[0,0], [50, 100], [100, 50], [150,200]]
+    #ctrlpoints = [[15,25], [50, 100], [100, 50], [150,200]]
+    ctrlpoints = [[175,275], [175, 400], [300, 500], [500,500], [575,350], [650,475]]
+#    ctrlpoints = [[0,0], [50, 100], [100, 50]]
 
 #    ctrlpoints = [(0,0), (150, 20), (100, 100)]
     #ctrlpoints = [(50,50), (80, 200), (200, 45)]
@@ -116,13 +123,27 @@ def main(argv):
     connectors = [ctrlpoints[0]]
     for i in xrange(1,len(ctrlpoints)-2):
         print i
-        connectors.append(((ctrlpoints[i+1][0] - ctrlpoints[i][0])/2., (ctrlpoints[i+1][1]- ctrlpoints[i][1])/2.))
+        connectors.append([(ctrlpoints[i+1][0] + ctrlpoints[i][0])/2., (ctrlpoints[i+1][1] + ctrlpoints[i][1])/2.])
     connectors.append(ctrlpoints[-1])
-    print connectors
 
     ctrlpoints = ctrlpoints[1:len(ctrlpoints)-1]
-
+    tangents = [None]*len(connectors)
+    # Tangent vectors for each connection point
     for i in xrange(len(ctrlpoints)):
+        p0 = connectors[i+1]
+        p1 = ctrlpoints[i]
+        t = [p1[0]-p0[0], p1[1]-p0[1]]
+        t = [t[0]/norm(t), t[1]/norm(t)]
+        tangents[i+1] = t
+
+    tangents[0] = [ctrlpoints[0][0]-connectors[0][0], ctrlpoints[0][1]-connectors[0][1]]
+    tangents[0] = [-tangents[0][0]/norm(tangents[0]), -tangents[0][1]/norm(tangents[0])]
+
+    print "Controlpts:\t",ctrlpoints
+    print "Connectors:\t",connectors
+    print "Tangents:\t",tangents
+
+    for i in xrange(0,len(ctrlpoints)):
         v = ctrlpoints[i]
         p0tmp = connectors[i]
         p1tmp = connectors[i+1]
@@ -133,35 +154,71 @@ def main(argv):
         g = max(normva, normvb)
         h = min(normva, normvb)
 
+
         if normva > normvb:
             print "va"
             p0 = p0tmp
             p1 = p1tmp
             vg = va
             vh = vb
+            T0 = tangents[i]
+            T1 = tangents[i+1]
+            T0 = [-T0[0], -T0[1]]
         else:
             print "vb"
             p0 = p1tmp
             p1 = p0tmp
             vg = vb
             vh = va
+            T0 = tangents[i+1]
+            T1 = tangents[i]
+            T1 = [-T1[0], -T1[1]]
 
-        # Check if we need to flip on p0
-        flip0 = (vg[0]*vh[1]-vg[1]*vh[0]) < 0
-        print "Flip: %f\n" % flip0
-        print "p0:", p0, "p1:",p1
-    
-        #p1 = transrot(ctrlpoints[i+1], dp, acos(dot(ctrlpoints[i-1], ctrlpoints[i])/normva))
-
-        va = (va[0]/normva, va[1]/normva)
-        vb = (vb[0]/normvb, vb[1]/normvb)
+        va = [va[0]/normva, va[1]/normva]
+        vb = [vb[0]/normvb, vb[1]/normvb]
 
         cosalpha= min(max(va[0]*vb[0]+va[1]*vb[1], -1),1)
         alpha = acos(cosalpha)
+
+        tau = 0.9
+#        tau = 0.5
+        glim = h * (C(alpha)/S(alpha)*sin(alpha) - cos(alpha))
+        g_diff = 0
+        if g > tau*glim + (1-tau)*h:
+            g_diff = g-(tau*glim + (1-tau)*h)
+            g = tau*glim+(1-tau)*h
+
+
+#        g = g,glim-0.5)
+
+        print "glim,g:\t",glim,g
+
+        # Check if we need to flip on p0
+        flip0 = (vg[0]*vh[1]-vg[1]*vh[0]) < 0
+        print "Flip: %d\n" % flip0
+        print "p0:", p0, "p1:",p1,"T0:",T0,"T1:",T1
+
+        # First: Translate to p0. Then: Rotate to direction of T0. Last: Flip across X-axis, if neccesary.
+#        alpha0 = acos(T0[0])
+        alpha0 = atan2(T0[1], T0[0])
+        alpha1 = atan2(T1[1], T1[0])
+        print "T0,T1:",T0, T1
+
+        print "alpha0,1:",alpha0, alpha1
+        #p0t = transrot(p0, neg(p0), alpha0)
+        #vt = transrot(p0, neg(p0), alpha0)
+        #p1t = transrot(p1, neg(p0), alpha0)
+        #if (flip0):
+        #    vt[1] *= -1
+        #    p1t[1] *= -1
+
+        #p1 = transrot(ctrlpoints[i+1], dp, acos(dot(ctrlpoints[i-1], ctrlpoints[i])/normva))
+
         
-        k=max(normva, normvb)/min(normva, normvb) #normva/normvb
+#        k=max(normva, normvb)/min(normva, normvb) #normva/normvb
+        k=g/h #normva/normvb
         print "k: %f %f < %f?" % (k, (k+cos(alpha))/sin(alpha), C(alpha)/S(alpha))
-        print alpha/2
+        print "alpha:",alpha
 
         fxx = lambda x: fx(x,k,alpha)
         dfxx = lambda x: dfx(x,k,alpha)
@@ -169,15 +226,40 @@ def main(argv):
         t0 = newton(fxx, dfxx, 0.5*alpha, 1e-10)
         a0 = (g+h*cos(alpha))/(C(t0)+sqrt((alpha-t0)/t0)*(C(alpha-t0)*cos(alpha)+S(alpha-t0)*sin(alpha)))
         a1 = a0*sqrt((alpha-t0)/t0)
-        print a0,a1
-        print rottrans(transrot((50,20), (-10,-10), -pi/2), (10,10), pi/2)
+        print "a0,a1:",a0,a1
 
-        t = 0.0
+        step = 0.0001
+
+        t = 0.
         while t < t0:
             x = a0*fresnelC2(t)
             y = a0*fresnelS2(t)
 
-            t += 0.0001
+            # Inverse transform
+            if flip0:
+                y *= -1
+            (x,y) = rottrans((x,y), p0, alpha0)
+            (x,y) = (x+g_diff*T0[0], y+g_diff*T0[1])
+
+            t += step
+            if x > n-1 or y > n-1 or x < 0 or y < 0: 
+                print x,y
+                continue
+
+            for j in xrange(3):
+                img[int(y)][int(x)*3+j] = 0
+            img[int(y)][int(x)*3] = 255
+
+        t = 0.
+        while t < alpha-t0:
+            x = a1*fresnelC2(t)
+            y = a1*fresnelS2(t)
+
+            # Inverse transform
+            if not flip0:
+                y *= -1
+            (x,y) = rottrans((x,y), p1, alpha1)
+            t += step
             if x > n-1 or y > n-1 or x < 0 or y < 0: 
                 print x,y
                 continue
@@ -187,14 +269,14 @@ def main(argv):
             img[int(y)][int(x)*3] = 255
 
     for c in ctrlpoints:
-        img[c[1]][c[0]*3] = 0
-        img[c[1]][c[0]*3+1] = 0
-        img[c[1]][c[0]*3+2] = 0
+        img[int(c[1])][int(c[0])*3] = 0
+        img[int(c[1])][int(c[0])*3+1] = 0
+        img[int(c[1])][int(c[0])*3+2] = 0
 
     for c in connectors:
-        img[c[1]][c[0]*3] = 0
-        img[c[1]][c[0]*3+1] = 0
-        img[c[1]][c[0]*3+2] = 0
+        img[int(c[1])][int(c[0])*3] = 0
+        img[int(c[1])][int(c[0])*3+1] = 255
+        img[int(c[1])][int(c[0])*3+2] = 0
 
     fout = open("cornu.png", "wb")
     w = png.Writer(n, n)
