@@ -240,5 +240,83 @@ The snow particles are simulated in each step by, for each particle:
 \end{enumerate}
 \end{frame}
 
+\section{A* search}
+
+\begin{frame}
+\frametitle{A*}
+A* is a path finding algorithm
+\begin{itemize}
+\item An extension of Dijkstra's algorithm
+\item Uses a heuristic $h(x)$ to estimate the distance to the goal node from node $x$
+\item Dijkstra: Uses distance from start to determine next node to expand
+\item A*: Uses distance from start plus $h(x)$ to determine next node to expand
+\item Tends to favor nodes in the "right direction"
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{A*}
+\begin{figure}[ht]
+\subfigure{
+\includegraphics[width=0.4\textwidth]{gfx/astar_expansion}}
+\subfigure{
+\includegraphics[width=0.4\textwidth]{gfx/dijkstra_expansion}}
+\caption{Node expansion in Dijkstra vs A*}
+\label{fig:}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Uses of A*}
+\begin{itemize}
+\item Shortest route calculations in maps
+\item Procedural generation of roads
+\item Solving the 8 (or 15 or whatever) puzzle
+\item Pathfinding in game AI
+\item Any shortest path problem where you know something about the topology of the graph
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{How does it work?}
+\begin{itemize}
+\item Have a CLOSED and OPEN set of nodes (CLOSED initially empty, OPEN contains the starting node)
+\item Pick the node $x$ from OPEN with the lowest $g(x)+h(x)=f(x)$ cost ($g(x)$ is distance from start)
+\item Put that node in the CLOSED set, remove it from OPEN
+\item Expand neighbors of $x$ (denoted $y$), put all $y$ into the OPEN set, with cost $g(x)+c(x,y)+h(y)$
+\item If neighbor $y$ is already in OPEN, update the cost if $g(x)+c(x,y) < g(y)$
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Improving A* for euclidian graphs}
+An euclidian graph: A graph where each node is a point in $R^n$.
+\begin{itemize}
+\item Having more neighbors for each node gives better angular resolution
+\item Use a neighborhood mask for determining the neighbors of a node
+\end{itemize}
+
+\begin{figure}[ht]
+\includegraphics[width=0.3\textwidth]{gfx/neighbormask}
+\caption{Neighborhood mask}
+\label{fig:}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Improving A* for euclidian graphs}
+\begin{figure}[ht]
+\subfigure{
+\includegraphics[height=0.25\textwidth]{gfx/neighbormask_no_effect}
+}
+\subfigure{
+\includegraphics[height=0.25\textwidth]{gfx/neighbormask_effect}
+}
+\caption{Effect of neighborhood mask}
+\label{fig:}
+\end{figure}
+\end{frame}
 
 \end{document}

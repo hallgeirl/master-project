@@ -7,6 +7,7 @@ TRASH=$(shell ls *.aux *.idx *.log *.toc *.ilg *.ind *.backup *.snm *.out *.nav 
 all:${OBJ}
 
 .tex.pdf: style.sty document.tex
+	make -C gfx
 	${TEX} $<
 	${TEX} $<
 
