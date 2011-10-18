@@ -28,8 +28,8 @@ using namespace fresnel;
 #endif
 #endif
 
-float weight_slope = 200.f,
-      weight_curvature = 200.f,
+float weight_slope = 100.f,
+      weight_curvature = 100.f,
       weight_road = 1.f;
 
 vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
@@ -102,7 +102,7 @@ inline float transfer_slope(const terrain_t& terrain, const vec2d& a, const vec2
     {
 //        printf("slope is infinity\n");
 //        fflush(stdout);
-        return numeric_limits<float>::infinity();
+//        return numeric_limits<float>::infinity();
     }
     
     return weight_slope*(slope+slope*slope);
@@ -495,16 +495,16 @@ int main(int argc, char** argv)
         }
     }
 
-//    vector<vec2d> path = pathFind(terrain, start, end, grid_density);
+    vector<vec2d> path = pathFind(terrain, start, end, grid_density);
 
 
-    vector<vec2d> path;
-    path.push_back(vec2d(175,275));
-    path.push_back(vec2d(175,400));
-    path.push_back(vec2d(300,500));
-    path.push_back(vec2d(500,500));
-    path.push_back(vec2d(575,350));
-    path.push_back(vec2d(650,475));
+//    vector<vec2d> path;
+//    path.push_back(vec2d(1750,2750));
+//    path.push_back(vec2d(1750,4000));
+//    path.push_back(vec2d(3000,5000));
+//    path.push_back(vec2d(5000,5000));
+//    path.push_back(vec2d(5750,3500));
+//    path.push_back(vec2d(6500,4750));
     ClothoidSpline clothoidSpline(path);
 
     writeRoadXML("someroadxml.rnd", path, terrain);
@@ -525,62 +525,63 @@ int main(int argc, char** argv)
         }
     }
 
-    for (double t = 0; t < clothoidSpline.length(); t += 2)
+    for (double t = 0; t < clothoidSpline.length(); t += 10)
     {
-        clothoidSpline.lookup(t);
+        vec2d p = clothoidSpline.lookup(t);
+        setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255,0,0);
     }
 
     //Draw some spline
-    for (size_t i = 0; i < clothoidSpline.clothoidPairs.size(); i++)
-    {
-        ClothoidPair c = clothoidSpline.clothoidPairs[i];
-        vec2d p0 = c.p0.p, p1 = c.p1.p;
-        vec2d T0 = c.p0.T, T1 = c.p1.T;
-        double step = 1.*terrain.point_spacing;
-
-        // Straight line segment for the longer edge, if neccesary
-        double t = 0.;
-
-//        printf("a0,a1: %lf %lf, alpha0,alpha1: %lf %lf, flip: %d, p0: %lf %lf, t0: %lf %lf, p1: %lf %lf, t1: %lf %lf\n", c.a0, c.a1, c.alpha0, c.alpha1, c.flip0, p0.x, p0.y, T0.x, T0.y, p1.x, p1.y, T1.x, T1.y);
-        while (t < c.g_diff || (c.straight_line && t < c.length))
-        {
-            double x = p0.x+T0.x*t;
-            double y = p0.y+T0.y*t;
-            setPixelColor(bm, int(x/terrain.point_spacing), int(y/terrain.point_spacing), 255, 0, 0);
-            t += step;
-        }
-
-        t = 0.;
-//        printf("t0 %lf t1 %lf\n", c.t0, c.t1);
-        while (t < c.t0 && !c.straight_line)
-        {
-            vec2d p(c.a0*C1(t), c.a0*S1(t));
-
-            // Inverse transform
-            if (c.flip0)
-                p.y *= -1;
-            
-            p = rottrans(p, c.p0.p, c.alpha0);
-            p = p + c.p0.T * c.g_diff;
-
-            t += step/c.a0;
-            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255, 0, 0);
-        }
-
-        t = 0.;
-        while (t < c.t1 && !c.straight_line)
-        {
-            vec2d p = vec2d(c.a1*C1(t), c.a1*S1(t));
-
-            // Inverse transform
-            if (!c.flip0)
-                p.y *= -1;
-            p = rottrans(p, c.p1.p, c.alpha1);
-            t += step/c.a1;
-
-            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255,0,0);
-        }
-    }
+//    for (size_t i = 0; i < clothoidSpline.clothoidPairs.size(); i++)
+//    {
+//        ClothoidPair c = clothoidSpline.clothoidPairs[i];
+//        vec2d p0 = c.p0.p, p1 = c.p1.p;
+//        vec2d T0 = c.p0.T, T1 = c.p1.T;
+//        double step = 1.*terrain.point_spacing;
+//
+//        // Straight line segment for the longer edge, if neccesary
+//        double t = 0.;
+//
+////        printf("a0,a1: %lf %lf, alpha0,alpha1: %lf %lf, flip: %d, p0: %lf %lf, t0: %lf %lf, p1: %lf %lf, t1: %lf %lf\n", c.a0, c.a1, c.alpha0, c.alpha1, c.flip0, p0.x, p0.y, T0.x, T0.y, p1.x, p1.y, T1.x, T1.y);
+//        while (t < c.g_diff || (c.straight_line && t < c.length))
+//        {
+//            double x = p0.x+T0.x*t;
+//            double y = p0.y+T0.y*t;
+//            setPixelColor(bm, int(x/terrain.point_spacing), int(y/terrain.point_spacing), 255, 0, 0);
+//            t += step;
+//        }
+//
+//        t = 0.;
+////        printf("t0 %lf t1 %lf\n", c.t0, c.t1);
+//        while (t < c.t0 && !c.straight_line)
+//        {
+//            vec2d p(c.a0*C1(t), c.a0*S1(t));
+//
+//            // Inverse transform
+//            if (c.flip0)
+//                p.y *= -1;
+//            
+//            p = rottrans(p, c.p0.p, c.alpha0);
+//            p = p + c.p0.T * c.g_diff;
+//
+//            t += step/c.a0;
+//            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255, 0, 0);
+//        }
+//
+//        t = 0.;
+//        while (t < c.t1 && !c.straight_line)
+//        {
+//            vec2d p = vec2d(c.a1*C1(t), c.a1*S1(t));
+//
+//            // Inverse transform
+//            if (!c.flip0)
+//                p.y *= -1;
+//            p = rottrans(p, c.p1.p, c.alpha1);
+//            t += step/c.a1;
+//
+//            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255,0,0);
+//        }
+//    }
     
     for (size_t i = 0; i < path.size(); i++)
     {

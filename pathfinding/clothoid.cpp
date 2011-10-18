@@ -58,12 +58,73 @@ vec2d rottrans(const vec2d& p, const vec2d& dp, double rot)
 vec2d ClothoidPair::lookup(double t)
 {
     //Get lengths of each clothoid or segment
-    double l[3];
-    l[0] = g_diff;
+    double l[4];
     if (reverse)
-        l[1] = l[0] + t1*a0;
+    {
+        //Reversed. First, we have the second clothoid, then we have the first clothoid and then the line.
+        l[0] = 0;
+        l[1] = t1*a1;
+        l[2] = l[1] + t0*a0;
+        l[3] = l[2] + g_diff;
+    }
     else
-        l[1] = l[0] + t0*a1;
+    {
+        //No reverse. First, we have a line. Then, we have the first clothoid, and finally the second.
+        l[0] = 0;
+        l[1] = g_diff;
+        l[2] = l[1] + t0*a0;
+        l[3] = l[2] + t1*a1;
+    }
+
+//    printf("%d %lf %lf %lf %lf %lf %lf %lf \n", reverse, g_diff, t0*a0, t1*a1, l[0], l[1], l[2], l[3]); 
+//    printf("%lf %lf %lf %lf\n", l[0], l[1], l[2], l[3]);
+    if (t < 0 || t > l[3])
+        printf("Out of range: %lf %lf\n", t, l[3]);
+
+//    printf("t=%lf\n", t);
+
+    //From the straight line
+    if ((t < l[1] && !reverse) || (t >= l[2] && reverse) || straight_line)
+    {
+        double tt = t;
+        if (reverse && !straight_line) tt -= l[2];
+        return p0.p + p0.T*tt;
+    }
+
+    //From first segment (g)
+    else if ((t < l[2] && !reverse) || (t >= l[1] && reverse))
+    {
+        double tt = (t - l[1])/a0;
+//        if (reverse) tt -= l[1];
+//        else tt -= l[1]
+
+
+        //from first segment
+        vec2d p(a0*C1(tt), a0*S1(tt));
+
+        // Inverse transform
+        if (flip0)
+            p.y *= -1;
+
+        p = rottrans(p, p0.p, alpha0) + p0.T * g_diff;
+        return p;
+    }
+    //From second segment
+    else
+    {
+        double tt = t;
+        if (!reverse) tt -= l[2];
+        tt /= a1;
+        vec2d p = vec2d(a1*C1(tt), a1*S1(tt));
+
+        // Inverse transform
+        if (!flip0)
+            p.y *= -1;
+        p = rottrans(p, p1.p, alpha1);
+
+        return p;
+    }
+
 }
 
 //Class function definitions
@@ -132,6 +193,7 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
             clothoid.straight_line = true;
             clothoid.length = (p1.p-p0.p).length();
             clothoidPairs.push_back(clothoid);
+            lengths.push_back(lengths[i]+clothoid.length);
             continue;
         }
         else
@@ -169,11 +231,10 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
         t1 = sqrt(t1*2./PI);
         clothoid.t0 = t0;
         clothoid.t1 = t1;
-        clothoid.length = clothoid.g_diff + t0*clothoid.a0 + t1*clothoid.a0;
+        clothoid.length = clothoid.g_diff + t0*clothoid.a0 + t1*clothoid.a1;
         
         clothoidPairs.push_back(clothoid);
         lengths.push_back(clothoid.length+lengths[i]);
-        printf("At pair %d: length %lf\n", i, lengths[i+1]);
     }
 }
 
@@ -204,11 +265,15 @@ vec2d ClothoidSpline::lookup(double t)
         else
             upper = i;
     }
-//    printf("t: %lf length (at beg/end): %lf/%lf\n", t, lengths[result], lengths[result+1]);
-    return vec2d(0,0);
+//    printf("clothoid no. %d t: %lf tmod: %lf length (at beg/end): %lf/%lf\n", result, t, t-lengths[result], lengths[result], lengths[result+1]);
+    return clothoidPairs[result].lookup(t-lengths[result]);
 }
 
 double ClothoidSpline::length()
 {
+//    for (int i=0;i<lengths.size();i++)
+//        printf("l[%d] = %lf, ", i, lengths[i]);
+//
+//    printf("\n");
     return lengths.back();
 }
