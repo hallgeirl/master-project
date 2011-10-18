@@ -55,6 +55,11 @@ vec2d rottrans(const vec2d& p, const vec2d& dp, double rot)
 }
 
 
+double ClothoidPair::length()
+{
+    return length_total;
+}
+
 vec2d ClothoidPair::lookup(double t)
 {
     //Get lengths of each clothoid or segment
@@ -76,18 +81,25 @@ vec2d ClothoidPair::lookup(double t)
         l[3] = l[2] + t1*a1;
     }
 
-//    printf("%d %lf %lf %lf %lf %lf %lf %lf \n", reverse, g_diff, t0*a0, t1*a1, l[0], l[1], l[2], l[3]); 
-//    printf("%lf %lf %lf %lf\n", l[0], l[1], l[2], l[3]);
     if (t < 0 || t > l[3])
-        printf("Out of range: %lf %lf\n", t, l[3]);
-
-//    printf("t=%lf\n", t);
+    {
+        printf("Out of range: %lf (%lf) gdiff: %lf A0: %lf A1: %lf Reverse: %d\n", t, l[3], g_diff, t0*a0, t1*a1, reverse);
+    }
 
     //From the straight line
-    if ((t < l[1] && !reverse) || (t >= l[2] && reverse) || straight_line)
+//    if ((t < l[1] && !reverse) || (t >= l[2] && reverse) || straight_line)
+    if ((t < l[1] && !reverse) || (t >= l[2] && reverse))
     {
         double tt = t;
-        if (reverse && !straight_line) tt -= l[2];
+//        if (reverse && !straight_line) 
+        if (reverse) 
+        {
+            tt -= l[2];
+            tt = g_diff - tt;
+        }
+//        if (reverse && straight_line) tt = length-tt;
+//        if (reverse) tt = length-tt;
+//        return vec2d(0,0);
         return p0.p + p0.T*tt;
     }
 
@@ -95,9 +107,7 @@ vec2d ClothoidPair::lookup(double t)
     else if ((t < l[2] && !reverse) || (t >= l[1] && reverse))
     {
         double tt = (t - l[1])/a0;
-//        if (reverse) tt -= l[1];
-//        else tt -= l[1]
-
+        if (reverse) tt = t0-tt;
 
         //from first segment
         vec2d p(a0*C1(tt), a0*S1(tt));
@@ -115,6 +125,8 @@ vec2d ClothoidPair::lookup(double t)
         double tt = t;
         if (!reverse) tt -= l[2];
         tt /= a1;
+        if (reverse) tt = t1-tt;
+        tt = t1-tt;
         vec2d p = vec2d(a1*C1(tt), a1*S1(tt));
 
         // Inverse transform
@@ -124,7 +136,75 @@ vec2d ClothoidPair::lookup(double t)
 
         return p;
     }
+}
 
+void ClothoidPair::construct(const connector_t& pa, const connector_t& pb, const vec2d& v, double tau)
+{
+    double normva = (v-pa.p).length(),  // norm of one side
+           normvb = (pb.p-v).length(); // norm of the other side
+    double cosalpha, alpha, k, g, h;    //angle between h and g, and the ratio of their lengths
+
+    vec2d vg,vh;
+
+    if (normva > normvb)
+    {
+        p0 = pa;
+        p1 = pb;
+        p0.T = p0.T * -1;
+        reverse = false;
+    }
+    else
+    {
+        p0 = pb;
+        p1 = pa;
+        p1.T = p1.T * -1;
+        reverse = true;
+    }
+
+    //Check if the points are colinear. If so, we only need a straight line.
+    if (abs(p0.p.x * (v.y - p1.p.y) + v.x * (p1.p.y - p0.p.y) + p1.p.x * (p0.p.y - v.y)) < 1e-6)
+    {
+        length_total = (p1.p-p0.p).length();
+        g_diff = length_total;
+        t0 = t1 = 0;
+        return;
+    }
+
+    vg = v-p0.p;
+    vh = p1.p-v;
+    g = vg.length(); h = vh.length();
+
+    cosalpha = min(max(dot(vg.normalized(), vh.normalized()), -1.), 1.);
+    alpha = acos(cosalpha);
+
+    {
+        double glim = h * (C2(alpha)/S2(alpha)*sin(alpha) - cos(alpha));
+        if (g > tau*glim + (1-tau)*h)
+        {
+            g_diff = g - (tau*glim + (1-tau)*h);
+            g = g - g_diff; 
+        }
+        else
+            g_diff = 0;
+    }
+
+    k = g / h;
+    flip0 = (vg.x*vh.y - vg.y*vh.x) < 0;
+    alpha0 = atan2(p0.T.y, p0.T.x);
+    alpha1 = atan2(p1.T.y, p1.T.x);
+
+    t0 = newton(0.5*alpha, k, alpha, 1e-10),
+    t1 = alpha - t0;
+
+    //Compute scaling factors
+    a0 = (g+h*cos(alpha))/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cos(alpha)+S2(alpha-t0)*sin(alpha)));
+    a1 = a0*sqrt((alpha-t0)/t0);
+
+    //Convert parameter from angle to length
+    t0 = sqrt(t0*2./PI);
+    t1 = sqrt(t1*2./PI);
+    
+    length_total = g_diff + t0*a0 + t1*a1;
 }
 
 //Class function definitions
@@ -162,79 +242,81 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
     for (size_t i = 0; i < controlPoints.size(); i++)
     {
         vec2d v = controlPoints[i];
-        double normva = (v-connectors[i].p).length(),  // norm of one side
-               normvb = (connectors[i+1].p-v).length(); // norm of the other side
-        double cosalpha, alpha, k, g, h;    //angle between h and g, and the ratio of their lengths
+//        double normva = (v-connectors[i].p).length(),  // norm of one side
+//               normvb = (connectors[i+1].p-v).length(); // norm of the other side
+//        double cosalpha, alpha, k, g, h;    //angle between h and g, and the ratio of their lengths
         ClothoidPair clothoid; //the clothoid pair we are constructing
-
-        vec2d vg,vh;
-        connector_t p0,p1;
-
-        if (normva > normvb)
-        {
-            p0 = connectors[i];
-            p1 = connectors[i+1];
-            p0.T = p0.T * -1;
-            clothoid.reverse = false;
-        }
-        else
-        {
-            p0 = connectors[i+1];
-            p1 = connectors[i];
-            p1.T = p1.T * -1;
-            clothoid.reverse = true;
-        }
-
-        clothoid.p0 = p0,
-        clothoid.p1 = p1;
-
-        if (abs(p0.p.x * (v.y - p1.p.y) + v.x * (p1.p.y - p0.p.y) + p1.p.x * (p0.p.y - v.y)) < 1e-6)
-        {
-            clothoid.straight_line = true;
-            clothoid.length = (p1.p-p0.p).length();
-            clothoidPairs.push_back(clothoid);
-            lengths.push_back(lengths[i]+clothoid.length);
-            continue;
-        }
-        else
-            clothoid.straight_line = false;
-
-        vg = v-p0.p;
-        vh = p1.p-v;
-        g = vg.length(); h = vh.length();
-
-        cosalpha = min(max(dot(vg.normalized(), vh.normalized()), -1.), 1.);
-        alpha = acos(cosalpha);
-
-        {
-            double glim = h * (C2(alpha)/S2(alpha)*sin(alpha) - cos(alpha));
-            if (g > tau*glim + (1-tau)*h)
-            {
-                clothoid.g_diff = g - (tau*glim + (1-tau)*h);
-                g = g - clothoid.g_diff; 
-            }
-            else
-                clothoid.g_diff = 0;
-        }
-
-        k = g / h;
-        clothoid.flip0 = (vg.x*vh.y - vg.y*vh.x) < 0;
-        clothoid.alpha0 = atan2(p0.T.y, p0.T.x);
-        clothoid.alpha1 = atan2(p1.T.y, p1.T.x);
-
-        double t0 = newton(0.5*alpha, k, alpha, 1e-10),
-               t1 = alpha - t0;
-        
-        clothoid.a0 = (g+h*cos(alpha))/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cos(alpha)+S2(alpha-t0)*sin(alpha)));
-        clothoid.a1 = clothoid.a0*sqrt((alpha-t0)/t0);
-        t0 = sqrt(t0*2./PI);
-        t1 = sqrt(t1*2./PI);
-        clothoid.t0 = t0;
-        clothoid.t1 = t1;
-        clothoid.length = clothoid.g_diff + t0*clothoid.a0 + t1*clothoid.a1;
-        
+        clothoid.construct(connectors[i], connectors[i+1], v, tau);
         clothoidPairs.push_back(clothoid);
-        lengths.push_back(clothoid.length+lengths[i]);
+        lengths.push_back(clothoid.length()+lengths[i]);
+
+//        vec2d vg,vh;
+//        connector_t p0,p1;
+//
+//        if (normva > normvb)
+//        {
+//            p0 = connectors[i];
+//            p1 = connectors[i+1];
+//            p0.T = p0.T * -1;
+//            clothoid.reverse = false;
+//        }
+//        else
+//        {
+//            p0 = connectors[i+1];
+//            p1 = connectors[i];
+//            p1.T = p1.T * -1;
+//            clothoid.reverse = true;
+//        }
+//
+//        clothoid.p0 = p0,
+//        clothoid.p1 = p1;
+//
+//        if (abs(p0.p.x * (v.y - p1.p.y) + v.x * (p1.p.y - p0.p.y) + p1.p.x * (p0.p.y - v.y)) < 1e-6)
+//        {
+//            clothoid.length = (p1.p-p0.p).length();
+//            clothoid.g_diff = clothoid.length;
+//            clothoid.t0 = clothoid.t1 = 0;
+//            clothoidPairs.push_back(clothoid);
+//            lengths.push_back(lengths[i]+clothoid.length);
+//            continue;
+//        }
+//
+//        vg = v-p0.p;
+//        vh = p1.p-v;
+//        g = vg.length(); h = vh.length();
+//
+//        cosalpha = min(max(dot(vg.normalized(), vh.normalized()), -1.), 1.);
+//        alpha = acos(cosalpha);
+//
+//        {
+//            double glim = h * (C2(alpha)/S2(alpha)*sin(alpha) - cos(alpha));
+//            if (g > tau*glim + (1-tau)*h)
+//            {
+//                clothoid.g_diff = g - (tau*glim + (1-tau)*h);
+//                g = g - clothoid.g_diff; 
+//            }
+//            else
+//                clothoid.g_diff = 0;
+//        }
+//
+//        k = g / h;
+//        clothoid.flip0 = (vg.x*vh.y - vg.y*vh.x) < 0;
+//        clothoid.alpha0 = atan2(p0.T.y, p0.T.x);
+//        clothoid.alpha1 = atan2(p1.T.y, p1.T.x);
+//
+//        double t0 = newton(0.5*alpha, k, alpha, 1e-10),
+//               t1 = alpha - t0;
+//        
+//        clothoid.a0 = (g+h*cos(alpha))/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cos(alpha)+S2(alpha-t0)*sin(alpha)));
+//        clothoid.a1 = clothoid.a0*sqrt((alpha-t0)/t0);
+//        t0 = sqrt(t0*2./PI);
+//        t1 = sqrt(t1*2./PI);
+//        clothoid.t0 = t0;
+//        clothoid.t1 = t1;
+//        clothoid.length = clothoid.g_diff + t0*clothoid.a0 + t1*clothoid.a1;
+//        
+//        clothoidPairs.push_back(clothoid);
+//        lengths.push_back(clothoid.length+lengths[i]);
     }
 }
 
@@ -269,11 +351,33 @@ vec2d ClothoidSpline::lookup(double t)
     return clothoidPairs[result].lookup(t-lengths[result]);
 }
 
+size_t ClothoidSpline::lookupClothoidPairIndex(double t)
+{
+    //Check that t is within the range of the spline
+    if (t < 0 || t > lengths.back())
+        throw runtime_error("Parameter t outside of curve range");
+
+    //First, determine which pair of clothoids we need by a binary search by finding the biggest length < t
+    int lower = 0, upper = lengths.size()-1;
+    int result = -1;
+    while (lower <= upper && result < 0)
+    {
+        int i = (upper+lower)/2;
+        if (lengths[i] <= t)
+        {
+            if (lengths[i+1] < t)
+                lower = i+1;
+            else
+                result = i;
+        }
+        else
+            upper = i;
+    }
+
+    return result;
+}
+
 double ClothoidSpline::length()
 {
-//    for (int i=0;i<lengths.size();i++)
-//        printf("l[%d] = %lf, ", i, lengths[i]);
-//
-//    printf("\n");
     return lengths.back();
 }

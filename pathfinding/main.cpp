@@ -28,8 +28,8 @@ using namespace fresnel;
 #endif
 #endif
 
-float weight_slope = 100.f,
-      weight_curvature = 100.f,
+float weight_slope = 1000.f,
+      weight_curvature = 1000.f,
       weight_road = 1.f;
 
 vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
@@ -127,7 +127,7 @@ inline float transfer_curvature(const terrain_t& terrain, const vec2d& a, const 
     float theta = acos(cos_theta);
     if (theta != theta)
     {
-        printf("theta %f %f %f %f %f\n", va.dot(vb), va.x, va.y, vb.x, vb.y);
+        printf("theta is NAN! %f %f %f %f %f\n", va.dot(vb), va.x, va.y, vb.x, vb.y);
         fflush(stdout);
     }
     
@@ -525,10 +525,25 @@ int main(int argc, char** argv)
         }
     }
 
-    for (double t = 0; t < clothoidSpline.length(); t += 10)
+//    for (double t = 0; t < clothoidSpline.length(); t += 10)
+    
+//    double tmin = 1500;
+//    double tmax = tmin+1500;
+    double tmin = 0, tmax = clothoidSpline.length();
+//    tmax = 2300;
+
+    for (double t = tmin; t < tmax; t += 5)
     {
         vec2d p = clothoidSpline.lookup(t);
-        setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255,0,0);
+//        int color = int((t-tmin)) % 256;
+        int color = 255;
+        int red = 1;
+//        int green = clothoidSpline.lookupClothoidPairIndex(t) % 2;
+        int green = 0;
+//        int blue = clothoidSpline.clothoidPairs[clothoidSpline.lookupClothoidPairIndex(t)].reverse;
+        int blue = 0;
+//        printf("%d is flipped: %d\n", clothoidSpline.lookupClothoidPairIndex(t), blue);
+        setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), color*red, color*green,color*blue);
     }
 
     //Draw some spline
