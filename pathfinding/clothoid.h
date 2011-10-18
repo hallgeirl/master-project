@@ -31,6 +31,7 @@ struct clothoid_pair_t
 
     connector_t p0, p1; // Point at the end of "g" and "h" respectively, with normal
     bool flip0, dir;
+    bool straight_line; //true if the points p0, v and p1 are colinear
 };
 
 class ClothoidSpline

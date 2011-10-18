@@ -212,11 +212,11 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         }
     }
 
-    printf("Neighborhood:\n");
-    for (size_t i = 0; i < neighborhood.size(); i++)
-        printf("%d,%d\n", neighborhood[i].x, neighborhood[i].y);
-
-    fflush(stdout);
+//    printf("Neighborhood:\n");
+//    for (size_t i = 0; i < neighborhood.size(); i++)
+//        printf("%d,%d\n", neighborhood[i].x, neighborhood[i].y);
+//
+//    fflush(stdout);
 
     node_t current(start, 0, 0);
     predecessor[start] = start;
@@ -345,11 +345,11 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         //Get next one in line
     }
     result.push_back(terrain.gridToPoint(start));
-    for (size_t i = 0; i < result.size(); i++)
-    {
-        printf("%lf, %lf\n", result[i].x, result[i].y);
-    }
-    fflush(stdout);
+//    for (size_t i = 0; i < result.size(); i++)
+//    {
+//        printf("%lf, %lf\n", result[i].x, result[i].y);
+//    }
+//    fflush(stdout);
 
     return result;
 }
@@ -458,7 +458,7 @@ int main(int argc, char** argv)
     int h = 1024, w = 1024;
 //    int h = 300, w = 300;
     float spacing = 10.;
-//    int grid_density = 4;
+    int grid_density = 4;
 
     //Terrain storage
     unsigned short* terrain_raw = new unsigned short[h*w];
@@ -495,16 +495,16 @@ int main(int argc, char** argv)
         }
     }
 
-    //vector<vec2d> path = pathFind(terrain, start, end, grid_density);
+    vector<vec2d> path = pathFind(terrain, start, end, grid_density);
 
-
-    vector<vec2d> path;
-    path.push_back(vec2d(175,275));
-    path.push_back(vec2d(175,400));
-    path.push_back(vec2d(300,500));
-    path.push_back(vec2d(500,500));
-    path.push_back(vec2d(575,350));
-    path.push_back(vec2d(650,475));
+//
+//    vector<vec2d> path;
+//    path.push_back(vec2d(175,275));
+//    path.push_back(vec2d(175,400));
+//    path.push_back(vec2d(300,500));
+//    path.push_back(vec2d(500,500));
+//    path.push_back(vec2d(575,350));
+//    path.push_back(vec2d(650,475));
     ClothoidSpline clothoidSpline(path);
 
     writeRoadXML("someroadxml.rnd", path, terrain);
@@ -532,22 +532,23 @@ int main(int argc, char** argv)
         clothoid_pair_t c = clothoidSpline.clothoidPairs[i];
         vec2d p0 = c.p0.p, p1 = c.p1.p;
         vec2d T0 = c.p0.T, T1 = c.p1.T;
-        double step = 1;
+        double step = 1.*terrain.point_spacing;
 
         // Straight line segment for the longer edge, if neccesary
         double t = 0.;
-//        printf("%lf\n", c.g_diff);
-//        printf("T0 %lf %lf\n", T0.x, T0.y);
-        while (t < c.g_diff)
+
+//        printf("a0,a1: %lf %lf, alpha0,alpha1: %lf %lf, flip: %d, p0: %lf %lf, t0: %lf %lf, p1: %lf %lf, t1: %lf %lf\n", c.a0, c.a1, c.alpha0, c.alpha1, c.flip0, p0.x, p0.y, T0.x, T0.y, p1.x, p1.y, T1.x, T1.y);
+        while (t < c.g_diff || (c.straight_line && t < c.length))
         {
             double x = p0.x+T0.x*t;
             double y = p0.y+T0.y*t;
-            setPixelColor(bm, int(x), int(y), 255, 0, 0);
+            setPixelColor(bm, int(x/terrain.point_spacing), int(y/terrain.point_spacing), 255, 0, 0);
             t += step;
         }
 
         t = 0.;
-        while (t < c.t0)
+//        printf("t0 %lf t1 %lf\n", c.t0, c.t1);
+        while (t < c.t0 && !c.straight_line)
         {
             vec2d p(c.a0*C1(t), c.a0*S1(t));
 
@@ -559,16 +560,11 @@ int main(int argc, char** argv)
             p = p + c.p0.T * c.g_diff;
 
             t += step/c.a0;
-//            if (p.x > n-1 or p.y > n-1 or p.x < 0 or p.y < 0)
-//            {
-//                printf("Out of range: %lf %lf\n", p.x, p.y);
-//                continue;
-//            }
-            setPixelColor(bm, int(p.x), int(p.y), 255, 0, 0);
+            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255, 0, 0);
         }
 
         t = 0.;
-        while (t < c.t1)
+        while (t < c.t1 && !c.straight_line)
         {
             vec2d p = vec2d(c.a1*C1(t), c.a1*S1(t));
 
@@ -577,61 +573,17 @@ int main(int argc, char** argv)
                 p.y *= -1;
             p = rottrans(p, c.p1.p, c.alpha1);
             t += step/c.a1;
-//            if x > n-1 or y > n-1 or x < 0 or y < 0: 
-//                print x,y
-//                continue
 
-            setPixelColor(bm, int(p.x), int(p.y), 255,0,0);
+            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255,0,0);
         }
     }
     
-
-//    float step = (1./(float)grid_density)/5.;
-//    for (float t = 2; t < path.size(); t+= step)
-//    {
-//        RGBQUAD rgb;
-//        rgb.rgbGreen = rgb.rgbBlue = 0;
-//        rgb.rgbRed = 255;
-//
-//        float x = 0, y = 0;
-//
-////        for (size_t i = t-2; i < t+1; i++)
-////        if (t >= 2 && t < path.size() - 2)
-//        {
-//            for (size_t i = 0; i < path.size(); i++)
-//            {
-//                float b = 0;
-//                float t_j = i-2;
-//                float t_1 = t_j+1,
-//                      t_2 = t_j+2,
-//                      t_3 = t_j+3;
-//
-////                if (t_j < 1) t_j = 1;
-////                if (t_1 < 1) t_1 = 1;
-////                if (t_2 < 1) t_2 = 1;
-////                if (t_3 < 1) t_3 = 1;
-//
-//                if (t <= t_1 && t >= t_j)
-//                    b = 0.5*pow(t-t_j, 2.);
-//                else if (t <= t_2 && t >= t_1)
-//                    b = 0.5-pow(t-t_1, 2.) + t-t_1;
-//                else if (t >= t_2 && t <= t_3)
-//                    b = 0.5*pow(1-(t-t_2), 2.);
-//
-//                x += ((float)path[i].x)*b/terrain.point_spacing;
-//                y += ((float)path[i].y)*b/terrain.point_spacing;
-//            }
-//        }
-//        printf("Setting %f,%f\n", x,y);
-//
-//        FreeImage_SetPixelColor(bm, (int)round(x), (int)round(y), &rgb);
-//    }
-
     for (size_t i = 0; i < path.size(); i++)
     {
         RGBQUAD rgb;
         rgb.rgbRed = rgb.rgbBlue = 0;
         rgb.rgbGreen = 255;
+//        FreeImage_SetPixelColor(bm, path[i].x/terrain.point_spacing, path[i].y/terrain.point_spacing, &rgb);
         FreeImage_SetPixelColor(bm, path[i].x/terrain.point_spacing, path[i].y/terrain.point_spacing, &rgb);
     }
 

@@ -64,7 +64,6 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
     // Figure out the connectors and their tangents(they're half way between each control vertex, plus the endpoints)
     connectors.push_back(connector_t(_controlPoints[0], (_controlPoints[0] - _controlPoints[1]).normalized()));
 
-//    printf("T0 %lf %lf\n", connectors.back().T.x, connectors.back().T.y);
     for (size_t i = 1; i < _controlPoints.size()-2; i++)
     {
         vec2d p0 = _controlPoints[i],
@@ -72,11 +71,8 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
         vec2d cp = (p0+p1)/2.;
         connector_t con(cp, (p0-cp).normalized());
         connectors.push_back(con);
-//        printf("T%d %lf %lf\n", i, con.T.x, con.T.y);
     }
-
-    connectors.push_back(connector_t(_controlPoints.back(), (_controlPoints.back()-_controlPoints[_controlPoints.size()-2]).normalized()));
-//    printf("T%d %lf %lf\n", connectors.size()-1, connectors.back().T.x, connectors.back().T.y);
+    connectors.push_back(connector_t(_controlPoints.back(), (_controlPoints[_controlPoints.size()-2]-_controlPoints.back()).normalized()));
 
     //Copy the control points to the class local vector. Exclude the first and last points because they are connectors, not control points
     for (size_t i = 1; i < _controlPoints.size()-1; i++)
@@ -106,22 +102,28 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
             p1.T = p1.T * -1;
         }
 
-
         clothoid.p0 = p0,
         clothoid.p1 = p1;
+
+        if (abs(p0.p.x * (v.y - p1.p.y) + v.x * (p1.p.y - p0.p.y) + p1.p.x * (p0.p.y - v.y)) < 1e-6)
+        {
+            clothoid.straight_line = true;
+            clothoid.length = (p1.p-p0.p).length();
+            clothoidPairs.push_back(clothoid);
+            continue;
+        }
+        else
+            clothoid.straight_line = false;
 
         vg = v-p0.p;
         vh = p1.p-v;
         g = vg.length(); h = vh.length();
-        k = g / h;
-
 
         cosalpha = min(max(dot(vg.normalized(), vh.normalized()), -1.), 1.);
         alpha = acos(cosalpha);
 
         {
             double glim = h * (C2(alpha)/S2(alpha)*sin(alpha) - cos(alpha));
-//            printf("%lf %lf\n", glim, g);
             if (g > tau*glim + (1-tau)*h)
             {
                 clothoid.g_diff = g - (tau*glim + (1-tau)*h);
@@ -132,16 +134,18 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
                 clothoid.g_diff = 0;
         }
 
+        k = g / h;
         clothoid.flip0 = (vg.x*vh.y - vg.y*vh.x) < 0;
         clothoid.alpha0 = atan2(p0.T.y, p0.T.x);
         clothoid.alpha1 = atan2(p1.T.y, p1.T.x);
 
         double t0 = newton(0.5*alpha, k, alpha, 1e-10),
                t1 = alpha - t0;
+        
         clothoid.a0 = (g+h*cos(alpha))/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cos(alpha)+S2(alpha-t0)*sin(alpha)));
         clothoid.a1 = clothoid.a0*sqrt((alpha-t0)/t0);
         t0 = sqrt(t0*2./PI);
-        t1 = sqrt(t0*2./PI);
+        t1 = sqrt(t1*2./PI);
         clothoid.t0 = t0;
         clothoid.t1 = t1;
         clothoid.length = clothoid.g_diff + t0 + t1;
@@ -152,6 +156,5 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
 
 ClothoidSpline::ClothoidSpline(std::vector<vec2d> controlPoints)
 {
-    construct(controlPoints, 0.);
-//    construct(controlPoints, 0.75);
+    construct(controlPoints, 0.75);
 }

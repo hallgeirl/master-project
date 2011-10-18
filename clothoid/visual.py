@@ -151,6 +151,8 @@ def main(argv):
         g = max(normva, normvb)
         h = min(normva, normvb)
 
+        print "g,h",g,h
+
 
         if normva > normvb:
             print "va"
@@ -177,7 +179,8 @@ def main(argv):
         cosalpha= min(max(va[0]*vb[0]+va[1]*vb[1], -1),1)
         alpha = acos(cosalpha)
 
-        tau = 0.75
+        #tau = 0.75
+        tau = 0.
         glim = h * (C(alpha)/S(alpha)*sin(alpha) - cos(alpha))
         g_diff = 0
         if g > tau*glim + (1-tau)*h:
@@ -189,7 +192,7 @@ def main(argv):
 
         # Check if we need to flip on p0
         flip0 = (vg[0]*vh[1]-vg[1]*vh[0]) < 0
-        print "Flip: %d\n" % flip0
+        print "Flip: %d" % flip0
         print "p0:", p0, "p1:",p1,"T0:",T0,"T1:",T1
 
         # First: Translate to p0. Then: Rotate to direction of T0. Last: Flip across X-axis, if neccesary.
@@ -207,6 +210,7 @@ def main(argv):
         dfxx = lambda x: dfx(x,k,alpha)
 
         t0 = newton(fxx, dfxx, 0.5*alpha, 1e-10)
+        print "Newton solution: %lf" % t0
         a0 = (g+h*cos(alpha))/(C(t0)+sqrt((alpha-t0)/t0)*(C(alpha-t0)*cos(alpha)+S(alpha-t0)*sin(alpha)))
         a1 = a0*sqrt((alpha-t0)/t0)
         print "a0,a1:",a0,a1
@@ -222,6 +226,7 @@ def main(argv):
             t += step
 
         t = 0.
+        print "t0 %lf t1 %lf" % (sqrt(t0*2./pi),sqrt((alpha-t0)*2./pi) )
         while t < sqrt(t0*2./pi):
             x = a0*fresnelC(t)
             y = a0*fresnelS(t)
@@ -259,6 +264,7 @@ def main(argv):
             for j in xrange(3):
                 img[int(y)][int(x)*3+j] = 0
             img[int(y)][int(x)*3] = 255
+        print ""
 
     for c in ctrlpoints:
         img[int(c[1])][int(c[0])*3] = 0
