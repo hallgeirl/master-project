@@ -1,6 +1,8 @@
 #ifndef __VEC2__H_
 #define __VEC2__H_
 
+#include <unordered_map>
+
 template<class T>
 struct vec2_t
 {

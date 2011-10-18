@@ -1,6 +1,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <ctime>
 
 #include "clothoid.h"
 #include "vec2.h"
@@ -53,13 +54,32 @@ vec2d rottrans(const vec2d& p, const vec2d& dp, double rot)
     return vec2d(cos(rot)*(p.x) - sin(rot)*(p.y)+dp.x, sin(rot)*(p.x) + cos(rot)*(p.y)+dp.y);
 }
 
+
+vec2d ClothoidPair::lookup(double t)
+{
+    //Get lengths of each clothoid or segment
+    double l[3];
+    l[0] = g_diff;
+    if (reverse)
+        l[1] = l[0] + t1*a0;
+    else
+        l[1] = l[0] + t0*a1;
+}
+
 //Class function definitions
 void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
 {
     if (_controlPoints.size() < 3)
         throw runtime_error("More than 3 control points are needed.");
 
+    //Clear previous spline (if any) 
     connectors.clear();
+    controlPoints.clear();
+    clothoidPairs.clear();
+    lengths.clear();
+        
+    // For first pair, the distance is 0
+    lengths.push_back(0);
 
     // Figure out the connectors and their tangents(they're half way between each control vertex, plus the endpoints)
     connectors.push_back(connector_t(_controlPoints[0], (_controlPoints[0] - _controlPoints[1]).normalized()));
@@ -84,7 +104,7 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
         double normva = (v-connectors[i].p).length(),  // norm of one side
                normvb = (connectors[i+1].p-v).length(); // norm of the other side
         double cosalpha, alpha, k, g, h;    //angle between h and g, and the ratio of their lengths
-        clothoid_pair_t clothoid; //the clothoid pair we are constructing
+        ClothoidPair clothoid; //the clothoid pair we are constructing
 
         vec2d vg,vh;
         connector_t p0,p1;
@@ -94,12 +114,14 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
             p0 = connectors[i];
             p1 = connectors[i+1];
             p0.T = p0.T * -1;
+            clothoid.reverse = false;
         }
         else
         {
             p0 = connectors[i+1];
             p1 = connectors[i];
             p1.T = p1.T * -1;
+            clothoid.reverse = true;
         }
 
         clothoid.p0 = p0,
@@ -127,7 +149,6 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
             if (g > tau*glim + (1-tau)*h)
             {
                 clothoid.g_diff = g - (tau*glim + (1-tau)*h);
-                //g = tau*glim + (1-tau)*h;
                 g = g - clothoid.g_diff; 
             }
             else
@@ -148,13 +169,46 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
         t1 = sqrt(t1*2./PI);
         clothoid.t0 = t0;
         clothoid.t1 = t1;
-        clothoid.length = clothoid.g_diff + t0 + t1;
-
+        clothoid.length = clothoid.g_diff + t0*clothoid.a0 + t1*clothoid.a0;
+        
         clothoidPairs.push_back(clothoid);
+        lengths.push_back(clothoid.length+lengths[i]);
+        printf("At pair %d: length %lf\n", i, lengths[i+1]);
     }
 }
 
 ClothoidSpline::ClothoidSpline(std::vector<vec2d> controlPoints)
 {
     construct(controlPoints, 0.75);
+}
+
+vec2d ClothoidSpline::lookup(double t)
+{
+    //Check that t is within the range of the spline
+    if (t < 0 || t > lengths.back())
+        throw runtime_error("Parameter t outside of curve range");
+
+    //First, determine which pair of clothoids we need by a binary search by finding the biggest length < t
+    int lower = 0, upper = lengths.size()-1;
+    int result = -1;
+    while (lower <= upper && result < 0)
+    {
+        int i = (upper+lower)/2;
+        if (lengths[i] <= t)
+        {
+            if (lengths[i+1] < t)
+                lower = i+1;
+            else
+                result = i;
+        }
+        else
+            upper = i;
+    }
+//    printf("t: %lf length (at beg/end): %lf/%lf\n", t, lengths[result], lengths[result+1]);
+    return vec2d(0,0);
+}
+
+double ClothoidSpline::length()
+{
+    return lengths.back();
 }

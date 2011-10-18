@@ -495,16 +495,16 @@ int main(int argc, char** argv)
         }
     }
 
-    vector<vec2d> path = pathFind(terrain, start, end, grid_density);
+//    vector<vec2d> path = pathFind(terrain, start, end, grid_density);
 
-//
-//    vector<vec2d> path;
-//    path.push_back(vec2d(175,275));
-//    path.push_back(vec2d(175,400));
-//    path.push_back(vec2d(300,500));
-//    path.push_back(vec2d(500,500));
-//    path.push_back(vec2d(575,350));
-//    path.push_back(vec2d(650,475));
+
+    vector<vec2d> path;
+    path.push_back(vec2d(175,275));
+    path.push_back(vec2d(175,400));
+    path.push_back(vec2d(300,500));
+    path.push_back(vec2d(500,500));
+    path.push_back(vec2d(575,350));
+    path.push_back(vec2d(650,475));
     ClothoidSpline clothoidSpline(path);
 
     writeRoadXML("someroadxml.rnd", path, terrain);
@@ -512,7 +512,6 @@ int main(int argc, char** argv)
     FreeImage_Initialise();
 
     FIBITMAP* bm = FreeImage_Allocate(w, h, 24);
-
 
     for (int i = 0; i < h; i++)
     {
@@ -526,10 +525,15 @@ int main(int argc, char** argv)
         }
     }
 
+    for (double t = 0; t < clothoidSpline.length(); t += 2)
+    {
+        clothoidSpline.lookup(t);
+    }
+
     //Draw some spline
     for (size_t i = 0; i < clothoidSpline.clothoidPairs.size(); i++)
     {
-        clothoid_pair_t c = clothoidSpline.clothoidPairs[i];
+        ClothoidPair c = clothoidSpline.clothoidPairs[i];
         vec2d p0 = c.p0.p, p1 = c.p1.p;
         vec2d T0 = c.p0.T, T1 = c.p1.T;
         double step = 1.*terrain.point_spacing;
