@@ -25,8 +25,6 @@ def fresnelG(t):
     ans = 0
     for i in xrange(cs_terms):
         ans += gn[i] * (t**(-2*i-1))
-#    g = 1./(2+4.142*t+3.492*t*t+6.67*t*t*t)
-
     
     return ans
 
@@ -103,7 +101,8 @@ def neg(p):
 def main(argv):
     C = fresnelC2
     S = fresnelS2
-    n = 1024
+    n = 700
+    step = 1.
 #    ctrlpoints = [(50,50), (200, 50), (60, 200)]
     #ctrlpoints = [(0,0), (200, 0), (100, 200)]
     
@@ -114,8 +113,6 @@ def main(argv):
     ctrlpoints = [[175,275], [175, 400], [300, 500], [500,500], [575,350], [650,475]]
 #    ctrlpoints = [[0,0], [50, 100], [100, 50]]
 
-#    ctrlpoints = [(0,0), (150, 20), (100, 100)]
-    #ctrlpoints = [(50,50), (80, 200), (200, 45)]
     img = [None]*n
     for i in xrange(len(img)):
         img[i] = [255]*n*3
@@ -180,16 +177,13 @@ def main(argv):
         cosalpha= min(max(va[0]*vb[0]+va[1]*vb[1], -1),1)
         alpha = acos(cosalpha)
 
-        tau = 0.9
-#        tau = 0.5
+        tau = 0.75
         glim = h * (C(alpha)/S(alpha)*sin(alpha) - cos(alpha))
         g_diff = 0
         if g > tau*glim + (1-tau)*h:
             g_diff = g-(tau*glim + (1-tau)*h)
             g = tau*glim+(1-tau)*h
 
-
-#        g = g,glim-0.5)
 
         print "glim,g:\t",glim,g
 
@@ -205,18 +199,7 @@ def main(argv):
         print "T0,T1:",T0, T1
 
         print "alpha0,1:",alpha0, alpha1
-        #p0t = transrot(p0, neg(p0), alpha0)
-        #vt = transrot(p0, neg(p0), alpha0)
-        #p1t = transrot(p1, neg(p0), alpha0)
-        #if (flip0):
-        #    vt[1] *= -1
-        #    p1t[1] *= -1
-
-        #p1 = transrot(ctrlpoints[i+1], dp, acos(dot(ctrlpoints[i-1], ctrlpoints[i])/normva))
-
-        
-#        k=max(normva, normvb)/min(normva, normvb) #normva/normvb
-        k=g/h #normva/normvb
+        k=g/h 
         print "k: %f %f < %f?" % (k, (k+cos(alpha))/sin(alpha), C(alpha)/S(alpha))
         print "alpha:",alpha
 
@@ -228,12 +211,20 @@ def main(argv):
         a1 = a0*sqrt((alpha-t0)/t0)
         print "a0,a1:",a0,a1
 
-        step = 0.0001
+        # Straight line segment for the longer edge, if neccesary
+        t = 0.
+        while t < g_diff:
+            x = p0[0]+T0[0]*t
+            y = p0[1]+T0[1]*t
+            for j in xrange(3):
+                img[int(y)][int(x)*3+j] = 0
+            img[int(y)][int(x)*3] = 255
+            t += step
 
         t = 0.
-        while t < t0:
-            x = a0*fresnelC2(t)
-            y = a0*fresnelS2(t)
+        while t < sqrt(t0*2./pi):
+            x = a0*fresnelC(t)
+            y = a0*fresnelS(t)
 
             # Inverse transform
             if flip0:
@@ -241,7 +232,7 @@ def main(argv):
             (x,y) = rottrans((x,y), p0, alpha0)
             (x,y) = (x+g_diff*T0[0], y+g_diff*T0[1])
 
-            t += step
+            t += step/a0
             if x > n-1 or y > n-1 or x < 0 or y < 0: 
                 print x,y
                 continue
@@ -250,16 +241,17 @@ def main(argv):
                 img[int(y)][int(x)*3+j] = 0
             img[int(y)][int(x)*3] = 255
 
+
         t = 0.
-        while t < alpha-t0:
-            x = a1*fresnelC2(t)
-            y = a1*fresnelS2(t)
+        while t < sqrt((alpha-t0)*2./pi):
+            x = a1*fresnelC(t)
+            y = a1*fresnelS(t)
 
             # Inverse transform
             if not flip0:
                 y *= -1
             (x,y) = rottrans((x,y), p1, alpha1)
-            t += step
+            t += step/a1
             if x > n-1 or y > n-1 or x < 0 or y < 0: 
                 print x,y
                 continue

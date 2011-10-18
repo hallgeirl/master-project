@@ -11,7 +11,14 @@
 #include <unordered_map>
 #include <sstream>
 
+#include "util.h"
+#include "vec2.h"
+#include "terrain.h"
+#include "clothoid.h"
+#include "fresnel.h"
+
 using namespace std;
+using namespace fresnel;
 
 #ifndef PI
 #ifdef M_PI
@@ -25,144 +32,10 @@ float weight_slope = 200.f,
       weight_curvature = 200.f,
       weight_road = 1.f;
 
-template<class T>
-struct vec2_t
-{
-    T x, y;
-    vec2_t()
-    {
-        x = y = -1;
-    }
-    vec2_t(T _x, T _y)
-    {
-        x = _x; y = _y;
-    }
+vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
 
-    float length()
-    {
-        return sqrt(x*x+y*y);
-    }
-
-    T dot(vec2_t<T> v)
-    {
-        return x*v.x+y*v.y;
-    }
-
-    vec2_t operator-(vec2_t b) const
-    {
-        return vec2_t(x-b.x, y-b.y);
-    }
-
-    vec2_t operator+(vec2_t b) const
-    {
-        return vec2_t(x+b.x, y+b.y);
-    }
-
-    vec2_t operator*(float b) const
-    {
-        return vec2_t(x*b, y*b);
-    }
-
-    vec2_t operator/(float b) const
-    {
-        return vec2_t(x/b, y/b);
-    }
-    
-    bool operator< (const vec2_t& n2) const 
-    { 
-        if (x != n2.x) return x < n2.x; 
-        else return y < n2.y; 
-    }
-
-    bool operator== (const vec2_t& n2) const
-    {
-        return x == n2.x && y == n2.y;
-    }
-};
-
-typedef vec2_t<int> vec2i;
-typedef vec2_t<float> vec2f;
-
-
-struct terrain_t
-{
-    float* data;         //Terrain data
-    int height, width;   //Height and width of terrain (in # points)
-    float point_spacing; //Distance between points
-
-    terrain_t(int _width, int _height, float _point_spacing)
-    {
-        height = _height;
-        width = _width;
-        point_spacing = _point_spacing;
-        data = new float[width*height];
-    }
-
-    ~terrain_t()
-    {
-        delete[] data;
-    }
-
-    float getPointBilinear(float x, float y) const
-    {
-        float y_1 = floor(y/point_spacing)*point_spacing;
-        float y_2 = ceil(y/point_spacing)*point_spacing;
-        if (y_2 == y_1) y_2 += point_spacing;
-
-        float x_1 = floor(x/point_spacing)*point_spacing;
-        float x_2 = ceil(x/point_spacing)*point_spacing;
-        if (x_1 == x_2) x_2 += point_spacing;
-
-        float fx_1 = getPointNearest(x_1, y_1)*(x_2-x)/(x_2-x_1) + getPointNearest(x_2, y_1)*(x-x_1)/(x_2-x_1);
-        float fx_2 = getPointNearest(x_1, y_2)*(x_2-x)/(x_2-x_1) + getPointNearest(x_2, y_2)*(x-x_1)/(x_2-x_1);
-        float fp = fx_1*(y_2-y)/(y_2-y_1) + fx_2*(y-y_1)/(y_2-y_1);
-
-        return fp;
-    }
-
-    float getPointNearest(float x, float y) const
-    {
-        int i = round(y/point_spacing),
-            j = round(x/point_spacing);
-
-            i = max(min(i, height-1), 0);
-            j = max(min(j, width-1), 0);
-
-        return data[i*width+j];
-    }
-
-    vec2f gridToPoint(const vec2i& a) const
-    {
-        return vec2f(((float)a.x)*point_spacing, ((float)a.y)*point_spacing);
-    }
-};
-
-int gcd(int a, int b)
-{
-    while (a > 0 && b > 0)
-    {
-        if (a > b)
-            a -= b;
-        else
-            b -= a;
-    }
-
-    return max(a,b);
-}
-
-
-
-namespace std 
-{
-    template<>
-    struct hash<vec2i> : public unary_function<vec2i, size_t>
-    {
-        size_t operator()(const vec2i& v) const
-        {
-            return v.x + (v.y << 16);
-        }
-    };
-}
+//Rotate, then translate
+vec2d rottrans(const vec2d& p, const vec2d& dp, double rot);
 
 struct node_t
 {
@@ -203,7 +76,7 @@ struct node_t
 
 
 //Heuristic for computing the cost from a to b.
-inline float h(const terrain_t& terrain, const vec2f& a, const vec2f& b)
+inline float h(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
     float dx = a.x-b.x, dy = a.y-b.y, 
           dz = 0;
@@ -211,7 +84,7 @@ inline float h(const terrain_t& terrain, const vec2f& a, const vec2f& b)
     return sqrt(dx*dx+dy*dy+dz*dz);
 }
 
-inline float get_slope(const terrain_t& terrain, const vec2f& a, const vec2f& b)
+inline float get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
     float dx = a.x-b.x, dy = a.y-b.y;
     float dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
@@ -220,25 +93,25 @@ inline float get_slope(const terrain_t& terrain, const vec2f& a, const vec2f& b)
     return slope;
 }
 
-inline float transfer_slope(const terrain_t& terrain, const vec2f& a, const vec2f& b)
+inline float transfer_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
-//    float k0 = 0.5;
+    float k0 = 2;
     
-//    if (slope > k0)
-//    {
+    float slope = get_slope(terrain, a, b);
+    if (slope > k0)
+    {
 //        printf("slope is infinity\n");
 //        fflush(stdout);
-//        return numeric_limits<float>::infinity();
-//    }
-    float slope = get_slope(terrain, a, b);
+        return numeric_limits<float>::infinity();
+    }
     
     return weight_slope*(slope+slope*slope);
 }
 
-inline float transfer_curvature(const terrain_t& terrain, const vec2f& a, const vec2f& b, const vec2f& prev)
+inline float transfer_curvature(const terrain_t& terrain, const vec2d& a, const vec2d& b, const vec2d& prev)
 {
-    vec2f vb = b-a;
-    vec2f va = a-prev;
+    vec2d vb = b-a;
+    vec2d va = a-prev;
     float lenA = va.length();
     float lenB = vb.length();
 
@@ -262,7 +135,7 @@ inline float transfer_curvature(const terrain_t& terrain, const vec2f& a, const 
 }
 
 //Transfer function for cost of making the road itself. This is dependent on the length of the road (how much material is used, basically)
-inline float transfer_road(const terrain_t& terrain, const vec2f& a, const vec2f& b)
+inline float transfer_road(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
     float dx = a.x-b.x, dy = a.y-b.y;
     float dz = 0;
@@ -272,11 +145,11 @@ inline float transfer_road(const terrain_t& terrain, const vec2f& a, const vec2f
 }
 
 //Integrate the cost over the path segment 
-inline float cost(const terrain_t& terrain, const vec2f& a, const vec2f& b, const vec2f& prev)
+inline float cost(const terrain_t& terrain, const vec2d& a, const vec2d& b, const vec2d& prev)
 {
     float i = 0;
     float cost_slope = 0;
-    vec2f dir = b-a;
+    vec2d dir = b-a;
 
     const float step = 1.*terrain.point_spacing/dir.length();
 
@@ -286,7 +159,7 @@ inline float cost(const terrain_t& terrain, const vec2f& a, const vec2f& b, cons
         if (t2 > 1.f)
             t2 = 1.f;
 
-        vec2f _a = dir*t1 + a,
+        vec2d _a = dir*t1 + a,
               _b = dir*t2 + a;
         
         cost_slope += transfer_slope(terrain, _a, _b) * (t2-t1);
@@ -303,7 +176,7 @@ inline float cost(const terrain_t& terrain, const vec2f& a, const vec2f& b, cons
     return cost_road + cost_slope + cost_curvature;
 }
 
-vector<vec2f> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density)
+vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density)
 {
     map<vec2i, vec2i> predecessor;
     unordered_map<vec2i, pair<bool,float> > in_open;
@@ -459,7 +332,7 @@ vector<vec2f> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
     cout << "Backtracing" << endl;
 
     //Backtrace
-    vector<vec2f> result;
+    vector<vec2d> result;
 
     vec2i current_pos = predecessor[end];
     result.push_back(terrain.gridToPoint(end));
@@ -493,11 +366,11 @@ long filesize(ifstream& f)
     return end-beg;
 }
 
-void writeRoadXML(string filename, const vector<vec2f>& controlPoints, const terrain_t& terrain)
+void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const terrain_t& terrain)
 {
-    vec2f startDirV = controlPoints[1] - controlPoints[0];
+    vec2d startDirV = controlPoints[1] - controlPoints[0];
     startDirV = startDirV * (1./startDirV.length());
-    double startDir = acos(fmin(fmax(startDirV.dot(vec2f(1.,0.)),-1), 1));
+    double startDir = acos(fmin(fmax(startDirV.dot(vec2d(1.,0.)),-1), 1));
 
     // Determine which quadrant the direction is in
     if (startDirV.y < 0)
@@ -550,7 +423,7 @@ void writeRoadXML(string filename, const vector<vec2f>& controlPoints, const ter
         output << "          <Polynomial>\n";
         output << "            <begin " << ss_point.str() << " />\n";
     }
-    vec2f last = controlPoints.back(), secondLast = controlPoints[controlPoints.size()-2];
+    vec2d last = controlPoints.back(), secondLast = controlPoints[controlPoints.size()-2];
     length += (last-secondLast).length();
     output <<  "            <end direction=\"0\" x=\"" << length << "\" y=\"" << terrain.getPointBilinear(last.x, last.y) << "\" />\n";
     output << "          </Polynomial>\n";
@@ -570,6 +443,14 @@ void writeRoadXML(string filename, const vector<vec2f>& controlPoints, const ter
     delete[] tail_buf;
 }
 
+void setPixelColor(FIBITMAP* bm, int x, int y, int r, int g, int b)
+{
+    RGBQUAD rgb;
+    rgb.rgbRed = r;
+    rgb.rgbGreen = g; 
+    rgb.rgbBlue = b;
+    FreeImage_SetPixelColor(bm, x, y, &rgb);
+}
 
 int main(int argc, char** argv)
 {
@@ -577,7 +458,7 @@ int main(int argc, char** argv)
     int h = 1024, w = 1024;
 //    int h = 300, w = 300;
     float spacing = 10.;
-    int grid_density = 4;
+//    int grid_density = 4;
 
     //Terrain storage
     unsigned short* terrain_raw = new unsigned short[h*w];
@@ -614,13 +495,24 @@ int main(int argc, char** argv)
         }
     }
 
-    vector<vec2f> path = pathFind(terrain, start, end, grid_density);
+    //vector<vec2d> path = pathFind(terrain, start, end, grid_density);
+
+
+    vector<vec2d> path;
+    path.push_back(vec2d(175,275));
+    path.push_back(vec2d(175,400));
+    path.push_back(vec2d(300,500));
+    path.push_back(vec2d(500,500));
+    path.push_back(vec2d(575,350));
+    path.push_back(vec2d(650,475));
+    ClothoidSpline clothoidSpline(path);
 
     writeRoadXML("someroadxml.rnd", path, terrain);
 
     FreeImage_Initialise();
 
     FIBITMAP* bm = FreeImage_Allocate(w, h, 24);
+
 
     for (int i = 0; i < h; i++)
     {
@@ -634,46 +526,106 @@ int main(int argc, char** argv)
         }
     }
 
-    float step = (1./(float)grid_density)/5.;
-    for (float t = 2; t < path.size(); t+= step)
+    //Draw some spline
+    for (size_t i = 0; i < clothoidSpline.clothoidPairs.size(); i++)
     {
-        RGBQUAD rgb;
-        rgb.rgbGreen = rgb.rgbBlue = 0;
-        rgb.rgbRed = 255;
+        clothoid_pair_t c = clothoidSpline.clothoidPairs[i];
+        vec2d p0 = c.p0.p, p1 = c.p1.p;
+        vec2d T0 = c.p0.T, T1 = c.p1.T;
+        double step = 1;
 
-        float x = 0, y = 0;
-
-//        for (size_t i = t-2; i < t+1; i++)
-//        if (t >= 2 && t < path.size() - 2)
+        // Straight line segment for the longer edge, if neccesary
+        double t = 0.;
+//        printf("%lf\n", c.g_diff);
+//        printf("T0 %lf %lf\n", T0.x, T0.y);
+        while (t < c.g_diff)
         {
-            for (size_t i = 0; i < path.size(); i++)
-            {
-                float b = 0;
-                float t_j = i-2;
-                float t_1 = t_j+1,
-                      t_2 = t_j+2,
-                      t_3 = t_j+3;
-
-//                if (t_j < 1) t_j = 1;
-//                if (t_1 < 1) t_1 = 1;
-//                if (t_2 < 1) t_2 = 1;
-//                if (t_3 < 1) t_3 = 1;
-
-                if (t <= t_1 && t >= t_j)
-                    b = 0.5*pow(t-t_j, 2.);
-                else if (t <= t_2 && t >= t_1)
-                    b = 0.5-pow(t-t_1, 2.) + t-t_1;
-                else if (t >= t_2 && t <= t_3)
-                    b = 0.5*pow(1-(t-t_2), 2.);
-
-                x += ((float)path[i].x)*b/terrain.point_spacing;
-                y += ((float)path[i].y)*b/terrain.point_spacing;
-            }
+            double x = p0.x+T0.x*t;
+            double y = p0.y+T0.y*t;
+            setPixelColor(bm, int(x), int(y), 255, 0, 0);
+            t += step;
         }
-        printf("Setting %f,%f\n", x,y);
 
-        FreeImage_SetPixelColor(bm, (int)round(x), (int)round(y), &rgb);
+        t = 0.;
+        while (t < c.t0)
+        {
+            vec2d p(c.a0*C1(t), c.a0*S1(t));
+
+            // Inverse transform
+            if (c.flip0)
+                p.y *= -1;
+            
+            p = rottrans(p, c.p0.p, c.alpha0);
+            p = p + c.p0.T * c.g_diff;
+
+            t += step/c.a0;
+//            if (p.x > n-1 or p.y > n-1 or p.x < 0 or p.y < 0)
+//            {
+//                printf("Out of range: %lf %lf\n", p.x, p.y);
+//                continue;
+//            }
+            setPixelColor(bm, int(p.x), int(p.y), 255, 0, 0);
+        }
+
+        t = 0.;
+        while (t < c.t1)
+        {
+            vec2d p = vec2d(c.a1*C1(t), c.a1*S1(t));
+
+            // Inverse transform
+            if (!c.flip0)
+                p.y *= -1;
+            p = rottrans(p, c.p1.p, c.alpha1);
+            t += step/c.a1;
+//            if x > n-1 or y > n-1 or x < 0 or y < 0: 
+//                print x,y
+//                continue
+
+            setPixelColor(bm, int(p.x), int(p.y), 255,0,0);
+        }
     }
+    
+
+//    float step = (1./(float)grid_density)/5.;
+//    for (float t = 2; t < path.size(); t+= step)
+//    {
+//        RGBQUAD rgb;
+//        rgb.rgbGreen = rgb.rgbBlue = 0;
+//        rgb.rgbRed = 255;
+//
+//        float x = 0, y = 0;
+//
+////        for (size_t i = t-2; i < t+1; i++)
+////        if (t >= 2 && t < path.size() - 2)
+//        {
+//            for (size_t i = 0; i < path.size(); i++)
+//            {
+//                float b = 0;
+//                float t_j = i-2;
+//                float t_1 = t_j+1,
+//                      t_2 = t_j+2,
+//                      t_3 = t_j+3;
+//
+////                if (t_j < 1) t_j = 1;
+////                if (t_1 < 1) t_1 = 1;
+////                if (t_2 < 1) t_2 = 1;
+////                if (t_3 < 1) t_3 = 1;
+//
+//                if (t <= t_1 && t >= t_j)
+//                    b = 0.5*pow(t-t_j, 2.);
+//                else if (t <= t_2 && t >= t_1)
+//                    b = 0.5-pow(t-t_1, 2.) + t-t_1;
+//                else if (t >= t_2 && t <= t_3)
+//                    b = 0.5*pow(1-(t-t_2), 2.);
+//
+//                x += ((float)path[i].x)*b/terrain.point_spacing;
+//                y += ((float)path[i].y)*b/terrain.point_spacing;
+//            }
+//        }
+//        printf("Setting %f,%f\n", x,y);
+//
+//        FreeImage_SetPixelColor(bm, (int)round(x), (int)round(y), &rgb);
+//    }
 
     for (size_t i = 0; i < path.size(); i++)
     {
