@@ -1,7 +1,7 @@
 OBJ=$(subst .cpp,.o,$(shell ls *.cpp 2> /dev/null))
 LIBS=-lfreeimage
 LDFLAGS=$(LIBS)
-CXXFLAGS+=-g -Wall -Wno-deprecated -std=c++0x
+CXXFLAGS+=-g -Wall -Wno-deprecated -std=c++0x -O3
 PROGRAM=pathfind
 
 all:$(PROGRAM)

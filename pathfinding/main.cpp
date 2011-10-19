@@ -31,8 +31,8 @@ using namespace clothoid;
 
 #define PRINT_ALL(cont, counter, fmt, ...) for (size_t counter = 0; counter < cont.size(); counter++) printf(fmt, __VA_ARGS__);
 
-float weight_slope = 200.f,
-      weight_curvature = 200.f,
+double weight_slope = 10000.f*1.,
+      weight_curvature = 50000.f*1,
       weight_road = 1.f;
 
 //vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
@@ -43,13 +43,13 @@ float weight_slope = 200.f,
 struct node_t
 {
     vec2i p;
-    float cost_g, cost_h;
+    double cost_g, cost_h;
 
-    node_t(vec2i _p, float _cost_g, float _cost_h) : p(_p), cost_g(_cost_g), cost_h(_cost_h)
+    node_t(vec2i _p, double _cost_g, double _cost_h) : p(_p), cost_g(_cost_g), cost_h(_cost_h)
     {
     }
 
-    float cost_f() const
+    double cost_f() const
     {
         return cost_g + cost_h;
     }
@@ -77,141 +77,147 @@ struct node_t
 
 
 //Heuristic for computing the cost from a to b.
-inline float h(const terrain_t& terrain, const vec2d& a, const vec2d& b)
+inline double h(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
-    float dx = a.x-b.x, dy = a.y-b.y, 
-          dz = 0;
-        //dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
-    return sqrt(dx*dx+dy*dy+dz*dz)*weight_road;
+    double dx = a.x-b.x, dy = a.y-b.y;
+//          dz = 0;
+//        dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
+    double len = sqrt(dx*dx+dy*dy);
+//    return len*weight_road + dz*weight_slope/len; // *weight_slope;
+    return len*weight_road; // *weight_slope;
 }
 
-inline float get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
+inline double get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
-    float dx = a.x-b.x, dy = a.y-b.y;
-    float dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
-    float slope = fabs(dz/sqrt(dx*dx+dy*dy));
+    double dx = a.x-b.x, dy = a.y-b.y;
+    double dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
+    double slope = fabs(dz/sqrt(dx*dx+dy*dy));
 
     return slope;
 }
 
-inline float transfer_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
+inline double transfer_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
-    float k0 = 2;
+    double k0 = 2;
     
-    float slope = get_slope(terrain, a, b);
+    double slope = get_slope(terrain, a, b);
     if (slope > k0)
     {
 //        printf("slope is infinity\n");
 //        fflush(stdout);
-//        return numeric_limits<float>::infinity();
+//        return numeric_limits<double>::infinity();
     }
     
     return weight_slope*(slope+slope*slope);
 }
 
-inline float transfer_curvature(const terrain_t& terrain, const vec2d& a, const vec2d& b, const vec2d& prev)
+inline double transfer_curvature(const terrain_t& terrain, const vec2d& a, const vec2d& b, const vec2d& prev)
 {
     vec2d vb = b-a;
     vec2d va = a-prev;
-    float lenA = va.length();
-    float lenB = vb.length();
+    double lenA = va.length();
+    double lenB = vb.length();
 
     if (lenA == 0 || lenB == 0) return 0;
 
     va = va * (1./lenA);
     vb = vb * (1./lenB);
 
-    float cos_theta = va.dot(vb);
-    cos_theta = fmin(cos_theta, 1);
-    cos_theta = fmax(cos_theta, -1);
+    double cos_theta = va.dot(vb);
+    cos_theta = fmax(fmin(cos_theta, 1),-1);
 
-    float theta = acos(cos_theta);
+    double theta = acos(cos_theta);
     if (theta != theta)
     {
         printf("theta is NAN! %f %f %f %f %f\n", va.dot(vb), va.x, va.y, vb.x, vb.y);
         fflush(stdout);
     }
     
+//    printf("curvature %lf\n", 2.f*sin(theta/2.f)/sqrt(lenA*lenB));
+
     return weight_curvature*2.f*sin(theta/2.f)/sqrt(lenA*lenB);
 }
 
 //Transfer function for cost of making the road itself. This is dependent on the length of the road (how much material is used, basically)
-inline float transfer_road(const terrain_t& terrain, const vec2d& a, const vec2d& b)
+inline double transfer_road(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
-    float dx = a.x-b.x, dy = a.y-b.y;
-    float dz = 0;
-//    float dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
+    double dx = a.x-b.x, dy = a.y-b.y;
+    double dz = 0;
+//    double dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
 
     return weight_road*sqrt(dx*dx+dy*dy+dz*dz);
 }
 
 //Integrate the cost over the path segment 
-float cost(const terrain_t& terrain, const vec2d& a, const vec2d& v, const vec2d& b, const vec2d T0, bool first, bool last)
+double cost(const terrain_t& terrain, const vec2d& a, const vec2d& v, const vec2d& b, const vec2d T0, bool first, bool last)
 {
     //do we have enough points to make a curve? If not, return a cost of 0.
-    if (v == a)
-        return 0;
-
-    vec2d p0, p1, T1;
-    if (first)
-    {
-        p0 = a;
-    }
-    else
-    {
-        p0 = (a+v)/2.;
-    }
-    
-    if (last)
-        p1 = b;
-    else    
-        p1 = (b+v)/2.;
-
-    T1 = (v-p1).normalized();
-
-    ClothoidPair c(p0, T0, p1, T1, v);
-    return c.length() * weight_road + c.integratedCurvature() * weight_curvature;
-
-    //Construct a clothoid spline from the three last vertices
-//    vector<vec2d> ctrl;
-//    ctrl.push_back(prev);
-//    ctrl.push_back(a);
-//    ctrl.push_back(b);
-//    ClothoidSpline(
-
-    
-//    return 0;
-//    float i = 0;
-//    float cost_slope = 0;
-//    vec2d dir = b-a;
+//    if (v == a)
+//        return 0;
 //
-//    const float step = 1.*terrain.point_spacing/dir.length();
-//
-//    for (float t = 0; t < 1.f; t = i*step, i++)
+//    vec2d p0, p1, T1;
+//    if (first)
 //    {
-//        float t1 = t, t2 = t+step;
-//        if (t2 > 1.f)
-//            t2 = 1.f;
+//        p0 = a;
+//    }
+//    else
+//    {
+//        p0 = (a+v)/2.;
+//    }
+//    
+//    if (last)
+//        p1 = b;
+//    else    
+//        p1 = (b+v)/2.;
 //
-//        vec2d _a = dir*t1 + a,
-//              _b = dir*t2 + a;
-//        
-//        cost_slope += transfer_slope(terrain, _a, _b) * (t2-t1);
+//    T1 = (v-p1).normalized();
+//
+//    ClothoidPair c(p0, T0, p1, T1, v);
+//
+//    double step = 1.*terrain.point_spacing;
+//    double cost_slope = 0;
+//    for (double t = 0; t < c.length()-step; t += step)
+//    {
+//        double t1 = t, t2 = min(t+step, c.length()-1e-5);
+//        clothoid_point_t pt1 = c.lookup(t1), pt2 = c.lookup(t2);
+//        cost_slope += transfer_slope(terrain, pt1.pos, pt2.pos) * (t2-t1);
 //    }
 //
-//    float cost_road = transfer_road(terrain, a, b),
-//          cost_curvature = transfer_curvature(terrain, a, b, prev);
-//        
-//    if (cost_road+cost_slope+cost_curvature == numeric_limits<float>::infinity())
-//        return numeric_limits<float>::infinity();
 //
-//    return cost_road + cost_slope + cost_curvature;
+//    return c.length() * weight_road + c.integratedCurvature() * weight_curvature + cost_slope * weight_slope;
+
+    
+    double i = 0;
+    double cost_slope = 0;
+    vec2d dir = b-v;
+
+    const double step = 1.*terrain.point_spacing/dir.length();
+
+    for (double t = 0; t < 1.f; t = i*step, i++)
+    {
+        double t1 = t, t2 = t+step;
+        if (t2 > 1.f)
+            t2 = 1.f;
+
+        vec2d _a = dir*t1 + v,
+              _b = dir*t2 + v;
+        
+        cost_slope += transfer_slope(terrain, _a, _b) * (t2-t1);
+    }
+
+    double cost_road = transfer_road(terrain, v, b),
+          cost_curvature = transfer_curvature(terrain, v, b, a);
+        
+    if (cost_road+cost_slope+cost_curvature == numeric_limits<double>::infinity())
+        return numeric_limits<double>::infinity();
+
+    return cost_road + cost_slope + cost_curvature;
 }
 
 vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density)
 {
     map<vec2i, vec2i> predecessor;
-    unordered_map<vec2i, pair<bool,float> > in_open;
+    unordered_map<vec2i, double> in_open;
     unordered_map<vec2i, bool> closed;
     vector<node_t> open;
 
@@ -244,8 +250,8 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         }
     }
 
-    printf("Neighborhood:\n");
-    PRINT_ALL(neighborhood, i, "%d,%d\n", neighborhood[i].x, neighborhood[i].y);
+//    printf("Neighborhood:\n");
+//    PRINT_ALL(neighborhood, i, "%d,%d\n", neighborhood[i].x, neighborhood[i].y);
 
     node_t current(start, 0, 0);
     predecessor[start] = start;
@@ -263,8 +269,16 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         pop_heap(open.begin(), open.end());
         open.pop_back();
 
+
+        //If the node is already in the closed list, we have already processed it (this may happen if the node is added more than once due to a better route)
+        unordered_map<vec2i, bool>::iterator closed_it = closed.find(current.p);
+        if (closed_it != closed.end()) 
+        {
+            continue;
+        }
+
         //Mark this node as not being in the open list, and move it to the closed list.
-        in_open[current.p] = pair<bool, float>(false, 0);
+        in_open.erase(current.p);
         closed[current.p] = true;
         
         static int ii = 0;
@@ -307,9 +321,9 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
                 const vec2i& pb = pos;
                 
                 if (pa == start && pa != v)
-                    T0 = (terrain.gridToPoint(v) - terrain.gridToPoint(pa)).normalized();
+                    T0 = (terrain.gridToPoint(v)  - terrain.gridToPoint(pa)).normalized();
                 else if (pa != v)
-                    T0 = (terrain.gridToPoint(pa)-terrain.gridToPoint(predecessor[pa])).normalized();
+                    T0 = (terrain.gridToPoint(pa) - terrain.gridToPoint(predecessor[pa])).normalized();
                 else
                     T0 = vec2d(0, 0);
 
@@ -323,42 +337,14 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
                                               pos == end),
                         h(terrain, terrain.gridToPoint(pos), terrain.gridToPoint(end)));
 
-//                if (n.cost_g == numeric_limits<float>::infinity())
-//                    continue;
+                if (n.cost_g == numeric_limits<double>::infinity())
+                    continue;
 
-                unordered_map<vec2i, pair<bool, float> >::iterator in_open_it = in_open.find(n.p);
-                if (in_open_it == in_open.end() || !(in_open_it->second.first))
+                unordered_map<vec2i, double>::iterator in_open_it = in_open.find(n.p);
+                if (in_open_it == in_open.end() || (in_open_it != in_open.end() && in_open_it->second > n.cost_g))
                 {
                     open.push_back(n); push_heap(open.begin(), open.end());
-                    in_open[n.p] = pair<bool, float>(true, n.cost_g);
-                    predecessor[n.p] = current.p;
-                }
-
-                //We found a better path to the node n
-                else if (in_open_it != in_open.end() && in_open_it->second.first && in_open_it->second.second > n.cost_g)
-                {
-                    //Update the cost in the cache
-                    in_open_it->second.second = n.cost_g;
-
-                    //Find the element in the open list
-//                    vector<node_t>::iterator open_it = find(open.begin(), open.end(), n);
-//                    size_t j = distance(open.begin(), open_it);
-                    
-                    for (size_t j = 0; i < open.size(); i++)
-                    {
-                        if (open[j].p == n.p)
-                        {
-                            open[j].cost_g = n.cost_g;
-                            int heapnode = j;
-                            //While the current node has a higher cost than the parent
-                            while (open[heapnode].cost_f() > open[(heapnode+1)/2 - 1].cost_f() && heapnode > 0)
-                            {
-                                swap(open[heapnode], open[(heapnode+1)/2 - 1]);
-                                heapnode = (heapnode+1)/2 - 1;
-                            }
-                            break;
-                        }
-                    }
+                    in_open[n.p] = n.cost_g;
                     predecessor[n.p] = current.p;
                 }
             }
@@ -425,7 +411,7 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
 
     ofstream output(filename.c_str());
     output.write(head_buf, head_size);
-    output << "        <XYCurve direction=\"0\" x=\"" << (float)controlPoints[0].x << "\" y=\"" << (float)controlPoints[0].y << "\">\n";
+    output << "        <XYCurve direction=\"0\" x=\"" << (double)controlPoints[0].x << "\" y=\"" << (double)controlPoints[0].y << "\">\n";
     output << "          <ClothoidSpline type=\"spline\">\n";
     for (size_t i = 1; i < controlPoints.size(); i++)
     {
@@ -493,22 +479,19 @@ int main(int argc, char** argv)
     //Terrain dimensions
     int h = 1024, w = 1024;
 //    int h = 300, w = 300;
-    float spacing = 10.;
+    double spacing = 10.;
 
     //Terrain storage
     unsigned short* terrain_raw = new unsigned short[h*w];
     terrain_t       terrain(h, w, spacing);
 
     //Terrain heights
-    float h_min = 0;
-    float h_max = 2700.3;
+    double h_min = 0;
+    double h_max = 2700.3;
 
     //Starting and ending points
-//    vec2i start(700, 570), end(900, 24);
-    vec2i end(70, 570), start(900, 24);
-//    vec2i start(700, 300), end(600, 500);
-//    vec2i start(10, 250), end(280, 20);
-//    vec2i start(2, 3), end(50, 70);
+    vec2i end(150, 1000), start(900, 24);
+//    vec2i end(70, 570), start(900, 24);
 
     //Input and output filenames
     const char* in = argv[1], * out = 0;
@@ -571,8 +554,8 @@ int main(int argc, char** argv)
         clothoid_point_t p = clothoidSpline.lookup(t);
         double color = 255;
         double red = 1;
-//        double green = 1.-min(p.curvature*100.,1.);
-        double green = 1.-min(p.integrated_curvature*500,1.);
+        double green = 1.-min(p.curvature*100.,1.);
+//        double green = 1.-min(p.integrated_curvature*500,1.);
         double blue = 1;
         blue = green;
         setPixelColor(bm, int(p.pos.x/terrain.point_spacing), int(p.pos.y/terrain.point_spacing), color*red, color*green,color*blue);

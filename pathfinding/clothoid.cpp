@@ -1,3 +1,6 @@
+/*
+    Author: Hallgeir Lien <hallgeir.lien@gmail.com>
+*/
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
@@ -23,14 +26,14 @@ namespace clothoid {
        Auxilliary functions 
      */
 
-    inline double fx(double x, double k, double alpha)
+    inline double fx(double x, double k, double cosalpha, double sinalpha, double Cx, double Sx, double Cx2, double Sx2, double alpha)
     {
-        return sqrt(x)*(C2(x)*sin(alpha) - S2(x)*(k + cos(alpha))) + sqrt(alpha-x) * (S2(alpha-x)*(1.+k*cos(alpha)) - k*C2(alpha-x)*sin(alpha));
+        return sqrt(x)*(Cx*sinalpha - Sx*(k + cosalpha)) + sqrt(alpha-x) * (Sx2*(1.+k*cosalpha) - k*Cx2*sinalpha);
     }
 
-    inline double dfx(double x, double k, double alpha)
+    inline double dfx(double x, double k, double cosalpha, double sinalpha, double Cx, double Sx, double Cx2, double Sx2, double alpha)
     {
-        return (C2(x)*sin(alpha) - S2(x)*(k+cos(alpha)))/(2.*sqrt(x)) + (k*C2(alpha-x)*sin(alpha) - S2(alpha-x)*(1+k*cos(alpha)))/(2.*sqrt(alpha-x));
+        return (Cx*sinalpha - Sx*(k+cosalpha))/(2.*sqrt(x)) + (k*Cx2*sinalpha - Sx2*(1+k*cosalpha))/(2.*sqrt(alpha-x));
     }
 
     // Find a root of f(x) = 0
@@ -39,10 +42,19 @@ namespace clothoid {
         double xnext = init,
                xold = 0;
 
-        while (abs(fx(xnext, k, alpha)) > err)
+        double Cx = C2(xnext), Sx = S2(xnext), 
+               Cx2 = C2(alpha-xnext), Sx2 = S2(alpha-xnext),
+               cosalpha = cos(alpha), sinalpha = sin(alpha);
+
+        double fx_ = fx(xnext, k, cosalpha, sinalpha, Cx, Sx, Cx2, Sx2, alpha);
+
+        while (abs(fx_) > err)
         {
             swap(xnext,xold);
-            xnext = xold - fx(xold, k, alpha)/dfx(xold, k, alpha);
+            xnext = xold - fx_/dfx(xold, k, cosalpha, sinalpha, Cx, Sx, Cx2, Sx2, alpha);
+            Cx = C2(xnext); Sx = S2(xnext);
+            Cx2 = C2(alpha - xnext); Sx2 = S2(alpha - xnext);
+            fx_ = fx(xnext, k, cosalpha, sinalpha, Cx, Sx, Cx2, Sx2, alpha);
         }
         return xnext;
     }
@@ -205,7 +217,7 @@ namespace clothoid {
         alpha = acos(cosalpha);
 
         {
-            double glim = h * (C2(alpha)/S2(alpha)*sin(alpha) - cos(alpha));
+            double glim = h * (C2(alpha)/S2(alpha)*sin(alpha) - cosalpha);
             if (g > tau*glim + (1-tau)*h)
             {
                 g_diff = g - (tau*glim + (1-tau)*h);
@@ -220,11 +232,12 @@ namespace clothoid {
         alpha0 = atan2(p0.T.y, p0.T.x);
         alpha1 = atan2(p1.T.y, p1.T.x);
 
-        t0 = newton(0.5*alpha, k, alpha, 1e-10);
+        t0 = newton(0.5*alpha, k, alpha, 1e-5);
+//        t0 = alpha/2.;
         t1 = alpha - t0;
 
         //Compute scaling factors
-        a0 = (g+h*cos(alpha))/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cos(alpha)+S2(alpha-t0)*sin(alpha)));
+        a0 = (g+h*cosalpha)/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cosalpha+S2(alpha-t0)*sin(alpha)));
         a1 = a0*sqrt((alpha-t0)/t0);
 
         //Convert parameter from angle to length
