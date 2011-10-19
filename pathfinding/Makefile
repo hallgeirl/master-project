@@ -3,14 +3,25 @@ LIBS=-lfreeimage
 LDFLAGS=$(LIBS)
 CXXFLAGS+=-g -Wall -Wno-deprecated -std=c++0x -O3
 PROGRAM=pathfind
+PUB=$(patsubst %,pub/%,$(shell ls *.cpp *.h 2> /dev/null))
 
-all:$(PROGRAM)
+all:$(PROGRAM) $(PUB)
 
 $(PROGRAM): $(OBJ)
 	$(CXX) $(OBJ) -o $(PROGRAM) $(LDFLAGS)
 
+pub/%:./%
+	@cat fileheader.txt > $@
+	@cat $< >> $@
+	@echo "$< saved with header as $@."
+
+pub:
+	mkdir pub
+
+publish: $(PUB)
+
 clean:
-	rm -f $(OBJ) $(PROGRAM)
+	rm -f $(OBJ) $(PROGRAM) $(PUB)
 
 test: all
 	make -C raw_crop

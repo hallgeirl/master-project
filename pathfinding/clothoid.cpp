@@ -1,8 +1,3 @@
-/*
-    Author: Hallgeir Lien <hallgeir.lien@gmail.com>
-    Feel free to distribute or modify this file as you please. 
-    All I ask is that you leave the author's name in the file.
-*/
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
