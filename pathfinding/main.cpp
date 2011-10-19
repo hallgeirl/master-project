@@ -29,6 +29,8 @@ using namespace clothoid;
 #endif
 #endif
 
+#define PRINT_ALL(cont, counter, fmt, ...) for (size_t counter = 0; counter < cont.size(); counter++) printf(fmt, __VA_ARGS__);
+
 float weight_slope = 200.f,
       weight_curvature = 200.f,
       weight_road = 1.f;
@@ -82,7 +84,7 @@ inline float h(const terrain_t& terrain, const vec2d& a, const vec2d& b)
     float dx = a.x-b.x, dy = a.y-b.y, 
           dz = 0;
         //dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
-    return sqrt(dx*dx+dy*dy+dz*dz);
+    return sqrt(dx*dx+dy*dy+dz*dz)*weight_road;
 }
 
 inline float get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
@@ -228,10 +230,7 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
     {
 //        sleep(1);
 //        printf("Open:\n");
-//        for (size_t i = 0; i < open.size(); i++)
-//        {
-//            printf("%d %d: g: %.3f h: %.3f f: %.3f\n", open[i].p.x, open[i].p.y, open[i].cost_g, open[i].cost_h, open[i].cost_f());
-//        }
+//        PRINT_ALL(open, i, "%d %d: g: %.3f h: %.3f f: %.3f\n", open[i].p.x, open[i].p.y, open[i].cost_g, open[i].cost_h, open[i].cost_f());
 
         //Get the next best node and pop it from the heap
         current = open.front();
@@ -318,7 +317,6 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
                         }
                     }
                     predecessor[n.p] = current.p;
-//                    make_heap(open.begin(), open.end());
                 }
             }
         }
@@ -340,17 +338,11 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
 
     while (!(current_pos == start))
     {
-//        printf("current %d %d\n", current_pos.x, current_pos.y);
         result.push_back(terrain.gridToPoint(current_pos));
         current_pos = predecessor[current_pos];
-        //Get next one in line
     }
     result.push_back(terrain.gridToPoint(start));
-//    for (size_t i = 0; i < result.size(); i++)
-//    {
-//        printf("%lf, %lf\n", result[i].x, result[i].y);
-//    }
-//    fflush(stdout);
+//    PRINT_ALL(result, i, "%lf, %lf\n", result[i].x, result[i].y);
 
     return result;
 }
@@ -380,12 +372,6 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
     ifstream head_f("roadxml_template_head.rnd");
     ifstream tail_f("roadxml_template_tail.rnd");
 
-//    long beg,end;
-//    beg = head_f.tellg();
-//    head_f.seekg(0, ios::end);
-//    end = head_f.tellg();
-//    head_f.seekg(0, ios::beg);
-
     int head_size = filesize(head_f);
     char* head_buf = new char[head_size];
     head_f.read(head_buf, head_size);
@@ -396,10 +382,7 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
 
     ofstream output(filename.c_str());
     output.write(head_buf, head_size);
-//    output << "        <XYCurve direction=\"" << startDir << "\" x=\"" << (float)controlPoints[0].x << "\" y=\"" << (float)controlPoints[0].y << "\">\n";
     output << "        <XYCurve direction=\"0\" x=\"" << (float)controlPoints[0].x << "\" y=\"" << (float)controlPoints[0].y << "\">\n";
-//    output << "        <XYCurve direction=\"" << startDir << "\" x=\"0\" y=\"0\">\n";
-//    output << "        <XYCurve direction=\"0\" x=\"0\" y=\"0\">\n";
     output << "          <ClothoidSpline type=\"spline\">\n";
     for (size_t i = 1; i < controlPoints.size(); i++)
     {
@@ -411,35 +394,38 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
     // Form the polynomials needed for the SZCurve
     ClothoidSpline spline(controlPoints);
 
+
+    double step = 50;
+    vec2d pos_prev = spline.lookup(0),
+          pos_next = spline.lookup(step);
     output << "        <SZCurve>\n";
     output << "          <Polynomial>\n";
-    output << "            <begin direction=\"" << get_slope(terrain, controlPoints[0], controlPoints[1]) << "\" x=\"0\" y=\"" << terrain.getPointBilinear(controlPoints[0].x, controlPoints[0].y) << "\" />\n";
+    output << "            <begin direction=\"" << get_slope(terrain, pos_prev, pos_next) << "\" x=\"0\" y=\"" << terrain.getPointBilinear(pos_prev.x, pos_prev.y) << "\" />\n";
 
-//    double prevelev = 
-//    for (int t = 0; t < spline.length(); t += 50)
-//    {
-//        vec2d pos = spline.lookup(t);
-////    for (size_t i = 1; i < controlPoints.size()-1; i++)
-////    {
-//        stringstream ss_point;
-//        ss_point <<  "direction=\"" << get_slope(terrain, controlPoints[i], controlPoints[i+1]) << "\" x=\"" << t << "\" y=\"" << terrain.getPointBilinear(controlPoints[i].x, controlPoints[i].y) << "\"";
-//        output << "            <end " << ss_point.str() << " />\n";
-//        output << "          </Polynomial>\n";
-//        output << "          <Polynomial>\n";
-//        output << "            <begin " << ss_point.str() << " />\n";
-//    }
-    vec2d last = controlPoints.back(), secondLast = controlPoints[controlPoints.size()-2];
+    for (int t = step; t < spline.length()-step-1e-6; t += step)
+    {
+        pos_prev = pos_next;
+        pos_next = spline.lookup(t+step);
+
+        stringstream ss_point;
+        ss_point <<  "direction=\"" << get_slope(terrain, pos_prev, pos_next) << "\" x=\"" << t << "\" y=\"" << terrain.getPointBilinear(pos_prev.x, pos_prev.y) << "\"";
+        output << "            <end " << ss_point.str() << " />\n";
+        output << "          </Polynomial>\n";
+        output << "          <Polynomial>\n";
+        output << "            <begin " << ss_point.str() << " />\n";
+    }
+//    vec2d last = controlPoints.back(), secondLast = controlPoints[controlPoints.size()-2];
 //    length += (last-secondLast).length();
-//    output <<  "            <end direction=\"0\" x=\"" << length << "\" y=\"" << terrain.getPointBilinear(last.x, last.y) << "\" />\n";
+    output <<  "            <end direction=\"0\" x=\"" << spline.length() << "\" y=\"" << terrain.getPointBilinear(pos_next.x, pos_next.y) << "\" />\n";
     output << "          </Polynomial>\n";
     output << "        </SZCurve>\n";
     output << "        <BankingCurve>\n";
     output << "          <Polynomial>\n";
     output << "            <begin direction=\"0\" x=\"0\" y=\"0\" />\n";
-//    output << "            <end direction=\"0\" x=\"" << length << "\" y=\"0\" />\n";
+    output << "            <end direction=\"0\" x=\"" << spline.length() << "\" y=\"0\" />\n";
     output << "          </Polynomial>\n";
     output << "        </BankingCurve>\n";
-//    output << "        <Portion endDistance=\"" << length << "\" endProfile=\"defaultNoMotorvei\" name=\"\" startProfile=\"defaultNoMotorvei\"/>\n";
+    output << "        <Portion endDistance=\"" << spline.length() << "\" endProfile=\"defaultNoMotorvei\" name=\"\" startProfile=\"defaultNoMotorvei\"/>\n";
     output.write(tail_buf, tail_size);
 
     output.close();
