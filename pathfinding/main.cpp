@@ -32,7 +32,7 @@ using namespace clothoid;
 #define PRINT_ALL(cont, counter, fmt, ...) for (size_t counter = 0; counter < cont.size(); counter++) printf(fmt, __VA_ARGS__);
 
 double weight_slope = 10000.f*1.,
-      weight_curvature = 50000.f*1,
+      weight_curvature = 50000.f*2,
       weight_road = 1.f;
 
 //vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
@@ -91,7 +91,7 @@ inline double get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b
 {
     double dx = a.x-b.x, dy = a.y-b.y;
     double dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
-    double slope = fabs(dz/sqrt(dx*dx+dy*dy));
+    double slope = dz/sqrt(dx*dx+dy*dy);
 
     return slope;
 }
@@ -100,7 +100,7 @@ inline double transfer_slope(const terrain_t& terrain, const vec2d& a, const vec
 {
     double k0 = 2;
     
-    double slope = get_slope(terrain, a, b);
+    double slope = fabs(get_slope(terrain, a, b));
     if (slope > k0)
     {
 //        printf("slope is infinity\n");
