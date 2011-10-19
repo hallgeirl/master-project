@@ -5,6 +5,9 @@
 
 #include "vec2.h"
 
+namespace clothoid
+{
+
 struct connector_t
 {
     vec2d T, //tangent vector
@@ -23,6 +26,7 @@ struct connector_t
 
 class ClothoidPair
 {
+private:
     double length_total, 
            a0, a1, //Scaling factors
            alpha0, alpha1, //Angle of starting tangent
@@ -32,10 +36,12 @@ class ClothoidPair
     connector_t p0, p1;  // Point at the end of "g" and "h" respectively, with normal
     bool flip0, reverse; //reverse indicates that the clothoids in the pair is switched
 
-public:
-    vec2d lookup(double t); //Lookup a value in the clothoid pair
-
+private:
     void construct(const connector_t& pa, const connector_t& pb, const vec2d& ctrl, double tau);
+
+public:
+    ClothoidPair(const connector_t& pa, const connector_t& pb, const vec2d& ctrl, double tau);
+    vec2d lookup(double t); //Lookup a coordinate in the clothoid pair
     double length();
 };
 
@@ -45,16 +51,17 @@ private:
     std::vector<connector_t> connectors;
     std::vector<vec2d> controlPoints;
     std::vector<double> lengths;          // Accumulated curve length at each clothoid pair's starting point
+    std::vector<ClothoidPair> clothoidPairs;
 
-    void construct(std::vector<vec2d> controlPoints, double tau);
+private:
+    void construct(const std::vector<vec2d>& controlPoints, double tau);
 
 public:
-    std::vector<ClothoidPair> clothoidPairs;
-    ClothoidSpline(std::vector<vec2d> controlPoints);
+    ClothoidSpline(const std::vector<vec2d>& controlPoints);
 
     vec2d lookup(double t);
     size_t lookupClothoidPairIndex(double t);
     double length();
 };
-
+}
 #endif

@@ -18,6 +18,12 @@ using namespace std;
 #endif
 #endif
 
+namespace clothoid {
+
+/*
+    Auxilliary functions 
+*/
+
 inline double fx(double x, double k, double alpha)
 {
     return sqrt(x)*(C2(x)*sin(alpha) - S2(x)*(k + cos(alpha))) + sqrt(alpha-x) * (S2(alpha-x)*(1.+k*cos(alpha)) - k*C2(alpha-x)*sin(alpha));
@@ -43,15 +49,24 @@ double newton(double init, double k, double alpha, double err = 1e-5)
 }
 
 //Translate, then rotate
-vec2d transrot(const vec2d& p, const vec2d& dp, double rot)
+inline vec2d transrot(const vec2d& p, const vec2d& dp, double rot)
 {
     return vec2d(cos(rot)*(p.x+dp.x) - sin(rot)*(p.y+dp.y), sin(rot)*(p.x+dp.x) + cos(rot)*(p.y+dp.y));
 }
 
 //Rotate, then translate
-vec2d rottrans(const vec2d& p, const vec2d& dp, double rot)
+inline vec2d rottrans(const vec2d& p, const vec2d& dp, double rot)
 {
     return vec2d(cos(rot)*(p.x) - sin(rot)*(p.y)+dp.x, sin(rot)*(p.x) + cos(rot)*(p.y)+dp.y);
+}
+
+/*
+    ClothoidPair member functions
+*/
+
+ClothoidPair::ClothoidPair(const connector_t& pa, const connector_t& pb, const vec2d& ctrl, double tau)
+{
+    construct(pa, pb, ctrl, tau);
 }
 
 
@@ -86,20 +101,15 @@ vec2d ClothoidPair::lookup(double t)
         printf("Out of range: %lf (%lf) gdiff: %lf A0: %lf A1: %lf Reverse: %d\n", t, l[3], g_diff, t0*a0, t1*a1, reverse);
     }
 
-    //From the straight line
-//    if ((t < l[1] && !reverse) || (t >= l[2] && reverse) || straight_line)
+    //Parameter is from the straight line
     if ((t < l[1] && !reverse) || (t >= l[2] && reverse))
     {
         double tt = t;
-//        if (reverse && !straight_line) 
         if (reverse) 
         {
             tt -= l[2];
             tt = g_diff - tt;
         }
-//        if (reverse && straight_line) tt = length-tt;
-//        if (reverse) tt = length-tt;
-//        return vec2d(0,0);
         return p0.p + p0.T*tt;
     }
 
@@ -119,7 +129,7 @@ vec2d ClothoidPair::lookup(double t)
         p = rottrans(p, p0.p, alpha0) + p0.T * g_diff;
         return p;
     }
-    //From second segment
+    //From second segment (h)
     else
     {
         double tt = t;
@@ -207,8 +217,12 @@ void ClothoidPair::construct(const connector_t& pa, const connector_t& pb, const
     length_total = g_diff + t0*a0 + t1*a1;
 }
 
-//Class function definitions
-void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
+
+
+/*
+    ClothoidSpline member functions
+*/
+void ClothoidSpline::construct(const std::vector<vec2d>& _controlPoints, double tau)
 {
     if (_controlPoints.size() < 3)
         throw runtime_error("More than 3 control points are needed.");
@@ -242,111 +256,22 @@ void ClothoidSpline::construct(std::vector<vec2d> _controlPoints, double tau)
     for (size_t i = 0; i < controlPoints.size(); i++)
     {
         vec2d v = controlPoints[i];
-//        double normva = (v-connectors[i].p).length(),  // norm of one side
-//               normvb = (connectors[i+1].p-v).length(); // norm of the other side
-//        double cosalpha, alpha, k, g, h;    //angle between h and g, and the ratio of their lengths
-        ClothoidPair clothoid; //the clothoid pair we are constructing
-        clothoid.construct(connectors[i], connectors[i+1], v, tau);
+        ClothoidPair clothoid(connectors[i], connectors[i+1], v, tau); //the clothoid pair we are constructing
+//        clothoid.construct(connectors[i], connectors[i+1], v, tau);
         clothoidPairs.push_back(clothoid);
         lengths.push_back(clothoid.length()+lengths[i]);
-
-//        vec2d vg,vh;
-//        connector_t p0,p1;
-//
-//        if (normva > normvb)
-//        {
-//            p0 = connectors[i];
-//            p1 = connectors[i+1];
-//            p0.T = p0.T * -1;
-//            clothoid.reverse = false;
-//        }
-//        else
-//        {
-//            p0 = connectors[i+1];
-//            p1 = connectors[i];
-//            p1.T = p1.T * -1;
-//            clothoid.reverse = true;
-//        }
-//
-//        clothoid.p0 = p0,
-//        clothoid.p1 = p1;
-//
-//        if (abs(p0.p.x * (v.y - p1.p.y) + v.x * (p1.p.y - p0.p.y) + p1.p.x * (p0.p.y - v.y)) < 1e-6)
-//        {
-//            clothoid.length = (p1.p-p0.p).length();
-//            clothoid.g_diff = clothoid.length;
-//            clothoid.t0 = clothoid.t1 = 0;
-//            clothoidPairs.push_back(clothoid);
-//            lengths.push_back(lengths[i]+clothoid.length);
-//            continue;
-//        }
-//
-//        vg = v-p0.p;
-//        vh = p1.p-v;
-//        g = vg.length(); h = vh.length();
-//
-//        cosalpha = min(max(dot(vg.normalized(), vh.normalized()), -1.), 1.);
-//        alpha = acos(cosalpha);
-//
-//        {
-//            double glim = h * (C2(alpha)/S2(alpha)*sin(alpha) - cos(alpha));
-//            if (g > tau*glim + (1-tau)*h)
-//            {
-//                clothoid.g_diff = g - (tau*glim + (1-tau)*h);
-//                g = g - clothoid.g_diff; 
-//            }
-//            else
-//                clothoid.g_diff = 0;
-//        }
-//
-//        k = g / h;
-//        clothoid.flip0 = (vg.x*vh.y - vg.y*vh.x) < 0;
-//        clothoid.alpha0 = atan2(p0.T.y, p0.T.x);
-//        clothoid.alpha1 = atan2(p1.T.y, p1.T.x);
-//
-//        double t0 = newton(0.5*alpha, k, alpha, 1e-10),
-//               t1 = alpha - t0;
-//        
-//        clothoid.a0 = (g+h*cos(alpha))/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cos(alpha)+S2(alpha-t0)*sin(alpha)));
-//        clothoid.a1 = clothoid.a0*sqrt((alpha-t0)/t0);
-//        t0 = sqrt(t0*2./PI);
-//        t1 = sqrt(t1*2./PI);
-//        clothoid.t0 = t0;
-//        clothoid.t1 = t1;
-//        clothoid.length = clothoid.g_diff + t0*clothoid.a0 + t1*clothoid.a1;
-//        
-//        clothoidPairs.push_back(clothoid);
-//        lengths.push_back(clothoid.length+lengths[i]);
     }
 }
 
-ClothoidSpline::ClothoidSpline(std::vector<vec2d> controlPoints)
+ClothoidSpline::ClothoidSpline(const std::vector<vec2d>& controlPoints)
 {
     construct(controlPoints, 0.75);
 }
 
 vec2d ClothoidSpline::lookup(double t)
 {
-    //Check that t is within the range of the spline
-    if (t < 0 || t > lengths.back())
-        throw runtime_error("Parameter t outside of curve range");
+    int result = lookupClothoidPairIndex(t);
 
-    //First, determine which pair of clothoids we need by a binary search by finding the biggest length < t
-    int lower = 0, upper = lengths.size()-1;
-    int result = -1;
-    while (lower <= upper && result < 0)
-    {
-        int i = (upper+lower)/2;
-        if (lengths[i] <= t)
-        {
-            if (lengths[i+1] < t)
-                lower = i+1;
-            else
-                result = i;
-        }
-        else
-            upper = i;
-    }
 //    printf("clothoid no. %d t: %lf tmod: %lf length (at beg/end): %lf/%lf\n", result, t, t-lengths[result], lengths[result], lengths[result+1]);
     return clothoidPairs[result].lookup(t-lengths[result]);
 }
@@ -357,7 +282,7 @@ size_t ClothoidSpline::lookupClothoidPairIndex(double t)
     if (t < 0 || t > lengths.back())
         throw runtime_error("Parameter t outside of curve range");
 
-    //First, determine which pair of clothoids we need by a binary search by finding the biggest length < t
+    //Determine which pair of clothoids we need by a binary search by finding the biggest length < t
     int lower = 0, upper = lengths.size()-1;
     int result = -1;
     while (lower <= upper && result < 0)
@@ -380,4 +305,6 @@ size_t ClothoidSpline::lookupClothoidPairIndex(double t)
 double ClothoidSpline::length()
 {
     return lengths.back();
+}
+
 }

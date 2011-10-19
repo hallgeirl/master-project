@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace fresnel;
+using namespace clothoid;
 
 #ifndef PI
 #ifdef M_PI
@@ -28,8 +29,8 @@ using namespace fresnel;
 #endif
 #endif
 
-float weight_slope = 1000.f,
-      weight_curvature = 1000.f,
+float weight_slope = 200.f,
+      weight_curvature = 200.f,
       weight_road = 1.f;
 
 vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
@@ -408,33 +409,37 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
     output << "        </XYCurve>\n";
 
     // Form the polynomials needed for the SZCurve
-    double length = 0;
+    ClothoidSpline spline(controlPoints);
+
     output << "        <SZCurve>\n";
     output << "          <Polynomial>\n";
     output << "            <begin direction=\"" << get_slope(terrain, controlPoints[0], controlPoints[1]) << "\" x=\"0\" y=\"" << terrain.getPointBilinear(controlPoints[0].x, controlPoints[0].y) << "\" />\n";
 
-    for (size_t i = 1; i < controlPoints.size()-1; i++)
-    {
-        length += (controlPoints[i]-controlPoints[i-1]).length();
-        stringstream ss_point;
-        ss_point <<  "direction=\"" << get_slope(terrain, controlPoints[i], controlPoints[i+1]) << "\" x=\"" << length << "\" y=\"" << terrain.getPointBilinear(controlPoints[i].x, controlPoints[i].y) << "\"";
-        output << "            <end " << ss_point.str() << " />\n";
-        output << "          </Polynomial>\n";
-        output << "          <Polynomial>\n";
-        output << "            <begin " << ss_point.str() << " />\n";
-    }
+//    double prevelev = 
+//    for (int t = 0; t < spline.length(); t += 50)
+//    {
+//        vec2d pos = spline.lookup(t);
+////    for (size_t i = 1; i < controlPoints.size()-1; i++)
+////    {
+//        stringstream ss_point;
+//        ss_point <<  "direction=\"" << get_slope(terrain, controlPoints[i], controlPoints[i+1]) << "\" x=\"" << t << "\" y=\"" << terrain.getPointBilinear(controlPoints[i].x, controlPoints[i].y) << "\"";
+//        output << "            <end " << ss_point.str() << " />\n";
+//        output << "          </Polynomial>\n";
+//        output << "          <Polynomial>\n";
+//        output << "            <begin " << ss_point.str() << " />\n";
+//    }
     vec2d last = controlPoints.back(), secondLast = controlPoints[controlPoints.size()-2];
-    length += (last-secondLast).length();
-    output <<  "            <end direction=\"0\" x=\"" << length << "\" y=\"" << terrain.getPointBilinear(last.x, last.y) << "\" />\n";
+//    length += (last-secondLast).length();
+//    output <<  "            <end direction=\"0\" x=\"" << length << "\" y=\"" << terrain.getPointBilinear(last.x, last.y) << "\" />\n";
     output << "          </Polynomial>\n";
     output << "        </SZCurve>\n";
     output << "        <BankingCurve>\n";
     output << "          <Polynomial>\n";
     output << "            <begin direction=\"0\" x=\"0\" y=\"0\" />\n";
-    output << "            <end direction=\"0\" x=\"" << length << "\" y=\"0\" />\n";
+//    output << "            <end direction=\"0\" x=\"" << length << "\" y=\"0\" />\n";
     output << "          </Polynomial>\n";
     output << "        </BankingCurve>\n";
-    output << "        <Portion endDistance=\"" << length << "\" endProfile=\"defaultNoMotorvei\" name=\"\" startProfile=\"defaultNoMotorvei\"/>\n";
+//    output << "        <Portion endDistance=\"" << length << "\" endProfile=\"defaultNoMotorvei\" name=\"\" startProfile=\"defaultNoMotorvei\"/>\n";
     output.write(tail_buf, tail_size);
 
     output.close();
@@ -546,57 +551,8 @@ int main(int argc, char** argv)
         setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), color*red, color*green,color*blue);
     }
 
-    //Draw some spline
-//    for (size_t i = 0; i < clothoidSpline.clothoidPairs.size(); i++)
-//    {
-//        ClothoidPair c = clothoidSpline.clothoidPairs[i];
-//        vec2d p0 = c.p0.p, p1 = c.p1.p;
-//        vec2d T0 = c.p0.T, T1 = c.p1.T;
-//        double step = 1.*terrain.point_spacing;
-//
-//        // Straight line segment for the longer edge, if neccesary
-//        double t = 0.;
-//
-////        printf("a0,a1: %lf %lf, alpha0,alpha1: %lf %lf, flip: %d, p0: %lf %lf, t0: %lf %lf, p1: %lf %lf, t1: %lf %lf\n", c.a0, c.a1, c.alpha0, c.alpha1, c.flip0, p0.x, p0.y, T0.x, T0.y, p1.x, p1.y, T1.x, T1.y);
-//        while (t < c.g_diff || (c.straight_line && t < c.length))
-//        {
-//            double x = p0.x+T0.x*t;
-//            double y = p0.y+T0.y*t;
-//            setPixelColor(bm, int(x/terrain.point_spacing), int(y/terrain.point_spacing), 255, 0, 0);
-//            t += step;
-//        }
-//
-//        t = 0.;
-////        printf("t0 %lf t1 %lf\n", c.t0, c.t1);
-//        while (t < c.t0 && !c.straight_line)
-//        {
-//            vec2d p(c.a0*C1(t), c.a0*S1(t));
-//
-//            // Inverse transform
-//            if (c.flip0)
-//                p.y *= -1;
-//            
-//            p = rottrans(p, c.p0.p, c.alpha0);
-//            p = p + c.p0.T * c.g_diff;
-//
-//            t += step/c.a0;
-//            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255, 0, 0);
-//        }
-//
-//        t = 0.;
-//        while (t < c.t1 && !c.straight_line)
-//        {
-//            vec2d p = vec2d(c.a1*C1(t), c.a1*S1(t));
-//
-//            // Inverse transform
-//            if (!c.flip0)
-//                p.y *= -1;
-//            p = rottrans(p, c.p1.p, c.alpha1);
-//            t += step/c.a1;
-//
-//            setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), 255,0,0);
-//        }
-//    }
+    printf("Length of curve: %lf\n", clothoidSpline.length());
+
     
     for (size_t i = 0; i < path.size(); i++)
     {
