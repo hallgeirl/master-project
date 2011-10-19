@@ -63,11 +63,15 @@ namespace clothoid {
        ClothoidPair member functions
      */
 
+    ClothoidPair::ClothoidPair(const vec2d& pa, const vec2d& pb, const vec2d& Ta, const vec2d& Tb, const vec2d& ctrl, double tau)
+    {
+        construct(connector_t(pa, Ta), connector_t(pb, Tb), ctrl, tau);
+    }
+
     ClothoidPair::ClothoidPair(const connector_t& pa, const connector_t& pb, const vec2d& ctrl, double tau)
     {
         construct(pa, pb, ctrl, tau);
     }
-
 
     double ClothoidPair::length()
     {
@@ -148,7 +152,16 @@ namespace clothoid {
             result.curvature = PI*tt/a1;
         }
 
+
+//        result.integrated_curvature = 0.5*PI*(t0*t0 / a0 + t1*t1 / a1) / (t0*a0+t1*a0+g_diff);
+        result.integrated_curvature = 0.5*PI*(t0*t0 / a0) + 0.5*PI*(t1*t1 / a1);
+
         return result;
+    }
+
+    double ClothoidPair::integratedCurvature()
+    {
+        return 0.5*PI*(t0*t0 / a0) + 0.5*PI*(t1*t1 / a1);
     }
 
     void ClothoidPair::construct(const connector_t& pa, const connector_t& pb, const vec2d& v, double tau)
@@ -163,14 +176,14 @@ namespace clothoid {
         {
             p0 = pa;
             p1 = pb;
-            p0.T = p0.T * -1;
+            p1.T = p1.T * -1;
             reverse = false;
         }
         else
         {
             p0 = pb;
             p1 = pa;
-            p1.T = p1.T * -1;
+            p0.T = p0.T * -1;
             reverse = true;
         }
 
@@ -180,6 +193,7 @@ namespace clothoid {
             length_total = (p1.p-p0.p).length();
             g_diff = length_total;
             t0 = t1 = 0;
+            a0 = a1 = 1;
             return;
         }
 
@@ -206,8 +220,8 @@ namespace clothoid {
         alpha0 = atan2(p0.T.y, p0.T.x);
         alpha1 = atan2(p1.T.y, p1.T.x);
 
-        t0 = newton(0.5*alpha, k, alpha, 1e-10),
-           t1 = alpha - t0;
+        t0 = newton(0.5*alpha, k, alpha, 1e-10);
+        t1 = alpha - t0;
 
         //Compute scaling factors
         a0 = (g+h*cos(alpha))/(C2(t0)+sqrt((alpha-t0)/t0)*(C2(alpha-t0)*cos(alpha)+S2(alpha-t0)*sin(alpha)));
@@ -240,17 +254,18 @@ namespace clothoid {
         lengths.push_back(0);
 
         // Figure out the connectors and their tangents(they're half way between each control vertex, plus the endpoints)
-        connectors.push_back(connector_t(_controlPoints[0], (_controlPoints[0] - _controlPoints[1]).normalized()));
+        connectors.push_back(connector_t(_controlPoints[0], (_controlPoints[1] - _controlPoints[0]).normalized()));
 
         for (size_t i = 1; i < _controlPoints.size()-2; i++)
         {
             vec2d p0 = _controlPoints[i],
                   p1 = _controlPoints[i+1];
             vec2d cp = (p0+p1)/2.;
-            connector_t con(cp, (p0-cp).normalized());
+            connector_t con(cp, (cp-p0).normalized());
             connectors.push_back(con);
         }
-        connectors.push_back(connector_t(_controlPoints.back(), (_controlPoints[_controlPoints.size()-2]-_controlPoints.back()).normalized()));
+        connectors.push_back(connector_t(_controlPoints.back(), (_controlPoints.back() - _controlPoints[_controlPoints.size()-2]).normalized()));
+//        connectors.push_back(connector_t(_controlPoints.back(), (_controlPoints[_controlPoints.size()-2]-_controlPoints.back()).normalized()));
 
         //Copy the control points to the class local vector. Exclude the first and last points because they are connectors, not control points
         for (size_t i = 1; i < _controlPoints.size()-1; i++)

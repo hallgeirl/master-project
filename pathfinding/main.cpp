@@ -146,35 +146,66 @@ inline float transfer_road(const terrain_t& terrain, const vec2d& a, const vec2d
 }
 
 //Integrate the cost over the path segment 
-inline float cost(const terrain_t& terrain, const vec2d& a, const vec2d& b, const vec2d& prev)
+float cost(const terrain_t& terrain, const vec2d& a, const vec2d& v, const vec2d& b, const vec2d T0, bool first, bool last)
 {
-    float i = 0;
-    float cost_slope = 0;
-    vec2d dir = b-a;
+    //do we have enough points to make a curve? If not, return a cost of 0.
+    if (v == a)
+        return 0;
 
-    const float step = 1.*terrain.point_spacing/dir.length();
-
-    for (float t = 0; t < 1.f; t = i*step, i++)
+    vec2d p0, p1, T1;
+    if (first)
     {
-        float t1 = t, t2 = t+step;
-        if (t2 > 1.f)
-            t2 = 1.f;
-
-        vec2d _a = dir*t1 + a,
-              _b = dir*t2 + a;
-        
-        cost_slope += transfer_slope(terrain, _a, _b) * (t2-t1);
+        p0 = a;
     }
+    else
+    {
+        p0 = (a+v)/2.;
+    }
+    
+    if (last)
+        p1 = b;
+    else    
+        p1 = (b+v)/2.;
 
-//    return transfer_road(terrain, a, b);
-    float cost_road = transfer_road(terrain, a, b),
-//          cost_slope = transfer_slope(terrain, a, b),
-          cost_curvature = transfer_curvature(terrain, a, b, prev);
-        
-    if (cost_road+cost_slope+cost_curvature == numeric_limits<float>::infinity())
-        return numeric_limits<float>::infinity();
+    T1 = (v-p1).normalized();
 
-    return cost_road + cost_slope + cost_curvature;
+    ClothoidPair c(p0, T0, p1, T1, v);
+    return c.length() * weight_road + c.integratedCurvature() * weight_curvature;
+
+    //Construct a clothoid spline from the three last vertices
+//    vector<vec2d> ctrl;
+//    ctrl.push_back(prev);
+//    ctrl.push_back(a);
+//    ctrl.push_back(b);
+//    ClothoidSpline(
+
+    
+//    return 0;
+//    float i = 0;
+//    float cost_slope = 0;
+//    vec2d dir = b-a;
+//
+//    const float step = 1.*terrain.point_spacing/dir.length();
+//
+//    for (float t = 0; t < 1.f; t = i*step, i++)
+//    {
+//        float t1 = t, t2 = t+step;
+//        if (t2 > 1.f)
+//            t2 = 1.f;
+//
+//        vec2d _a = dir*t1 + a,
+//              _b = dir*t2 + a;
+//        
+//        cost_slope += transfer_slope(terrain, _a, _b) * (t2-t1);
+//    }
+//
+//    float cost_road = transfer_road(terrain, a, b),
+//          cost_curvature = transfer_curvature(terrain, a, b, prev);
+//        
+//    if (cost_road+cost_slope+cost_curvature == numeric_limits<float>::infinity())
+//        return numeric_limits<float>::infinity();
+//
+//    return cost_road + cost_slope + cost_curvature;
 }
 
 vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density)
@@ -269,10 +300,27 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
                     continue;
                 }
 
+                vec2d T0;
+                //First curve segment?
+                const vec2i& v = current.p;
+                const vec2i& pa = predecessor[current.p];
+                const vec2i& pb = pos;
+                
+                if (pa == start && pa != v)
+                    T0 = (terrain.gridToPoint(v) - terrain.gridToPoint(pa)).normalized();
+                else if (pa != v)
+                    T0 = (terrain.gridToPoint(pa)-terrain.gridToPoint(predecessor[pa])).normalized();
+                else
+                    T0 = vec2d(0, 0);
+
                 node_t n(pos, 
-                        current.cost_g + cost(terrain, terrain.gridToPoint(current.p), 
-                            terrain.gridToPoint(pos), 
-                            terrain.gridToPoint(predecessor[current.p])),
+                        current.cost_g + cost(terrain, 
+                                              terrain.gridToPoint(pa), 
+                                              terrain.gridToPoint(v), 
+                                              terrain.gridToPoint(pb),
+                                              T0,
+                                              predecessor[current.p] == start,
+                                              pos == end),
                         h(terrain, terrain.gridToPoint(pos), terrain.gridToPoint(end)));
 
 //                if (n.cost_g == numeric_limits<float>::infinity())
@@ -446,7 +494,6 @@ int main(int argc, char** argv)
     int h = 1024, w = 1024;
 //    int h = 300, w = 300;
     float spacing = 10.;
-    int grid_density = 4;
 
     //Terrain storage
     unsigned short* terrain_raw = new unsigned short[h*w];
@@ -483,10 +530,11 @@ int main(int argc, char** argv)
         }
     }
 
+    int grid_density = 4;
     vector<vec2d> path = pathFind(terrain, start, end, grid_density);
 
 //    vector<vec2d> path;
-//    for (int i = 0; i < 10; i++)
+//    for (int i = 0; i < 5; i++)
 //        path.push_back(vec2d(rand() % 10240, rand() % 10240));
 //    path.push_back(vec2d(1750,2750));
 //    path.push_back(vec2d(1750,4000));
@@ -523,7 +571,8 @@ int main(int argc, char** argv)
         clothoid_point_t p = clothoidSpline.lookup(t);
         double color = 255;
         double red = 1;
-        double green = 1.-min(p.curvature*100.,1.);
+//        double green = 1.-min(p.curvature*100.,1.);
+        double green = 1.-min(p.integrated_curvature*500,1.);
         double blue = 1;
         blue = green;
         setPixelColor(bm, int(p.pos.x/terrain.point_spacing), int(p.pos.y/terrain.point_spacing), color*red, color*green,color*blue);

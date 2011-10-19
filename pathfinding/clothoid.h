@@ -27,6 +27,7 @@ namespace clothoid
     {
         double t, curvature;
         vec2d pos;
+        double integrated_curvature;
     };
 
     class ClothoidPair
@@ -45,9 +46,11 @@ namespace clothoid
             void construct(const connector_t& pa, const connector_t& pb, const vec2d& ctrl, double tau);
 
         public:
-            ClothoidPair(const connector_t& pa, const connector_t& pb, const vec2d& ctrl, double tau);
+            ClothoidPair(const vec2d& pa, const vec2d& pb, const vec2d& Ta, const vec2d& Tb, const vec2d& ctrl, double tau = 0.75);
+            ClothoidPair(const connector_t& pa, const connector_t& pb, const vec2d& ctrl, double tau = 0.75);
             clothoid_point_t lookup(double t); //Lookup a coordinate in the clothoid pair
             double length();
+            double integratedCurvature();
     };
 
     class ClothoidSpline

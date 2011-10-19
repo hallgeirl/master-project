@@ -62,6 +62,11 @@ struct vec2_t
     {
         return x == n2.x && y == n2.y;
     }
+
+    bool operator!= (const vec2_t& n2) const
+    {
+        return !(*this == n2);
+    }
 };
 
 typedef vec2_t<int> vec2i;
