@@ -35,10 +35,10 @@ float weight_slope = 200.f,
       weight_curvature = 200.f,
       weight_road = 1.f;
 
-vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
-
-//Rotate, then translate
-vec2d rottrans(const vec2d& p, const vec2d& dp, double rot);
+//vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
+//
+////Rotate, then translate
+//vec2d rottrans(const vec2d& p, const vec2d& dp, double rot);
 
 struct node_t
 {
@@ -74,8 +74,6 @@ struct node_t
         return p == n2;
     }
 };
-
-//inline interpolate(const  terrain_t& terrain, const vec2_t& a, const vec2_t& b)
 
 
 //Heuristic for computing the cost from a to b.
@@ -215,11 +213,8 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         }
     }
 
-//    printf("Neighborhood:\n");
-//    for (size_t i = 0; i < neighborhood.size(); i++)
-//        printf("%d,%d\n", neighborhood[i].x, neighborhood[i].y);
-//
-//    fflush(stdout);
+    printf("Neighborhood:\n");
+    PRINT_ALL(neighborhood, i, "%d,%d\n", neighborhood[i].x, neighborhood[i].y);
 
     node_t current(start, 0, 0);
     predecessor[start] = start;
@@ -245,7 +240,7 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         ii++;
         if (ii % 1000 == 0)
         {
-            printf("current %d,%d\tnopen %ld\tnclosed %ld\tf %f\th %f\n", current.p.x, current.p.y, open.size(), closed.size(), current.cost_f(), current.cost_h);
+            printf("current %d,%d\tnopen %zd\tnclosed %zd\tf %f\th %f\n", current.p.x, current.p.y, open.size(), closed.size(), current.cost_f(), current.cost_h);
             fflush(stdout);
         }
 
@@ -396,11 +391,11 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
 
 
     double step = 50;
-    vec2d pos_prev = spline.lookup(0),
+    clothoid_point_t pos_prev = spline.lookup(0),
           pos_next = spline.lookup(step);
     output << "        <SZCurve>\n";
     output << "          <Polynomial>\n";
-    output << "            <begin direction=\"" << get_slope(terrain, pos_prev, pos_next) << "\" x=\"0\" y=\"" << terrain.getPointBilinear(pos_prev.x, pos_prev.y) << "\" />\n";
+    output << "            <begin direction=\"" << get_slope(terrain, pos_prev.pos, pos_next.pos) << "\" x=\"0\" y=\"" << terrain.getPointBilinear(pos_prev.pos.x, pos_prev.pos.y) << "\" />\n";
 
     for (int t = step; t < spline.length()-step-1e-6; t += step)
     {
@@ -408,7 +403,7 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
         pos_next = spline.lookup(t+step);
 
         stringstream ss_point;
-        ss_point <<  "direction=\"" << get_slope(terrain, pos_prev, pos_next) << "\" x=\"" << t << "\" y=\"" << terrain.getPointBilinear(pos_prev.x, pos_prev.y) << "\"";
+        ss_point <<  "direction=\"" << get_slope(terrain, pos_prev.pos, pos_next.pos) << "\" x=\"" << t << "\" y=\"" << terrain.getPointBilinear(pos_prev.pos.x, pos_prev.pos.y) << "\"";
         output << "            <end " << ss_point.str() << " />\n";
         output << "          </Polynomial>\n";
         output << "          <Polynomial>\n";
@@ -416,7 +411,7 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
     }
 //    vec2d last = controlPoints.back(), secondLast = controlPoints[controlPoints.size()-2];
 //    length += (last-secondLast).length();
-    output <<  "            <end direction=\"0\" x=\"" << spline.length() << "\" y=\"" << terrain.getPointBilinear(pos_next.x, pos_next.y) << "\" />\n";
+    output <<  "            <end direction=\"0\" x=\"" << spline.length() << "\" y=\"" << terrain.getPointBilinear(pos_next.pos.x, pos_next.pos.y) << "\" />\n";
     output << "          </Polynomial>\n";
     output << "        </SZCurve>\n";
     output << "        <BankingCurve>\n";
@@ -445,6 +440,8 @@ void setPixelColor(FIBITMAP* bm, int x, int y, int r, int g, int b)
 
 int main(int argc, char** argv)
 {
+    srand(time(0));
+
     //Terrain dimensions
     int h = 1024, w = 1024;
 //    int h = 300, w = 300;
@@ -488,15 +485,16 @@ int main(int argc, char** argv)
 
     vector<vec2d> path = pathFind(terrain, start, end, grid_density);
 
-
 //    vector<vec2d> path;
+//    for (int i = 0; i < 10; i++)
+//        path.push_back(vec2d(rand() % 10240, rand() % 10240));
 //    path.push_back(vec2d(1750,2750));
 //    path.push_back(vec2d(1750,4000));
 //    path.push_back(vec2d(3000,5000));
 //    path.push_back(vec2d(5000,5000));
 //    path.push_back(vec2d(5750,3500));
 //    path.push_back(vec2d(6500,4750));
-    ClothoidSpline clothoidSpline(path);
+    ClothoidSpline clothoidSpline(path, 0.75);
 
     writeRoadXML("someroadxml.rnd", path, terrain);
 
@@ -518,23 +516,17 @@ int main(int argc, char** argv)
 
 //    for (double t = 0; t < clothoidSpline.length(); t += 10)
     
-//    double tmin = 1500;
-//    double tmax = tmin+1500;
     double tmin = 0, tmax = clothoidSpline.length();
-//    tmax = 2300;
 
     for (double t = tmin; t < tmax; t += 5)
     {
-        vec2d p = clothoidSpline.lookup(t);
-//        int color = int((t-tmin)) % 256;
-        int color = 255;
-        int red = 1;
-//        int green = clothoidSpline.lookupClothoidPairIndex(t) % 2;
-        int green = 0;
-//        int blue = clothoidSpline.clothoidPairs[clothoidSpline.lookupClothoidPairIndex(t)].reverse;
-        int blue = 0;
-//        printf("%d is flipped: %d\n", clothoidSpline.lookupClothoidPairIndex(t), blue);
-        setPixelColor(bm, int(p.x/terrain.point_spacing), int(p.y/terrain.point_spacing), color*red, color*green,color*blue);
+        clothoid_point_t p = clothoidSpline.lookup(t);
+        double color = 255;
+        double red = 1;
+        double green = 1.-min(p.curvature*100.,1.);
+        double blue = 1;
+        blue = green;
+        setPixelColor(bm, int(p.pos.x/terrain.point_spacing), int(p.pos.y/terrain.point_spacing), color*red, color*green,color*blue);
     }
 
     printf("Length of curve: %lf\n", clothoidSpline.length());
@@ -545,7 +537,6 @@ int main(int argc, char** argv)
         RGBQUAD rgb;
         rgb.rgbRed = rgb.rgbBlue = 0;
         rgb.rgbGreen = 255;
-//        FreeImage_SetPixelColor(bm, path[i].x/terrain.point_spacing, path[i].y/terrain.point_spacing, &rgb);
         FreeImage_SetPixelColor(bm, path[i].x/terrain.point_spacing, path[i].y/terrain.point_spacing, &rgb);
     }
 
