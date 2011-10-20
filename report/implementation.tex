@@ -5,10 +5,42 @@ This chapter will describe my implementation of the procedural road generation a
 For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described.
 
 \subsection{Implementation of A*}
+An A* search often has a very large amount of insertion operations to the $OPEN$ set, as it is used in algorithm \ref{alg:astar}. In addition, every iteration the node with the lowest $f$-cost must be retrieved from this set. Using an unsorted list gives a constant insertion time, but a really bad lookup-time when searching for the node with the lowest $f$-cost of $O(n)$. In the other extreme, a sorted list gives constant lookup-time, but insertion takes $O(n)$ time. 
 
+Instead, typically a min-heap is used. A min-heap has a constant lookup-time because the next element to be extracted is always on top, but in addition the element must be removed, which takes $O(lg n)$ time. Insertion takes in theory $O(lg(n))$ time, but due to the structure of the heap, in reality this cost is constant. In this implementation, a min-heap is used. 
+
+\subsubsection{Neighborhood mask creation}
+A typical A* implementation for use with a grid like the discretization of a terrain often use eight neighbors. \cite{roadgen} propose that not only the immediate eight neighbors are used per node, but instead use a larger neighborhood as described in section \ref{sec:roadgen_shortestpath}, and as shown in figure \ref{fig:neighbormask}. 
+
+The naive implementation of utilizing this would be to for each node loop over each neighboring node within a distance $k$, check if $gcd(i,j)=1$, and if so, compute the cost to that node and add it to the $OPEN$ list. This does a lot of uneccesary checks as many of those neighbors will not be selected for expansion because $gcd(i,j)\neq 1$. Instead, the neighborhood mask are precomputed before the search starts and put in an an array. This allows us to instead loop over the array, with exactly as many elements as there is neighbors that will actually be expanded. The pseudocode for the generation of neighborhood masks are given in algorithm \ref{alg:neighborhoodmask}.
+
+\begin{algorithm}
+\begin{algorithmic}
+\STATE Let $M$ be the neighborhood mask, initially empty.
+\FOR {$i := 0\to k$}
+    \FOR {$j := 0\to k$}
+        \IF {$gcd(i,j) \neq 1$}
+            \STATE continue
+        \ENDIF
+        \STATE $M := M + (i,j)$
+        \IF {$ i \neq 0$}
+            \STATE $M := M + (-i,j)$
+        \ELSIF {$j \neq 0$}
+            \STATE $M := M + (i,-j)$
+        \ELSIF {$i \neq 0 \land j \neq 0$}
+            \STATE $M := M + (-i,-j)$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\caption{Pseudocode for constructing the neighborhood mask}
+\label{alg:neighborhoodmask}
+\end{algorithm}
+
+%Although \cite{roadgen} uses the principles of a standard A* search for generating a road, there are some particularities with this specific implementation
 
 \subsection{Clothoid spline generation}
-TODO
+Figure \ref{fig:clothoid_pair} shows an example of a clothoid pair, where the colors differentiate the pairs.
 
 \subsection{RoadXML generation}
 
@@ -16,9 +48,10 @@ TODO
 \section{Integration with snow simulator}
 \label{sec:impl_snowsim}
 
-\subsection{Scaling of terrain}
+\subsection{Scaling of terrain and model}
 
 \subsection{Model loader and format}
+The models used for roads and other meshes in the snow simulator is the Wavefront OBJ format, which is a plaintext format containing information about the material used, positions of vertices, texture coordinates, faces and normals. 
 
 \subsection{Other improvements}
 

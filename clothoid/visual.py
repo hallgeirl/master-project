@@ -101,8 +101,8 @@ def neg(p):
 def main(argv):
     C = fresnelC2
     S = fresnelS2
-    n = 700
-    step = 1.
+    n = 520
+    step = 0.25
 #    ctrlpoints = [(50,50), (200, 50), (60, 200)]
     #ctrlpoints = [(0,0), (200, 0), (100, 200)]
     
@@ -110,7 +110,8 @@ def main(argv):
     #ctrlpoints = [[0,0], [100, 10], [100, 100], [150,0]]
     #ctrlpoints = [[0,0], [50, 100], [100, 50], [150,200]]
     #ctrlpoints = [[15,25], [50, 100], [100, 50], [150,200]]
-    ctrlpoints = [[175,275], [175, 400], [300, 500], [500,500], [575,350], [650,475]]
+#    ctrlpoints = [[175,275], [175, 400], [300, 500], [500,500], [575,350], [650,475]]
+    ctrlpoints = [[100,30], [0, 400], [400, 70]]
 #    ctrlpoints = [[0,0], [50, 100], [100, 50]]
 
     img = [None]*n
@@ -179,8 +180,8 @@ def main(argv):
         cosalpha= min(max(va[0]*vb[0]+va[1]*vb[1], -1),1)
         alpha = acos(cosalpha)
 
-        #tau = 0.75
-        tau = 0.
+#        tau = 0.75
+        tau = 0.5
         glim = h * (C(alpha)/S(alpha)*sin(alpha) - cos(alpha))
         g_diff = 0
         if g > tau*glim + (1-tau)*h:
@@ -222,7 +223,8 @@ def main(argv):
             y = p0[1]+T0[1]*t
             for j in xrange(3):
                 img[int(y)][int(x)*3+j] = 0
-            img[int(y)][int(x)*3] = 255
+#            img[int(y)][int(x)*3] = 255
+            img[int(y)][int(x)*3+1] = 255
             t += step
 
         t = 0.
@@ -263,7 +265,7 @@ def main(argv):
 
             for j in xrange(3):
                 img[int(y)][int(x)*3+j] = 0
-            img[int(y)][int(x)*3] = 255
+            img[int(y)][int(x)*3+2] = 255
         print ""
 
     for c in ctrlpoints:

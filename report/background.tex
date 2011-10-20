@@ -22,12 +22,12 @@ One of the most well known and efficient single-source algorithms when we assume
 \STATE Let $\pi(v)$ be the predecessor to node $v$; initially, $\forall v (\pi(v) = \mbox{none})$ 
 \STATE Put all nodes $v_i$ in a priority queue, sorted on $d(v_i)$.
 \WHILE {$|Q| > 0$}
-    \STATE $v \gets \mbox{next node in Q}$
-    \STATE $Q\gets Q - \{v\}$
+    \STATE $v := \mbox{next node in Q}$
+    \STATE $Q:= Q - \{v\}$
     \FORALL{neighbors $w$ of $v$}
         \IF{$d(v)+w(v,w) < d(w)$}
-            \STATE $d(w) \gets  d(v)+w(v, w)$.
-            \STATE $\pi(w)\gets v$
+            \STATE $d(w) :=  d(v)+w(v, w)$.
+            \STATE $\pi(w):= v$
         \ENDIF
     \ENDFOR
 \ENDWHILE
@@ -51,14 +51,14 @@ Combining these values gives the {\textit f-cost} $f(x) = g(x)+h(x)$, which is t
 \STATE Initially, $OPEN = \{v_a\}$ and $CLOSED = \emptyset$. 
 \STATE Let $\pi(v)$ be the predecessor to node $v$; initially, $\forall v (\pi(v) = \mbox{none})$ 
 \WHILE {$|Q| > 0 \land v_b \notin CLOSED$}
-    \STATE $v \gets \mbox{node with smallest f-cost in OPEN}$
-    \STATE $OPEN\gets OPEN - {v}$
-    \STATE $CLOSED \gets CLOSED + \{v\}$
+    \STATE $v := \mbox{node with smallest f-cost in OPEN}$
+    \STATE $OPEN:= OPEN - {v}$
+    \STATE $CLOSED := CLOSED + \{v\}$
     \FORALL{neighbors $w$ of $v$}
         \IF{$w \notin CLOSED \land w \notin OPEN$}
             \STATE Put $w$ in the $OPEN$ queue.
         \ELSIF{$w \in OPEN \wedge g(v)+w(v,w) < g(w)$}
-            \STATE $g(w) \gets g(v)+w(v,w)$
+            \STATE $g(w) := g(v)+w(v,w)$
         \ENDIF
     \ENDFOR
 \ENDWHILE
@@ -122,7 +122,7 @@ and the curvature of a clothoid curve is given by
 \kappa(t) = \frac{\pi t}{a},\ \kappa(\theta) = \frac{\sqrt{2\pi\theta}}{a}
 \label{eq:clothoid_curvature}
 \end{equation}
-A plot of a clothoid is shown in figure \ref{fig:back_clothoid}. 
+A plot of a clothoid is shown in figure \ref{fig:back_clothoid}, plotted from $t=0$ and upwards. Note that in many applications of clothoid curves, in particular in road trajectory computation, only the first part of the curve is used, as we will see later on.
 
 \begin{figure}[ht]
 \centering
@@ -155,6 +155,50 @@ f(t) = \sum_{n=0}^{11} f_nt^{-2n-1}, g(t) = \sum_{n=0}^{11} g_nt^{-2n-1}
 where values for $g_n$ and $f_n$ is given in appendix \ref{app:fresnel}, as well as in \cite{fresnel}. 
 
 \subsection{Clothoid splines}
+Clothoids can be used to form splines, given a set of control points $\mbf{v}_1, \mbf{v}_2, ..., \mbf{v}_n$.\cite{clothoid} One way of achieving this is first noting that clothoids have a curvature in the beginning of the curve $\kappa(0) = 0$. Assume that we are given three points $\mbf{v}$, $\mbf{p}_0$ and $\mbf{p}_1$, and the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively. If we can find a pair of clothoids $A_0$ and $A_1$ that start at $\mbf{p}_0$ and $\mbf{p}_1$, respectively, in the direction of their tangents, so that they are joined at some point $\mbf{p}$ with equal curvature, then we can construct a spline using three or more control points.\cite{clothoid} 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figure/clothoid_pair}
+\caption{Clothoid pair that can be used as a spline segment. $\mbf{q}$ marks where the clothoids are joined, and $\mbf{s}$ marks where a straight line segment is appended.}
+\label{fig:clothoid_pair}
+\end{figure}
+
+The first step in constructing the spline is to define the vertices where the clothoid pairs meet with zero curvature. One way of choosing these is to use the first and last control vertex as the first and last vertex, and use the midpoint between two control vertices for all the middle points. This is a typical way of doing it, although there may be other ways of choosing the connection vertices. The tangents of each point is chosen so that the last tangent in a clothoid pair points in the direction of the control vertex $\mbf{v}$ from $\mbf{p}_1$, and the very first tangent is chosen in the direction of $\mbf{v}$ from $\mbf{p}_0$. 
+%Now, for each control vertex, we may define a clothoid pair from that vertex, and its adjecent connection vertices. 
+
+\subsubsection{Finding clothoid pairs}
+Given the three points $\mbf{v}$, $\mbf{p}_0$ and $\mbf{p}_1$ where the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively, how can a pair of clothoids be found that satisfies the continuity of the curvature at the meeting point, and the initial direction given by the tangent vectors? Label ${\mbf P}_0$ and ${\mbf P}_1$ so that $||{\mbf P}_0-\mbf{v}||_2 > ||{\mbf P}_1-\mbf{v}||_2$, and call the longer edge $g$ and the shorter one $h$. Let $k=g/h$ be the ratio of their lengths. Let $\alpha$ be the angle between these two edges, as shown in figure \ref{fig:clothoid_pair}. Then, if
+\begin{equation}
+\frac{k + \cos{\alpha}}{\sin \alpha} < \frac{C_2(\alpha)}{S_2(\alpha)}
+\label{eq:clothoid_asymmetry_condition}
+\end{equation}
+then such a pair of clothoids exist.\cite{clothoid} Finding this pair is then done by computing the tangent angle deviation $\theta$ for the meeting point for both clothoids, $\theta_0$ and $\theta_1$, or in other words, find $\theta_0$ and $\theta_1$ such that $\theta_0 + \theta_1 = \alpha$ and $\kappa_{A_0}(\theta_0) = \kappa_{A_1}(\theta_1)$. This is done by solving the equation 
+\begin{align}
+\sqrt{\theta}[C(\theta)\sin(\alpha) - S(\theta)(k+\cos(\alpha)] + \sqrt{\alpha-\theta}[S(\alpha-\theta)(1+k\cos(\alpha)) - kC(\alpha - \theta)\sin(\alpha)] = 0
+\end{align}
+for $\theta_0$. For solving this equation, \cite{clothoid} suggests Newton's method or the bisection method.
+
+Finally, we must compute the scaling factors for $A_0$ and $A_1$, that is, $a_0$ and $a_1$, respectively. Again referring to \cite{clothoid}, this is done by solving the equation
+\begin{align}
+a_0C(\theta_0)+a_0\sqrt{\frac{\alpha-\theta_0}{\theta_0}}C(\alpha-\theta_0)\cos(\alpha) + a_0\sqrt{\frac{\alpha-\theta_0}{\theta_0}}S(\alpha-\theta_0)\sin(\alpha) = g+h\cos(\alpha)
+\end{align}
+for $a_0$. This is a simple rearrangement of terms since $\theta_0$ and all other values are known at this point.
+
+Now we have all we need to define the clothoid pair given by the three points: The scaling factors $a_0$ and $a_1$, and the tangent angle deviation of the curves at their endpoints $\theta_0$ and $\theta_1$.
+
+\subsubsection{Appending straight line segments}
+There may be a significant asymmetry between the lengths of $g$ and $h$; i.e., given a control vertex $\mbf{v}$ and two points $\mbf{p}_0$ and $\mbf{p}_1$, $||{\mbf P}_0-\mbf{v}||_2$ and $||{\mbf P}_1-\mbf{v}||_2$ may be very different. It is easy to see that if this is the case, the inequality \ref{eq:clothoid_asymmetry_condition} may no longer hold and we may not be able to find a clothoid pair for these three points. Because the curvature at the joints between clothoid pairs are zero, the same as a straight line, this can be solved by simply appending a straight line, and "moving" the starting point furthest away from ${\mbf v}$ closer, so that the asymmetry is reduced. Moving it so that $g=h$ results in a symmetric pair of clothoids, i.e. one clothoid is simply a reflection of the other.\cite{clothoid}
+
+To achieve this, assume that the point furthest away from ${\mbf v}$, i.e. the point defining $g$, is labelled ${\mbf P}_0$. Then we may define a symmetry parameter $\tau\in [0, 1)$ that determines how close to ${\mbf v}$ we wish to move ${\mbf P}_0$. $\tau=0$ gives perfect symmetry, while any other value of $\tau$ gives different degrees of asymmetry, up to the limit determined by \ref{eq:clothoid_asymmetry_condition}. The limit of the size of $g$ is given by rearranging the inequality \ref{eq:clothoid_asymmetry_condition}, and changing the inequality sign with an equality sign:
+\begin{equation}
+g_{lim} = h\left(\frac{C(\alpha)}{S(\alpha)}\sin(\alpha) - \cos(\alpha)\right)
+\end{equation}
+Then, ${\mbf P}_0$ is moved to 
+\begin{equation}
+{\mbf P}_0^\prime = {\mbf v}-((1-\tau)h + \tau g_{lim}){\mbf T}_0
+\end{equation}
+and the region of the curve between ${\mbf P}_0$ and ${\mbf P}_0^\prime$ is now described by a straight line between these two points. 
 
 
 \section{Road generation}
@@ -163,11 +207,12 @@ Generating realistic roads is more often than not non-trivial due to the many va
 %A cost function controls the road trajectory we get
 
 \subsection{Formulating road generation as a shortest-path problem}
+\label{sec:roadgen_shortestpath}
 Road generation can be formulated as a shortest-path problem in the following manner. First, discretize the terrain into a grid of elevation points. Each of these points is then a node in the graph. Conveniently enough, these points are also in $\mathbb{R}^3$ $(x,y,height)$, which makes designing heuristics for A* easier.
 
-Next, we must define the edges of the graph. Those edges define, naturally, which nodes that can be reached from each node. The most naive ways of defining this neighborhood is either to choose ALL nodes to be reachable from every other node, or only the immediate 8 neighbors. The first approach would be computationally infeasible due to the sheer amount of nodes in the graph. The other approach has a severe restriction on angles (the so-called limit on direction problem\cite{roadgen}), as the pathfinding algorithm can only take turns in multiples of 45 degrees, resulting in a fairly jagged path. 
+Next, we must define the edges of the graph. Those edges define, naturally, which nodes that can be reached from each node. The most naive ways of defining this neighborhood is either to choose ALL nodes to be reachable from every other node, or only the immediate eight neighbors. The first approach would be computationally infeasible due to the sheer amount of nodes in the graph. The other approach has a severe restriction on angles (the so-called limit on direction problem\cite{roadgen}), as the pathfinding algorithm can only take turns in multiples of 45 degrees, resulting in a fairly jagged path. 
 
-The solution to this problem of limit on direction, as presented in\cite{roadgen}, is to not only use the immediate neighbors, but use a neighborhood mask to define the neighbors. This mask is defined as follows: The neighbors of a point $p_{k,l}$ is defined as all points $p_{k+i,l+j}$ where $i,j$ is integers, $gcd(i,j) = 1$ and $i,j \in [-k,k]$. That $gcd(i,j)=1$ requirement is not a requirement for correctness, but to avoid unneccesary cost function evaluations for overlapping paths. Figure \ref{fig:neighbormask} illustrates the neighborhood of a grid point with a mask size of $k=2$.
+The solution to this problem of limit on direction, as presented in\cite{roadgen}, is to not only use the immediate neighbors, but use a neighborhood mask to define the neighbors. This mask is defined as follows: The neighbors of a point $p_{a,b}$ is defined as all points $p_{a+i,b+j}$ where $i,j$ are integers, $gcd(i,j) = 1$ and $i,j \in [-k,k]$. That $gcd(i,j)=1$ requirement is not a requirement for correctness, but to avoid unneccesary cost function evaluations for overlapping paths. Figure \ref{fig:neighbormask} illustrates the neighborhood of a grid point with a mask size of $k=2$.
 
 \begin{figure}[ht]
 \centering
@@ -201,7 +246,7 @@ C({\mbf p}, \dot{{\mbf p}}, \ddot{\mbf{p}}) = \sum_{i=1}^{n} \mu_i(c_i({\mbf p},
 $$
 
 \subsection{Trajectory computation}
-The trajectory is modelled as a clothoid spline\cite{roadgen}, which is a particular class of curves where the curvature varies linearly with the position along the curve\cite{clothoid}.
+%The trajectory is modelled as a clothoid spline\cite{roadgen}, which is a particular class of curves where the curvature varies linearly with the position along the curve\cite{clothoid}.
 
 \subsection{Road model generation}
 

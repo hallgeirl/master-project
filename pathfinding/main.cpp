@@ -554,7 +554,8 @@ int main(int argc, char** argv)
         clothoid_point_t p = clothoidSpline.lookup(t);
         double color = 255;
         double red = 1;
-        double green = 1.-min(p.curvature*100.,1.);
+        double green = 1;
+//        double green = 1.-min(p.curvature*100.,1.);
 //        double green = 1.-min(p.integrated_curvature*500,1.);
         double blue = 1;
         blue = green;
