@@ -1,0 +1,36 @@
+
+The Fresnel integrals can be approximated by the formulas
+
+\begin{align*}
+C(t) =& \frac{1}{2} + f(t)\sin\left(\frac{\pi}{2}t^2\right) - g(t)\cos\left(\frac{\pi}{2}t^2\right)\\
+S(t) =& \frac{1}{2} - f(t)\cos\left(\frac{\pi}{2}t^2\right) - g(t)\sin\left(\frac{\pi}{2}t^2\right)
+\end{align*}
+where
+$$
+f(t) = \sum_{n=0}^{11} f_nt^{-2n-1}, g(t) = \sum_{n=0}^{11} g_nt^{-2n-1}
+$$
+and where $f_n$, $g_n$ is given in table \ref{tab:fresnel}. This gives an error of less than $5\cdot 10^{-10}$. For $t < 1.6$, a good approximation with an error of less than $6\cdot 10^{-10}$ can be found by using the truncated Taylor series.\cite{fresnel}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{ccc}
+\hline
+$\mbf{n}$ & $\mbf{f_n}$ & $\mbf{g_n}$\\
+\hline
+0  &  0.318309844  &  0\\
+1  &  9.34626E-08  &  0.101321519\\
+2  &  -0.09676631  &  -4.07292E-05\\
+3  &  0.000606222  &  -0.152068115\\
+4  &  0.325539361  &  -0.046292605\\
+5  &  0.325206461  &  1.622793598\\
+6  &  -7.450551455 &  -5.199186089\\
+7  &  32.20380908  &  7.477942354\\
+8  &  -78.8035274  &  -0.695291507\\
+9  &  118.5343352  &  -15.10996796\\
+10 &  -102.4339798 &  22.28401942\\
+11 &  39.06207702  &  -10.89968491\\
+\hline
+\end{tabular}
+\caption{$g_n$ and $f_n$ values for computing the Fresnel integral}
+\label{tab:fresnel}
+\end{table}

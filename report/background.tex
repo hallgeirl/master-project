@@ -106,6 +106,57 @@ All vector cores may access a global memory, analogous to a regular computer's m
 
 \subsection{CUDA}
 
+\section{Clothoids and the Fresnel integrals}
+Clothoids, or Euler spirals or Cornu spirals as they are also called, is a class of parametric curves that is often used in road modelling and planning due to their pleasant properties with regards to curvature. The curvature changes linearly with respect to the position along the curve, which gives smooth transistions into curves in the road. A clothoid is described by the parametric curve
+\begin{equation}
+x(t) = aC(t),\  y(t) = aS(t) 
+\label{eq:clothoid}
+\end{equation}
+where $a$ is a scaling factor, and $C(t)$ and $S(t)$ are the Fresnel integrals
+\begin{align}
+C(t) =& \int_0^t \cos\left(\frac{\pi}{2}s^2\right) ds \label{eq:fresnel_c}\\
+S(t) =& \int_0^t \cos\left(\frac{\pi}{2}s^2\right) ds \label{eq:fresnel_s}
+\end{align}
+and the curvature of a clothoid curve is given by 
+\begin{equation}
+\kappa(t) = \frac{\pi t}{a},\ \kappa(\theta) = \frac{\sqrt{2\pi\theta}}{a}
+\label{eq:clothoid_curvature}
+\end{equation}
+A plot of a clothoid is shown in figure \ref{fig:back_clothoid}. 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.4\textwidth]{figure/cornu}
+\caption{Plot of a clothoid}
+\label{fig:back_clothoid}
+\end{figure}
+
+\subsection{The fresnel integrals}
+A commonly used form of the Fresnel integrals is given by equations \ref{eq:fresnel_c} and \ref{eq:fresnel_s}, where the parameter is the position along the curve $t$. Alternative forms of these integrals are given by using a point's tangent angle deviation $\theta$ from the beginning of the curve at $t=0$ as a parameter instead of $t$, and is given as\cite{clothoid}\cite{mathhandbook}
+\begin{align}
+C_2(\theta) =& \frac{1}{\sqrt{2\pi} }\int_0^\theta \frac{\cos(u)}{\sqrt{u}} du\label{eq:fresnel_c2}\\
+S_2(\theta) =& \frac{1}{\sqrt{2\pi} }\int_0^\theta \frac{\sin(u)}{\sqrt{u}} du\label{eq:fresnel_s2}
+\end{align}
+These two forms are equivalent, with\cite{mathhandbook}
+\begin{align}
+C(t) =& C_2\left(\frac{\pi}{2}t^2\right)\\
+S(t) =& S_2\left(\frac{\pi}{2}t^2\right)
+\end{align}
+
+The Fresnel integrals can be efficiently computed within an error of less than $\epsilon = 5\cdot 10^{-10}$ without numerical integration, by using polynomial approximations to two functions $f(t)$ and $g(t)$, and then rewriting the integrals as\cite{fresnel}
+\begin{align}
+C(t) =& \frac{1}{2} + f(t)\sin\left(\frac{\pi}{2}t^2\right) - g(t)\cos\left(\frac{\pi}{2}t^2\right)\\
+S(t) =& \frac{1}{2} - f(t)\cos\left(\frac{\pi}{2}t^2\right) - g(t)\sin\left(\frac{\pi}{2}t^2\right)
+\end{align}
+where
+\begin{align}
+f(t) = \sum_{n=0}^{11} f_nt^{-2n-1}, g(t) = \sum_{n=0}^{11} g_nt^{-2n-1}
+\end{align}
+where values for $g_n$ and $f_n$ is given in appendix \ref{app:fresnel}, as well as in \cite{fresnel}. 
+
+\subsection{Clothoid splines}
+
+
 \section{Road generation}
 Roads can be generated in a number of ways; city street networks can be generated using using Lindenmayer systems\cite{citymodelling}, and shortest path algoriths like A* can be used to generate roads through a terrain, and this method may even be extended to generating hierarchical roads.\cite{roadgen}\cite{roadgen2}
 Generating realistic roads is more often than not non-trivial due to the many variables that determine if a road is "good" or not. For instance, different types of roads (e.g. highways, country roads) may have different tolerance to changes in elevation and curvature, and the tradeoffs of going up a steep slope or making a longer, more curvy road around that slope must be weighted. In this section we will first look at how we can formulate the problem of generating a road through a terrain as a shortest-path problem as described by \cite{roadgen}, and lastly we will discuss the details about the trajectory computation and road modelling given a discrete shortest path.
@@ -150,18 +201,11 @@ C({\mbf p}, \dot{{\mbf p}}, \ddot{\mbf{p}}) = \sum_{i=1}^{n} \mu_i(c_i({\mbf p},
 $$
 
 \subsection{Trajectory computation}
+The trajectory is modelled as a clothoid spline\cite{roadgen}, which is a particular class of curves where the curvature varies linearly with the position along the curve\cite{clothoid}.
 
 \subsection{Road model generation}
 
 
-\section{Clothoids and clothoid splines}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.5\textwidth]{figure/cornu}
-\caption{Cornu spiral}
-\label{fig:back_cornu}
-\end{figure}
 
 \section{Simulating snow}
 A major part of this project is to extending the snow simulator developed at the HPC lab at NTNU, to support loading meshes (mainly roads, but may be arbitrary meshes). In order to fully integrate the contributions from this project into the snow simulator, it is important to have some background on the way the snow simulator works. Figure \ref{fig:back_snowsim_screenshots} shows the snow simulator in action. This section will first describe how the wind simulation is done, and then go into details of how the particles are updated. 
