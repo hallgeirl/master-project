@@ -98,14 +98,14 @@ inline double get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b
 
 inline double transfer_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
-    double k0 = 2;
+    double k0 = 1;
     
     double slope = fabs(get_slope(terrain, a, b));
     if (slope > k0)
     {
 //        printf("slope is infinity\n");
 //        fflush(stdout);
-//        return numeric_limits<double>::infinity();
+        return numeric_limits<double>::infinity();
     }
     
     return weight_slope*(slope+slope*slope);
