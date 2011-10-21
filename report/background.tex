@@ -106,7 +106,11 @@ All vector cores may access a global memory, analogous to a regular computer's m
 
 \subsection{CUDA}
 
-\section{Clothoids and the Fresnel integrals}
+\section{Newton's method}
+
+
+\section{Clothoids and clothoid splines}
+\label{sec:back_clothoid}
 Clothoids, or Euler spirals or Cornu spirals as they are also called, is a class of parametric curves that is often used in road modelling and planning due to their pleasant properties with regards to curvature. The curvature changes linearly with respect to the position along the curve, which gives smooth transistions into curves in the road. A clothoid is described by the parametric curve
 \begin{equation}
 x(t) = aC(t),\  y(t) = aS(t) 
@@ -155,6 +159,7 @@ f(t) = \sum_{n=0}^{11} f_nt^{-2n-1}, g(t) = \sum_{n=0}^{11} g_nt^{-2n-1}
 where values for $g_n$ and $f_n$ is given in appendix \ref{app:fresnel}, as well as in \cite{fresnel}. 
 
 \subsection{Clothoid splines}
+\label{sec:clothoid_spline}
 Clothoids can be used to form splines, given a set of control points $\mbf{v}_1, \mbf{v}_2, ..., \mbf{v}_n$.\cite{clothoid} One way of achieving this is first noting that clothoids have a curvature in the beginning of the curve $\kappa(0) = 0$. Assume that we are given three points $\mbf{v}$, $\mbf{p}_0$ and $\mbf{p}_1$, and the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively. If we can find a pair of clothoids $A_0$ and $A_1$ that start at $\mbf{p}_0$ and $\mbf{p}_1$, respectively, in the direction of their tangents, so that they are joined at some point $\mbf{p}$ with equal curvature, then we can construct a spline using three or more control points.\cite{clothoid} 
 
 \begin{figure}[ht]
@@ -175,15 +180,19 @@ Given the three points $\mbf{v}$, $\mbf{p}_0$ and $\mbf{p}_1$ where the tangent 
 \end{equation}
 then such a pair of clothoids exist.\cite{clothoid} Finding this pair is then done by computing the tangent angle deviation $\theta$ for the meeting point for both clothoids, $\theta_0$ and $\theta_1$, or in other words, find $\theta_0$ and $\theta_1$ such that $\theta_0 + \theta_1 = \alpha$ and $\kappa_{A_0}(\theta_0) = \kappa_{A_1}(\theta_1)$. This is done by solving the equation 
 \begin{align}
-\sqrt{\theta}[C(\theta)\sin(\alpha) - S(\theta)(k+\cos(\alpha)] + \sqrt{\alpha-\theta}[S(\alpha-\theta)(1+k\cos(\alpha)) - kC(\alpha - \theta)\sin(\alpha)] = 0
+\sqrt{\theta}[C(\theta)\sin(\alpha) - S(\theta)(k+\cos(\alpha)] + \sqrt{\alpha-\theta}[S(\alpha-\theta)(1+k\cos(\alpha)) - kC(\alpha - \theta)\sin(\alpha)] = 0\label{eq:theta0equation}
 \end{align}
-for $\theta_0$. For solving this equation, \cite{clothoid} suggests Newton's method or the bisection method.
+for $\theta_0$. For solving this equation, \cite{clothoid} suggests Newton's method or the bisection method. Finding $\theta_1$ is then simply $\theta_1 = \alpha-\theta_0$.
 
 Finally, we must compute the scaling factors for $A_0$ and $A_1$, that is, $a_0$ and $a_1$, respectively. Again referring to \cite{clothoid}, this is done by solving the equation
 \begin{align}
-a_0C(\theta_0)+a_0\sqrt{\frac{\alpha-\theta_0}{\theta_0}}C(\alpha-\theta_0)\cos(\alpha) + a_0\sqrt{\frac{\alpha-\theta_0}{\theta_0}}S(\alpha-\theta_0)\sin(\alpha) = g+h\cos(\alpha)
+a_0C(\theta_0)+a_0\sqrt{\frac{\alpha-\theta_0}{\theta_0}}C(\alpha-\theta_0)\cos(\alpha) + a_0\sqrt{\frac{\alpha-\theta_0}{\theta_0}}S(\alpha-\theta_0)\sin(\alpha) = g+h\cos(\alpha)\label{eq:a0equation}
 \end{align}
-for $a_0$. This is a simple rearrangement of terms since $\theta_0$ and all other values are known at this point.
+for $a_0$. This is a simple rearrangement of terms since $\theta_0$ and all other values are known at this point. To find $a_1$, we use the formula\cite{clothoid}
+\begin{equation}
+a_1 = a_0 \sqrt{\frac{\theta_1}{\theta_0}} = a_0 \sqrt{\frac{\alpha - \theta_0}{\theta_0}}
+\label{eq:a1equation}
+\end{equation}
 
 Now we have all we need to define the clothoid pair given by the three points: The scaling factors $a_0$ and $a_1$, and the tangent angle deviation of the curves at their endpoints $\theta_0$ and $\theta_1$.
 

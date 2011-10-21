@@ -39,11 +39,14 @@ namespace clothoid {
         double xnext = init,
                xold = 0;
 
+        //Precompute some values so they aren't evaluated as often.
         double Cx = C2(xnext), Sx = S2(xnext), 
                Cx2 = C2(alpha-xnext), Sx2 = S2(alpha-xnext),
                cosalpha = cos(alpha), sinalpha = sin(alpha);
 
+        //Reduce the number of function evaluations by storing the next result(they are quite costly)
         double fx_ = fx(xnext, k, cosalpha, sinalpha, Cx, Sx, Cx2, Sx2, alpha);
+       
 
         while (abs(fx_) > err)
         {
@@ -162,8 +165,7 @@ namespace clothoid {
         }
 
 
-//        result.integrated_curvature = 0.5*PI*(t0*t0 / a0 + t1*t1 / a1) / (t0*a0+t1*a0+g_diff);
-        result.integrated_curvature = 0.5*PI*(t0*t0 / a0) + 0.5*PI*(t1*t1 / a1);
+//        result.integrated_curvature = 0.5*PI*(t0*t0 / a0) + 0.5*PI*(t1*t1 / a1);
 
         return result;
     }

@@ -10,10 +10,12 @@ all:$(PROGRAM) $(PUB)
 $(PROGRAM): $(OBJ)
 	$(CXX) $(OBJ) -o $(PROGRAM) $(LDFLAGS)
 
-pub/%:./%
+pub/%:./% 
 	@cat fileheader.txt > $@
 	@cat $< >> $@
 	@echo "$< saved with header as $@."
+
+$(PUB): pub
 
 pub:
 	mkdir pub

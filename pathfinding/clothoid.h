@@ -27,7 +27,6 @@ namespace clothoid
     {
         double t, curvature;
         vec2d pos;
-        double integrated_curvature;
     };
 
     class ClothoidPair
