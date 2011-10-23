@@ -10,7 +10,16 @@ An A* search often has a very large amount of insertion operations to the $OPEN$
 Instead, typically a min-heap is used. A min-heap has a constant lookup-time because the next element to be extracted is always on top, but in addition the element must be removed, which takes $O(lg n)$ time. Insertion takes in theory $O(lg(n))$ time, but due to the structure of the heap, in reality this cost is constant. In this implementation, a min-heap is used. 
 a
 \subsubsection{Grid coarsening}
+Typically in an A* search every grid point is used as a node in the graph. For huge maps, say $4096\times 4096$, this approach becomes very slow due to the complex cost function used for procedural road generation. A more complex cost function makes it harder to make a heuristic that is both efficient and accurate for the distance to the goal, which causes A* to expand more nodes, and thus scale poorly with larger problems. A solution to this is to coarsen the grid used, so that instead of using every elevation point in the heightmap as a node, we use every $m$ nodes, as shown in figure \ref{fig:grid_coarsening}. This significantly reduces the number of nodes, making it viable to create paths through larger terrains.
 
+\begin{figure}[ht]
+\centering
+\subfloat[$m=2$]{\includegraphics[width=0.3\textwidth]{figure/grid_coarsening_m2}}
+\qquad
+\subfloat[$m=4$]{\includegraphics[width=0.3\textwidth]{figure/grid_coarsening_m4}}
+\caption{Grid coarsening with grid points every 2 and 4 elevation point}
+\label{fig:grid_coarsening}
+\end{figure}
 
 \subsubsection{Neighborhood mask creation}
 A typical A* implementation for use with a grid like the discretization of a terrain often use eight neighbors. \cite{roadgen} propose that not only the immediate eight neighbors are used per node, but instead use a larger neighborhood as described in section \ref{sec:roadgen_shortestpath}, and as shown in figure \ref{fig:neighbormask}. 
@@ -83,13 +92,17 @@ We construct a \texttt{local\_lengths} table with the cummulative lengths of all
 The last step is to compute the position from the clothoid or straight line we found in the previous step. The parameter $t_l$ must be transformed into $t_{ll}$ local to the clothoid or straight line. How this is done, depends on which segment of the clothoid pair we are in, and wether or not the clothoid pair is reversed. Table \ref{tab:transform_local_t} shows all possibilities.
 
 \begin{table}[ht]
-\begin{tabular}{cc}
+\centering
+\begin{tabular}{ccl}
 \hline
 {\tbf Part of curve} & {\tbf Reversed} & ${\mbf t_{ll}}$ \\
 \hline
 $S$ & No & $t_l$\\
 $S$ & Yes & $|S| - (t_l - |A_1| - |A_0|)$\\
 $A_0$ & No & $(t_l - |S|)/a_0$\\
+$A_0$ & Yes & $t_0-(t_l - |S|)/a_0$\\
+$A_1$ & No & $(t_l - |S|-|A_0|)/a_1$\\
+$A_1$ & Yes & $t_1-t_l/a_1$\\
 \hline
 \end{tabular}
 \caption{Transformation of $t_l$ into a parameter $t_{ll}$ local to the segment}

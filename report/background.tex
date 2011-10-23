@@ -158,9 +158,16 @@ f(t) = \sum_{n=0}^{11} f_nt^{-2n-1}, g(t) = \sum_{n=0}^{11} g_nt^{-2n-1}
 \end{align}
 where values for $g_n$ and $f_n$ is given in appendix \ref{app:fresnel}, as well as in \cite{fresnel}. 
 
+\subsection{Notation}
+The notation used for this section is based on \cite{clothoid}. The points where clothoid pairs meet with zero curvature will be called \textit{connection points} or \textit{connection vertices}. A clothoid pair is made up by three points; connection points ${\mbf P}_0$ and ${\mbf P}_1$, and control vertex ${\mbf V}$. The vertices are labeled such that $||{\mbf P}_0-{\mbf V}||_2 \geq ||{\mbf P}_1-{\mbf V}||_2$. The vector ${\mbf V} - {\mbf P}_0$ is called ${\mbf g}$ and ${\mbf P}_1-{\mbf V}$ is called ${\mbf h}$; the lengths are referred to as $g$ and $h$, respectively.
+
+The clothoids starting at ${\mbf P}_0$ and ${\mbf P}_1$ are labelled $A_0$ and $A_1$ respectively; any straight line segment that has been appended before $A_0$ is referred to as $S$. The lengths of these curves are $|A_0|$, $|A_1|$ and $|S|$, respectively. The control vertices in a spline with $n$ vertices are referred to as ${\mbf v}_0, ..., {\mbf v}_n$, and the connection points are referred to as ${\mbf p}_0, ..., {\mbf p}_{n-1}$. Note the difference between ${\mbf p}_0$ as the first connection point in the spline, and ${\mbf P}_0$ as the point local to a clothoid pair.
+
+%TODO: FIGURE
+
 \subsection{Clothoid splines}
 \label{sec:clothoid_spline}
-Clothoids can be used to form splines, given a set of control points $\mbf{v}_1, \mbf{v}_2, ..., \mbf{v}_n$.\cite{clothoid} One way of achieving this is first noting that clothoids have a curvature in the beginning of the curve $\kappa(0) = 0$. Assume that we are given three points $\mbf{v}$, $\mbf{p}_0$ and $\mbf{p}_1$, and the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively. If we can find a pair of clothoids $A_0$ and $A_1$ that start at $\mbf{p}_0$ and $\mbf{p}_1$, respectively, in the direction of their tangents, so that they are joined at some point $\mbf{p}$ with equal curvature, then we can construct a spline using three or more control points.\cite{clothoid} 
+Clothoids can be used to form splines, given a set of control points $\mbf{v}_1, \mbf{v}_2, ..., \mbf{v}_n$.\cite{clothoid} One way of achieving this is first by noting that clothoids have a curvature in the beginning of the curve $\kappa(0) = 0$. Assume that we are given three points $\mbf{V}$, $\mbf{P}_0$ and $\mbf{P}_1$, and the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively. If we can find a pair of clothoids $A_0$ and $A_1$ that start at $\mbf{P}_0$ and $\mbf{P}_1$, respectively, in the direction of their tangents, so that they are joined at some point $\mbf{P}$ with equal curvature, then we can construct a spline using three or more control points.\cite{clothoid} 
 
 \begin{figure}[ht]
 \centering
@@ -169,11 +176,12 @@ Clothoids can be used to form splines, given a set of control points $\mbf{v}_1,
 \label{fig:clothoid_pair}
 \end{figure}
 
-The first step in constructing the spline is to define the vertices where the clothoid pairs meet with zero curvature. One way of choosing these is to use the first and last control vertex as the first and last vertex, and use the midpoint between two control vertices for all the middle points. This is a typical way of doing it, although there may be other ways of choosing the connection vertices. The tangents of each point is chosen so that the last tangent in a clothoid pair points in the direction of the control vertex $\mbf{v}$ from $\mbf{p}_1$, and the very first tangent is chosen in the direction of $\mbf{v}$ from $\mbf{p}_0$. 
+
+The first step in constructing the spline is to define the vertices where the clothoid pairs meet with zero curvature. One way of choosing these is to use the first and last control vertex as the first and last vertex, and use the midpoint between two control vertices for all the middle points. This is a typical way of doing it, although there may be other ways of choosing the connection vertices. The tangents of each point is chosen so that the last tangent in a clothoid pair points in the direction of the control vertex $\mbf{v}$ from $\mbf{P}_1$, and the very first tangent is chosen in the direction of $\mbf{v}$ from $\mbf{p}_0$. 
 %Now, for each control vertex, we may define a clothoid pair from that vertex, and its adjecent connection vertices. 
 
 \subsubsection{Finding clothoid pairs}
-Given the three points $\mbf{v}$, $\mbf{p}_0$ and $\mbf{p}_1$ where the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively, how can a pair of clothoids be found that satisfies the continuity of the curvature at the meeting point, and the initial direction given by the tangent vectors? Label ${\mbf P}_0$ and ${\mbf P}_1$ so that $||{\mbf P}_0-\mbf{v}||_2 > ||{\mbf P}_1-\mbf{v}||_2$, and call the longer edge $g$ and the shorter one $h$. Let $k=g/h$ be the ratio of their lengths. Let $\alpha$ be the angle between these two edges, as shown in figure \ref{fig:clothoid_pair}. Then, if
+Given the three points $\mbf{v}$, $\mbf{P}_0$ and $\mbf{P}_1$ where the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively, how can a pair of clothoids be found that satisfies the continuity of the curvature at the meeting point, and the initial direction given by the tangent vectors? Label ${\mbf P}_0$ and ${\mbf P}_1$ so that $||{\mbf P}_0-\mbf{v}||_2 > ||{\mbf P}_1-\mbf{v}||_2$, and call the longer edge $g$ and the shorter one $h$. Let $k=g/h$ be the ratio of their lengths. Let $\alpha$ be the angle between these two edges, as shown in figure \ref{fig:clothoid_pair}. Then, if
 \begin{equation}
 \frac{k + \cos{\alpha}}{\sin \alpha} < \frac{C_2(\alpha)}{S_2(\alpha)}
 \label{eq:clothoid_asymmetry_condition}
