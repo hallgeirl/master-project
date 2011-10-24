@@ -155,11 +155,73 @@ $A_1$ & Yes & $t_1-t_l/a_1$\\
 
 \subsection{RoadXML generation}
 \label{sec:roadxmlgen}
+After the discrete shortest path has been found, represented by the points ${\mbf v}_0, ..., {\mbf v}_n$, a RoadXML file can be created. A RoadXML file contains information about road profiles, ground materials, the road trajectory, banking curves and elevations, and more.\cite{roadxml} For this project, only the road trajectory and elevation curves are defined in the RoadXML file; the rest is given in a static header, which defines the road profile (number of lanes, width of the road, ...). 
+
+The road trajectory is defined in the XYCurve tag\cite{roadxml}. A curve of type ClothoidSpline is defined, with the control points found from the discrete shortest path algorithm. The control points are specified with the Vectord2 tag, from the first to last control point, as shown in figure \ref{fig:roadxml_controlpoints}. The $x$ and $y$ values of each Vectord2 element is \textit{relative} to the $x$ and $y$ values specified in the XYCurve tag, which is the starting point of the curve. The direction of the XYCurve specifies rotation; in this project, direction is always zero.
+
+\begin{figure}[ht]
+\centering
+\begin{verbatim}
+<XYCurve direction="0" x="1480" y="10000">
+  <ClothoidSpline type="spline">
+    <Vectord2 x="200" y="-80" />
+    <Vectord2 x="400" y="-160" />
+    <Vectord2 x="560" y="-200" />
+    <Vectord2 x="680" y="-240" />
+    <Vectord2 x="880" y="-320" />
+    (...)
+  </ClothoidSpline>
+</XYCurve>
+\end{verbatim}
+\caption{Example of a trajectory definition in the RoadXML file}
+\label{fig:roadxml_controlpoints}
+\end{figure}
+
+Next, the elevation curves are defined. In RoadXML, these are referred to as SZ curves; S refers to the position along the curve, and Z refers to the elevation at that point. SZ curves in RoadXML actually defines a series of third-degree polynomials that gives a pleasant entry and exit to a slope. Figure \ref{fig:roadxml_elevation_curves} shows an example of an SZCurve definition. 
+
+\begin{figure}[ht]
+\centering
+\begin{verbatim}
+<SZCurve>
+  <Polynomial>
+    <begin direction="-0.125207" x="0" y="131.439" />
+    <end direction="0.0514822" x="50" y="125.178" />
+  </Polynomial>
+  <Polynomial>
+    <begin direction="0.0514822" x="50" y="125.178" />
+    <end direction="-0.119704" x="100" y="127.752" />
+  </Polynomial>
+  <Polynomial>
+    <begin direction="-0.119704" x="100" y="127.752" />
+    <end direction="-0.0555701" x="150" y="121.767" />
+  </Polynomial>
+  (...)
+</SZCurve>
+\end{verbatim}
+\caption{Example of elevation curve definitions in the RoadXML file}
+\label{fig:roadxml_elevation_curves}
+\end{figure}
+
+Each Polynomial element defines a third-degree polynomial, $ax^3+bx^2+cx+d$. The coefficients are derived by the applications using the file from the beginning and ending direction (both in radians, value of zero is flat), and the beginning and ending elevation values. It's easy to see that we may construct a linear equation with four unknowns by inserting the values for $x$ and $y$ into the equation $ax^3+bx^2+cx+d = y$, and doing the same for the derivative using the slope (derived from direction) as the right-hand-side.
+
+For this project, a polynomial is generated for intervals of length 50 as this seems to give good enough resolution, while not giving a very bumpy road. The beginning direction for polynomial $p_i$ are taken as the average slope between $x_i$ and $x_{i+1}$. The ending direction are the next polynomial's beginning direction, in order to have continuity for the slope.
 
 \section{Integration with snow simulator}
 \label{sec:impl_snowsim}
 
 \subsection{Scaling of terrain and model}
+The original snow simulator used a fixed value for the maximum elevation given by a height map, without taking into consideration the scale of the map. In fact, there was no parameters describing the physical dimensions of the map; a height map was simply taken in, placed within a square of a certain dimension, and the height of each point was scaled statically to a value between 0 and 64. In reality, we want the height of each point in the height map to be proprtionally correct to the actual widths and heights of the map. In other words, if we have a map of some mountain, say mt. Everest, and the height map defines an area of $10km\times 10km$, and is contained within a square of $512\times 512$ in the snow simulator's coordinate system, we want the $y$ coordinate of the highest peak to be $8.848\cdot 512/10 = 453.0176$, again in the snow simulator's coordinate system.
+
+To achieve this, a few extra parameters was introduced to the snow simulator:
+\begin{itemize}
+\item Resolution of the height map, in meters, in the X and Z direction ($R_x$, $R_z$).
+\item Minimum and maximum elevation defined by the height map, in meters ($e_{min}$, $e_{max}$ (for mt. Everest, this could be $0$ and $8848$)
+\end{itemize}
+Using this we can now find the elevation $e$ at each height map point, which is as given by equation \ref{eq:elevation_scaling_factor}. $R_x$ is the resolution of the heightmap in the $x$ direction, and $S_x$ is the size of the scene in the $x$ dimension. $E$ is the elevation given by the height map.
+\begin{align}
+E =& \\
+e =& \frac{(e_{max}-e_{min})R_xS_x}{} + e_{min} \label{eq:elevation_scaling_factor}
+\end{align}
 
 \subsection{Model loader and format}
 The models used for roads and other meshes in the snow simulator is the Wavefront OBJ format, which is a plaintext format containing information about the material used, positions of vertices, texture coordinates, faces and normals. 
