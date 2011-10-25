@@ -217,10 +217,10 @@ To achieve this, a few extra parameters was introduced to the snow simulator:
 \item Resolution of the height map, in meters, in the X and Z direction ($R_x$, $R_z$).
 \item Minimum and maximum elevation defined by the height map, in meters ($e_{min}$, $e_{max}$ (for mt. Everest, this could be $0$ and $8848$)
 \end{itemize}
-Using this we can now find the elevation $e$ at each height map point, which is as given by equation \ref{eq:elevation_scaling_factor}. $R_x$ is the resolution of the heightmap in the $x$ direction, and $S_x$ is the size of the scene in the $x$ dimension. $E$ is the elevation given by the height map.
+Using this we can now find the elevation $e$ at each height map point, which is as given by equation \ref{eq:elevation_scaling_factor}. $R_x$ is the resolution of the heightmap in the $x$ direction, and $S_x$ is the size of the scene in the $x$ dimension. $E$ is the elevation given by the height map, as a 16-bit integer between 0 and 65535.
 \begin{align}
-E =& \\
-e =& \frac{(e_{max}-e_{min})R_xS_x}{} + e_{min} \label{eq:elevation_scaling_factor}
+d =& E\cdot (e_{max}-e_{min})/2^{16}-e_{max}\\
+e =& \frac{dS_x}{} + e_{min} \label{eq:elevation_scaling_factor}
 \end{align}
 
 \subsection{Model loader and format}
