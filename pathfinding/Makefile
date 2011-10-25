@@ -28,6 +28,5 @@ clean:
 test: all
 	make -C raw_crop
 	./raw_crop/raw_crop test4.raw test4_crop.raw
-	./$(PROGRAM) test4.raw test4.png
-	#gdb --args ./$(PROGRAM) test4_crop.raw test4.png
-	eog test4.png
+	./$(PROGRAM) test4.raw mntroad
+	eog mntroad.png
