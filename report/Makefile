@@ -27,8 +27,8 @@ figures:
 .PHONY: clean
 
 clean:
-	rm -f *.aux *.nav *.out *.snm *.toc *.log *.bbl *.idx *.ind *.ilg *.blg *.lot *.lof *~ *.ist *.acn *.glo *.gls *.acr *.alg *.backup *.pdf
-	make -C figure/ clean
+	rm -f *.aux *.nav *.out *.snm *.toc *.log *.bbl *.idx *.ind *.ilg *.blg *.lot *.lof *~ *.ist *.acn *.glo *.gls *.acr *.alg *.backup *.pdf *.loa
+	$(MAKE) -C figure/ clean
 
 test: all
 	evince main.pdf
