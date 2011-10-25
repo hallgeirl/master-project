@@ -10,6 +10,7 @@
 #include <limits>
 #include <unordered_map>
 #include <sstream>
+#include <getopt.h>
 
 #include "util.h"
 #include "vec2.h"
@@ -105,7 +106,7 @@ inline double transfer_slope(const terrain_t& terrain, const vec2d& a, const vec
     {
 //        printf("slope is infinity\n");
 //        fflush(stdout);
-        return numeric_limits<double>::infinity();
+//        return numeric_limits<double>::infinity();
     }
     
     return weight_slope*(slope+slope*slope);
@@ -472,33 +473,71 @@ void setPixelColor(FIBITMAP* bm, int x, int y, int r, int g, int b)
     FreeImage_SetPixelColor(bm, x, y, &rgb);
 }
 
+void usage()
+{
+    printf("Usage:\n./pathfind [OPTIONS] <input raw file> <output filename w/o extension>\n");
+    printf("Options may be:\n");
+    printf("\t-a: Minimum elevation (default: 0)\n");
+    printf("\t-b: Maximum elevation (default: 2700)\n");
+    printf("\t-s: Resolution of heightmap (default: 10)\n");
+    printf("\t-d: Density of grid points (default: 4)\n");
+}
+
 int main(int argc, char** argv)
 {
-    srand(time(0));
+    //Parse command line arguments
+    string output_name = "default";
+    string input_name = "default";
+    string output_roadxml, output_ctrlpoints;
+
+    //Terrain heights
+    double h_min = 0;
+    double h_max = 2700.3;
 
     //Terrain dimensions
     int h = 1024, w = 1024;
-//    int h = 300, w = 300;
     double spacing = 10.;
+    int grid_density = 4;
+    
+    int c;
+    while ((c = getopt(argc, argv, "a:b:s:")) != EOF)
+    {
+        switch (c)
+        {
+            case 'a':
+                h_min = atof(optarg);
+            break;
+            case 'b':
+                h_max = atof(optarg);
+            break;
+            case 's':
+                spacing = atof(optarg);
+                break;
+            case 'd':
+                grid_density = atoi(optarg);
+                break;
+            default:
+                usage();
+                exit(1);
+                break;
+       }
+    }
+    srand(time(0));
 
     //Terrain storage
     unsigned short* terrain_raw = new unsigned short[h*w];
     terrain_t       terrain(h, w, spacing);
 
-    //Terrain heights
-    double h_min = 0;
-    double h_max = 2700.3;
 
     //Starting and ending points
     vec2i end(150, 1000), start(900, 24);
 //    vec2i end(70, 570), start(900, 24);
 
     //Input and output filenames
-    const char* in = argv[1], * out = 0;
-    if (argc > 2) out = argv[2];
+    input_name = argv[optind], output_name = argv[optind+1];
 
     //Read terrain
-    ifstream input(in, ios::binary);
+    ifstream input(input_name.c_str(), ios::binary);
     input.read((char*)terrain_raw, w*h*2);
     input.close();
 
@@ -513,7 +552,6 @@ int main(int argc, char** argv)
         }
     }
 
-    int grid_density = 4;
     vector<vec2d> path = pathFind(terrain, start, end, grid_density);
 
 //    vector<vec2d> path;
@@ -527,7 +565,18 @@ int main(int argc, char** argv)
 //    path.push_back(vec2d(6500,4750));
     ClothoidSpline clothoidSpline(path, 0.75);
 
-    writeRoadXML("someroadxml.rnd", path, terrain);
+    writeRoadXML(output_name + ".rnd", path, terrain);
+
+    //Write the road file
+    {
+        ofstream f(output_name + ".rd");
+        f << output_name + ".obj\n";
+        for (size_t i = 0; i < path.size(); i++)
+        {
+            f << path[i].x << " " << path[i].y << "\n";
+        }
+        f.close();
+    }
 
     FreeImage_Initialise();
 
@@ -552,6 +601,7 @@ int main(int argc, char** argv)
     for (double t = tmin; t < tmax; t += 5)
     {
         clothoid_point_t p = clothoidSpline.lookup(t);
+        printf("p %lf %lf %lf\n", p.pos.x, p.pos.y, clothoidSpline.length());
         double color = 255;
         double red = 1;
         double green = 1;
@@ -563,7 +613,6 @@ int main(int argc, char** argv)
     }
 
     printf("Length of curve: %lf\n", clothoidSpline.length());
-
     
     for (size_t i = 0; i < path.size(); i++)
     {
@@ -574,11 +623,11 @@ int main(int argc, char** argv)
     }
 
     //Save image
-    if (out != 0)
+//    if (out != 0)
     {
-        printf("Saving image %s...\n", out);
+        printf("Saving image %s...\n", (output_name + ".png").c_str());
 
-        FreeImage_Save(FIF_PNG, bm, out);
+        FreeImage_Save(FIF_PNG, bm, (output_name + ".png").c_str());
 
     }
 

@@ -206,6 +206,7 @@ Each Polynomial element defines a third-degree polynomial, $ax^3+bx^2+cx+d$. The
 
 For this project, a polynomial is generated for intervals of length 50 as this seems to give good enough resolution, while not giving a very bumpy road. The beginning direction for polynomial $p_i$ are taken as the average slope between $x_i$ and $x_{i+1}$. The ending direction are the next polynomial's beginning direction, in order to have continuity for the slope.
 
+
 \section{Integration with snow simulator}
 \label{sec:impl_snowsim}
 
@@ -217,10 +218,10 @@ To achieve this, a few extra parameters was introduced to the snow simulator:
 \item Resolution of the height map, in meters, in the X and Z direction ($R_x$, $R_z$).
 \item Minimum and maximum elevation defined by the height map, in meters ($e_{min}$, $e_{max}$ (for mt. Everest, this could be $0$ and $8848$)
 \end{itemize}
-Using this we can now find the elevation $e$ at each height map point, which is as given by equation \ref{eq:elevation_scaling_factor}. $R_x$ is the resolution of the heightmap in the $x$ direction, and $S_x$ is the size of the scene in the $x$ dimension. $E$ is the elevation given by the height map.
+Using this we can now find the elevation $e$ at each height map point, which is as given by equation \ref{eq:elevation_scaling_factor}. $R_x$ is the resolution of the heightmap in the $x$ direction, and $S_x$ is the size of the scene in the $x$ dimension. $E$ is the elevation computed from the height map. $d$ is the 16-bit integer stored in the heightmap; $d\in [0,2^{16}-1]$. $n$ is the number of elevation points in the $x$ direction.
 \begin{align}
-E =& \\
-e =& \frac{(e_{max}-e_{min})R_xS_x}{} + e_{min} \label{eq:elevation_scaling_factor}
+E =& \frac{d(e_{max}-e_{min})}{2^{16}}+e_{min}\\
+e =& \frac{(E-e_{min})S_x}{nR_x} = \frac{d}{2^{16}}\cdot \frac{(e_{max}-e_{min})Sx}{nRx} \label{eq:elevation_scaling_factor}
 \end{align}
 
 \subsection{Model loader and format}

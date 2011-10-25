@@ -75,9 +75,10 @@ def main(argv):
             v3 = (v1[1]*v2[2]-v1[2]*v2[1], v1[2]*v2[0]-v1[0]*v2[2], v1[0]*v2[1]-v1[1]*v2[0])
             lenv3 = sqrt(v3[0]**2 + v3[1]**2 + v3[2]**2)
             v3 = [v3[0]/lenv3, v3[1]/lenv3, v3[2]/lenv3]
-            normalmap[j*3] = max(min(v3[0]*256+128, 255),0)
-            normalmap[j*3+1] = max(min(v3[1]*256+128, 255),0)
-            normalmap[j*3+2] = max(min(v3[2]*256+128, 255),0)
+            print v3[0]*128+128, v3[1]*128+128, v3[2]*128+128
+            normalmap[j*3] = int(max(min(v3[0]*128+128, 255),0))
+            normalmap[j*3+1] = int(max(min(v3[1]*128+128, 255),0))
+            normalmap[j*3+2] = int(max(min(v3[2]*128+128, 255),0))
         normalmap.tofile(outputstream)
 
     if must_close_output:
