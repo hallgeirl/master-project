@@ -6,9 +6,7 @@ all: $(SVGPDF)
 
 
 .svg.pdf:
-	inkscape --export-eps=$(subst .svg,.eps,$<) --export-dpi=600 $<
-	epstopdf --res=600 $(subst .svg,.eps,$<)
-	rm $(subst .svg,.eps,$<)
+	inkscape --export-pdf=$(subst .svg,.pdf,$<) --export-dpi=600 --export-area-drawing $<
 
 clean:
 	rm -f $(SVGPDF)
