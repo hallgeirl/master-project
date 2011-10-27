@@ -3,11 +3,10 @@ This chapter will give some background on important algorithms and file formats 
 
 \section{Search Algorithms and A* Shortest Path Search Algorithm}
 Finding the shortest path between nodes in a graph is an old and heavily researched problem. The problem can be stated like this: Given a weighted graph $G = (V,E)$ with edges $E$ and vertices $V$, and a weighting function $w(e) = w(v_i, v_j)$ of edge $e = (v_i, v_j)$, find the path from $v_a$ to $v_b$, that solves the minimization problem
-
 \begin{equation}
 \min_{\mbf P} \left\{ \sum_{e\in \mbf{p}} w(e) \right\}
 \end{equation}
-over all paths $\mbf P$ between nodes $v_a$ and $v_b$.
+over all paths $\mbf P$ between nodes $v_a$ and $v_b$.\cite{shortestpath}
 
 \subsection{Solving shortest path problems}
 There are many algorithms to solve the minimization problem of finding the shortest path. There are two main categories: Single-source, and all-pairs. Single-source solves the shortest path algorithm for a single source node $a$, to one or all other nodes. All-pairs finds, as the name suggests, the shortest path between all the nodes in the graph. In this project, we are concerned about the single-source shortest path algorithms. In particular, we are interested in finding the shortest path between one node $v_a$ to another single node $v_b$.
