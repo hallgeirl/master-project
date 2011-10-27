@@ -105,7 +105,22 @@ All vector cores may access a global memory, analogous to a regular computer's m
 \subsection{CUDA}
 
 \section{Newton's method}
+\label{sec:newtons_method}
+Newton's method is a method for solving equations of the form
+$$
+f(x) = 0
+$$
+for some function $f(x)$. It takes as input an initial guess for the value of $x$, $x_0$, and then computes
+\begin{equation}
+x_{n+1} = x_{n} - \frac{f(x_n)}{f^\prime(x_n)}
+\end{equation}
+This process is repeated until $|f(x_n)| < \epsilon$, where $\epsilon$ is the tolerance of error. 
 
+The way Newton's method works is that for every iteration, it draws a straight line from the current estimate of $x$, $x_n$, in the direction of the tangent of the curve at $x_n$, and computes the intersection with the line $y=0$. $x_{n+1}$ is then the value of $x$ at that intersection point. Then the process is continued until convergence. 
+
+TODO: FIGURE
+
+Newton's method typically has quadratic convergence\cite{newton}. However, note that Newton's method may not always converge, depending on the choice of the initial guess $x_0$, and the properties of the function. For instance, if a function has a derivative of zero, or if the derivative is otherwise badly behaved near the root, we may fail to find a root using this method. An example is the function $f(x)=\cos(x)$; an initial guess of $0$ gives division by zero, and other guesses causes the next guess to overshoot due to the nature of the function and its derivative.
 
 \section{Clothoids and clothoid splines}
 \label{sec:back_clothoid}
@@ -161,7 +176,7 @@ The notation used for this section is based on \cite{clothoid}. The points where
 
 The clothoids starting at ${\mbf P}_0$ and ${\mbf P}_1$ are labelled $A_0$ and $A_1$ respectively; any straight line segment that has been appended before $A_0$ is referred to as $S$. The lengths of these curves are $|A_0|$, $|A_1|$ and $|S|$, respectively. The control vertices in a spline with $n$ vertices are referred to as ${\mbf v}_0, ..., {\mbf v}_n$, and the connection points are referred to as ${\mbf p}_0, ..., {\mbf p}_{n-1}$. Note the difference between ${\mbf p}_0$ as the first connection point in the spline, and ${\mbf P}_0$ as the point local to a clothoid pair.
 
-%TODO: FIGURE
+TODO: FIGURE
 
 \subsection{Clothoid splines}
 \label{sec:clothoid_spline}
@@ -261,14 +276,10 @@ C({\mbf p}, \dot{{\mbf p}}, \ddot{\mbf{p}}) = \sum_{i=1}^{n} \mu_i(c_i({\mbf p},
 $$
 
 \subsection{Trajectory computation}
-%The trajectory is modelled as a clothoid spline\cite{roadgen}, which is a particular class of curves where the curvature varies linearly with the position along the curve\cite{clothoid}.
+A piecewise linear curve, like the one given by the discrete shortest path A* algorithm described above, is not a good description of the road trajectory, as this gives very sharp turns. Instead, the road trajectory can be modelled as a clothoid spline\cite{roadgen}, which is described in section \ref{sec:back_clothoid}. This gives a pleasant curvature which varies linearly with the position along the curve\cite{clothoid}. Given the discrete shortest path represented by the points ${\mbf p}_0, {\mbf p}_1, ..., {\mbf p}_n$, a clothoid spline can be constructed using these points as control points. The spline starts and ends at the end points (${\mbf p}_0$ and ${\mbf p}_n$). 
 
-\subsection{Road model generation}
-
-
-
-\section{Simulating snow}
-A major part of this project is to extending the snow simulator developed at the HPC lab at NTNU, to support loading meshes (mainly roads, but may be arbitrary meshes). In order to fully integrate the contributions from this project into the snow simulator, it is important to have some background on the way the snow simulator works. Figure \ref{fig:back_snowsim_screenshots} shows the snow simulator in action. This section will first describe how the wind simulation is done, and then go into details of how the particles are updated. 
+\section{The Snow Simulator}
+A major part of this project is to extending the snow simulator developed at the HPC lab at NTNU, to support loading meshes (mainly roads, but may be arbitrary meshes). In order to fully integrate the contributions from this project into the snow simulator, it is important to have some background on the way the snow simulator works. Figure \ref{fig:back_snowsim_screenshots} shows the snow simulator in action. This section will first describe the terrain format. Then, wind simulation and particle updates are described briefly.
 
 \begin{figure}[ht]
 \subfloat{
@@ -284,16 +295,31 @@ A major part of this project is to extending the snow simulator developed at the
 %Also, a few other improvements, discussed in section \ref{sec:impl_snowsim}, have been done. 
 
 \subsection{Terrain}
+Terrains are in many applications represented by a height map, which is nothing more than a bitmap of a certain width and height, where each element represent a height in the terrain. In the snow simulator, a 16 bit integer height map is used; this means, each height value is an integer of 16 bits, which is then mapped to an actual height value in the model. 
+
+The height map is stored as raw data, with no header, in row-major order; that is, the elements within a row is stored sequentially in the file, so row 1 is stored first, followed by row 2, etc. The map is loaded by first reading all the values of the file, then generating vertices for a triangle mesh that will be used as rendering. In the original snow simulator that this project aims to extend, the integers are mapped to a floating point value between 0 and 64. This means that a value of zero represents an y vertex position of zero, and a value of $2^{16}-1$ is mapped to a vertex y-position of 64. Figure \ref{fig:heightmap} shows a visualizeation of a height map.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{figure/heightmap}
+\caption{A heightmap of a terrain}
+\label{fig:heightmap}
+\end{figure}
 
 \subsection{Wind simulation}
+Wind in the snow simulator is modelled by the incompressible Euler equations, which is derived from the Navier-Stokes equations by setting the viscosity to zero and density to one,
+\begin{align}
+\nabla \cdot {\mbf u} = & 0\\
+\frac{\delta{\mbf u}}{\delta t} = & -({\mbf u}\cdot \nabla){\mbf u} - \nabla{\mbf p}
+\end{align}
+where ${\mbf p}$ is the pressure, and ${\mbf u}$ is the velocity vector field.
 
-\subsubsection{Modelling wind as a fluid}
-
-\subsubsection{Obstacles}
-
-\subsubsection{}
+This equation is simulated numerically by first solving for advection (movemenet of the fluid along its own motion), then solving for pressure which involves solving the poisson equation $\nabla^2 p = \nabla\cdot {\mbf u}^*$ (where ${\mbf u}^*$ is a temporary velocity field generated from the advection step), and finally projecting these velocities into a divergence-free (mass conserving) field\cite{snowsim1}.
 
 \subsection{Particle updates}
+Snow particles are updated according to their current velocity, wind velocity at their position and gravity.\cite{snowsim1} First, the wind velocity is interpolated from the wind field. Then, a circular velocity of the snow particle is computed, which causes them to rotate around a central axis. Then the accelleration is computed from the drag (a function of the difference between the velocities of the wind and snow particles), and gravity. 
+
+TODO 
 
 \section{USGS DEM Format}
 USGS DEM is a file format for storing elevation data. It is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data.\cite{usgsdem}

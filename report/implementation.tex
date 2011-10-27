@@ -69,7 +69,7 @@ If the control points and its corresponding connection points are colinear, we s
 
 In each clothoid pair, one clothoid must be flipped; this is because the clothoids have different signs on the derivative of their curvature; i.e. $Sgn(\frac{d\kappa_{0}}{dt})\neq Sgn(\frac{d\kappa_{1}}{dt})$.  To test for which clothoid needs flipping, it is sufficient to check the sign of the third component in the cross product ${\mbf g}\times {\mbf h}$ where ${\mbf g}$ and ${\mbf h}$ are the vectors representing the longest and shortest vectors, respectively, of ${\mbf v}-{\mbf P}_0$ and ${\mbf P}_1 - {\mbf v}$. If the sign is negative, the clothoid starting in ${\mbf P}_0$ must be flipped; otherwise, the other clothoid must be flipped.
 
-Finally, the scaling factors $a_0$ and $a_1$, and the tangent angle deviation for the first clothoid at the meeting point $\theta_0$ are computed. Note that $\theta_1$ is computed using $\theta_1 = \alpha - \theta_0$ because $\theta_0 + \theta_1 = \alpha$\cite{clothoid}. $\theta_0$ is found by using Newton's method to solve equation \ref{eq:theta0equation} in section \ref{sec:clothoid_spline}. An intial guess of $x=\alpha/2$ is used, which is reasonable because $\theta_0$ is somewhere between $0$ and $\alpha$.\cite{clothoid}. The scaling factors is found by solving equation \ref{eq:a0equation} for $a_0$, also in section \ref{sec:clothoid_spline}. $a_1$ is found using the formula given in equation \ref{eq:a1equation}. The complete pseudocode for constructing the clothoid spline is seen in algorithm \ref{alg:clothoid_spline_construct}.
+Finally, the scaling factors $a_0$ and $a_1$, and the tangent angle deviation for the first clothoid at the meeting point $\theta_0$ are computed. Note that $\theta_1$ is computed using $\theta_1 = \alpha - \theta_0$ because $\theta_0 + \theta_1 = \alpha$\cite{clothoid}. $\theta_0$ is found by using Newton's method described in \ref{sec:newtons_method} to solve equation \ref{eq:theta0equation} in section \ref{sec:clothoid_spline}. An intial guess of $x=\alpha/2$ is used, which is reasonable because $\theta_0$ is somewhere between $0$ and $\alpha$.\cite{clothoid}. The scaling factors is found by solving equation \ref{eq:a0equation} for $a_0$, also in section \ref{sec:clothoid_spline}. $a_1$ is found using the formula given in equation \ref{eq:a1equation}. The complete pseudocode for constructing the clothoid spline is seen in algorithm \ref{alg:clothoid_spline_construct}.
 
 \begin{algorithm}[ht]
 \centering
@@ -209,8 +209,11 @@ For this project, a polynomial is generated for intervals of length 50 as this s
 
 \section{Integration with snow simulator}
 \label{sec:impl_snowsim}
+This section presents the modifications done to the snow simulator to accommodate road models and real-life terrains. First, the scaling of the terrain was modified, and this is described in section \ref{sec:terrain_scaling}. Then, the mesh loader is described. Finally, the terrain adjustments neccesary to accommodate the road models are described.
+%, as well as other improvements and modifications to the snow simulator.
 
 \subsection{Scaling of terrain and model}
+\label{sec:terrain_scaling}
 The original snow simulator used a fixed value for the maximum elevation given by a height map, without taking into consideration the scale of the map. In fact, there was no parameters describing the physical dimensions of the map; a height map was simply taken in, placed within a square of a certain dimension, and the height of each point was scaled statically to a value between 0 and 64. In reality, we want the height of each point in the height map to be proprtionally correct to the actual widths and heights of the map. In other words, if we have a map of some mountain, say mt. Everest, and the height map defines an area of $10km\times 10km$, and is contained within a square of $512\times 512$ in the snow simulator's coordinate system, we want the $y$ coordinate of the highest peak to be $8.848\cdot 512/10 = 453.0176$, again in the snow simulator's coordinate system.
 
 To achieve this, a few extra parameters was introduced to the snow simulator:
@@ -319,7 +322,7 @@ Initially, all distances are set to infinity. Then, we traverse the vertex list 
 \label{alg:terrain_adjustment}
 \end{algorithm}
 
-\subsection{Other improvements}
+%\subsection{Other improvements}
 
 \section{USGS DEM converter}
 Real-world height maps are often stored in the USGS Digital Elevation Model (DEM) format. Among the users are Kartverket in Norway, who provides digital elevation maps of Norway. There is also a considerable amount of elevation data in the DEM format for the United States, although it has been mostly superceded by the SDTS format, also developed by the USGS\cite{wiki_usgsdem}. However, the snow simulator uses raw 16 bit integer heightmaps, for simplicity. Converting a USGS DEM map to 16 bit RAW takes time, and as such, it was decided that instead of directly supporting DEMs in the snow simulator, the best approach was to create a stand-alone converter from DEM to RAW.

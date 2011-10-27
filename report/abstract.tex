@@ -1,3 +1,11 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
+In this report, I present an integration of a road generation algorithm, described in \cite{roadgen}, with the GPU accellerated snow simulator developed at the HPC lab at the Department of Computer and Information Science at the Norwegian University of Science and Technology (NTNU). I also present a USGS DEM to RAW heightmap converter, for using real-world maps in the snow simulator. 
+
+Given a height map of a terrain, my road generation application generates a road that minimizes a cost function that depends on the length of the road, slope and curvature. This is accomplished using an optimized A* search, generating a discrete shortest path represented by a series of nodes. 
+
+The road trajectory is then computed by using the nodes of the discrete shortest path ascontrol points in a clothoid spline, which gives pleasant curves in the road. The trajectory is used to generate a RoadXML file, which is a description of the road (trajectory, road profile, textures, etc.); this is then used in TODO SOFTWARE NAME to generate a triangle mesh of the road. This mesh is loaded into the snow simulator for rendering. The terrain is adjusted to accommodate the road model as neccesary, by constructing a distance map for each vertex in the road mesh, then adjusting the terrain elevation according to the closest vertices.
+
+Results show visually pleasing rendering of the roads, that looks natural in the terrain. TODO MORE RESULTS
+
