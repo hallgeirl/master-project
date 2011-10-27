@@ -118,7 +118,12 @@ This process is repeated until $|f(x_n)| < \epsilon$, where $\epsilon$ is the to
 
 The way Newton's method works is that for every iteration, it draws a straight line from the current estimate of $x$, $x_n$, in the direction of the tangent of the curve at $x_n$, and computes the intersection with the line $y=0$. $x_{n+1}$ is then the value of $x$ at that intersection point. Then the process is continued until convergence. 
 
-TODO: FIGURE
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{figure/newtonsmethod}
+\caption{Newton's method. $x_0$ is initial guess, and it converges after two iterations to $x_2$.}
+\label{fig:newtons_method}
+\end{figure}
 
 Newton's method typically has quadratic convergence\cite{newton}. However, note that Newton's method may not always converge, depending on the choice of the initial guess $x_0$, and the properties of the function. For instance, if a function has a derivative of zero, or if the derivative is otherwise badly behaved near the root, we may fail to find a root using this method. An example is the function $f(x)=\cos(x)$; an initial guess of $0$ gives division by zero, and other guesses causes the next guess to overshoot due to the nature of the function and its derivative.
 
