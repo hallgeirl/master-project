@@ -1,0 +1,32 @@
+test densities
+path ./
+exec pathfind
+
+testset helens_before
+width 256
+height 256
+heightmap helens256b.raw
+spacing 30
+include densities.inc
+
+testset helens_after
+width 768
+height 768
+heightmap helens768.raw
+spacing 10
+include densities.inc
+
+testset mountains
+width 1024
+height 1024
+heightmap test4.raw
+spacing 10
+include densities.inc
+
+testset trondheim
+width 4096
+height 4096
+heightmap trondheim4096.raw
+spacing 20
+include densities.inc
+

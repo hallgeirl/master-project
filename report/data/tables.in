@@ -1,0 +1,24 @@
+file trondheim.tex
+separator &
+newline \\
+query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='trondheim' order by density asc
+
+file helens_before.tex
+separator &
+newline \\
+query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='helens_before' order by density asc
+
+file helens_after.tex
+separator &
+newline \\
+query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='helens_after' order by density asc
+
+file mountains.tex
+separator &
+newline \\
+query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='mountains' order by density asc
+
+#file test.tbl
+#separator &
+#newline \\
+#query select r1.n, r1.tx||'x'||r1.ty, round(r1.gflops, 3), round(100*r1.gflops/1405, 2), r2.tx||'x'||r2.ty, round(r2.gflops, 3), round(100*r2.gflops/1405, 2) from results r1, results r2 where r1.name='Testing' and r2.name='Testing_vert' and r1.n = r2.n
