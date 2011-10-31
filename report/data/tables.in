@@ -1,22 +1,22 @@
 file trondheim.tex
 separator &
 newline \\
-query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='trondheim' order by density asc
+query select density, round(runningtime,2), round(speedup,2), round(cost,1), round(cost/optimal,2) from results where name='densities' and testset='trondheim' order by density asc
 
 file helens_before.tex
 separator &
 newline \\
-query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='helens_before' order by density asc
+query select density, round(runningtime,2), round(speedup,2), round(cost,1), round(cost/optimal,2) from results where name='densities' and testset='helens_before' order by density asc
 
 file helens_after.tex
 separator &
 newline \\
-query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='helens_after' order by density asc
+query select density, round(runningtime,2), round(speedup,2), round(cost,1), round(cost/optimal,2) from results where name='densities' and testset='helens_after' order by density asc
 
 file mountains.tex
 separator &
 newline \\
-query select density, runningtime, speedup, cost, cost/optimal from results where name='densities' and testset='mountains' order by density asc
+query select density, round(runningtime,2), round(speedup,2), round(cost,1), round(cost/optimal,2) from results where name='densities' and testset='mountains' order by density asc
 
 #file test.tbl
 #separator &

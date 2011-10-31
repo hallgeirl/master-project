@@ -26,7 +26,10 @@ clean:
 	rm -f $(OBJ) $(PROGRAM) $(PUB)
 
 test: all
-	make -C raw_crop
-	./raw_crop/raw_crop test4.raw test4_crop.raw
-	./$(PROGRAM) test4.raw mntroad
-	eog mntroad.png
+#	./$(PROGRAM) -x 4096 -y 4096 -a "-5" -b 842 trondheim4096.raw trondheim
+#	eog trondheim.png
+	./$(PROGRAM) -x 768 -y 768 -s 10 -d 4 helens768.raw helens
+	eog helens.png
+#	./$(PROGRAM) test4.raw test4
+	#make -C raw_crop
+	#./raw_crop/raw_crop test4.raw test4_crop.raw

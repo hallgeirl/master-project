@@ -3,6 +3,7 @@ BIBFILES=$(shell ls *.bib)
 
 .PHONY: all
 .PHONY: figures
+.PHONY: tables
 
 all: main.pdf
 
@@ -12,7 +13,7 @@ all: main.pdf
 #figure/%.pdf: figure/crop/%.ps
 #	cat $< | ps2eps -c -n -P | epstopdf --filter > $@
 
-main.pdf: $(TEXFILES) $(BIBFILES) figures
+main.pdf: $(TEXFILES) $(BIBFILES) figures tables
 	pdflatex main
 	makeglossaries main
 	pdflatex main
@@ -24,11 +25,15 @@ main.pdf: $(TEXFILES) $(BIBFILES) figures
 figures:
 	$(MAKE) -C figure/
 
+tables:
+	$(MAKE) -C data/
+
 .PHONY: clean
 
 clean:
 	rm -f *.aux *.nav *.out *.snm *.toc *.log *.bbl *.idx *.ind *.ilg *.blg *.lot *.lof *~ *.ist *.acn *.glo *.gls *.acr *.alg *.backup *.pdf *.loa
 	$(MAKE) -C figure/ clean
+	$(MAKE) -C data/ clean
 
 test: all
 	evince main.pdf

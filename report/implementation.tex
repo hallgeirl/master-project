@@ -3,13 +3,42 @@
 This chapter will describe my implementation of the procedural road generation algorithm, how the roads produced here is integrated with the snow simulator with all the changes to the snow simulator this entails, and lastly it describes the details about my implementation of the USGS DEM to height map converter application.
 
 \section{Procedural road generation}
-For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described.
+For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described. 
 
 \subsection{Implementation of A*}
-An A* search often has a very large amount of insertion operations to the $OPEN$ set, as it is used in algorithm \ref{alg:astar}. In addition, every iteration the node with the lowest $f$-cost must be retrieved from this set. Using an unsorted list gives a constant insertion time, but a really bad lookup-time when searching for the node with the lowest $f$-cost of $O(n)$. In the other extreme, a sorted list gives constant lookup-time, but insertion takes $O(n)$ time. 
+The A* search used for generating roads in this project first generates a discrete shortest path, described by $n$ points in space. When computing costs, it is assumed that these points form a piecewise linear curve $(x(t), y(t)$ with parameter $t$, which is the length of the curve. Eventually, a clothoid curve is generated from the same points, but this is not used for pathfinding.
 
-Instead, typically a min-heap is used. A min-heap has a constant lookup-time because the next element to be extracted is always on top, but in addition the element must be removed, which takes $O(lg(n))$ time. Insertion takes in theory $O(lg(n))$ time, but due to the structure of the heap, in practice this cost is constant on average. In this implementation, a min-heap is used. 
-a
+An A* search often has a very large amount of insertion operations to the $OPEN$ set, as it is used in algorithm \ref{alg:astar}. In addition, every iteration the node with the lowest $f$-cost must be retrieved from this set. Using an unsorted list gives a constant insertion time, but a really bad lookup-time when searching for the node with the lowest $f$-cost of $O(n)$. In the other extreme, a sorted list gives constant lookup-time, but insertion takes $O(n)$ time. Instead, typically a min-heap is used. A min-heap has a constant lookup-time because the next element to be extracted is always on top, but in addition the element must be removed, which takes $O(lg(n))$ time. Insertion takes in theory $O(lg(n))$ time, but due to the structure of the heap, in practice this cost is constant on average. In this implementation, a min-heap is used. 
+
+\subsubsection{Cost functions}
+Three separate cost functions were implemented based on slope, curvature and road length. Given two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$, the cost to go from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ is defined as $C({\mbf p}_i \to {\mbf p}_{i+1}) = c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) + c_{curvature}({\mbf p}_{i-1}, {\mbf p}_i, {\mbf p}_{i+1})$. These cost functions attempt to approximate the actual cost of the road on a piecewise linear curve formed by the points defining the discrete shortest path. 
+
+The cost for road length is given as 
+$$
+c_{length}({\mbf p}_i, {\mbf p}_{i+1}) = w_{road}||{\mbf p}_{i+1} - {\mbf p}_i||
+$$
+where $w_{road}$ is the weight for road length; this is typically set to one in this project. 
+
+Let $z(t)$ be the elevation in the terrain, at the coordinates $x(t), y(t)$ of the piecewise linear curve described above, where $t$ is the parameter of the curve. For slope, we need to numerically solve the integral
+$$
+c_{slope}(t) = w_{slope}\int_{t_1}^{t_2} \dot{z}(t)\; dt
+$$
+where $\dot{z}(t)$ is the slope of the curve at $t$. This can be approximated by using the midpoint rule, with a discrete summation as
+$$
+c_{slope}(t) \approx w_{slope}h\sum_{i=0}^{(t_2-t_1)/h} \frac{z(t_i)+z(t_i+h)}{h} = w_{slope}\sum_{i=0}^{(t_2-t_1)/h} (z(t_i)+z(t_i+h))
+$$
+where $h$ is the step length used in the approximation. The smaller $h$ is, the better an approximation to the actual integral is achieved. $(z(t_i)+z(t_i+h))/h$ is the forward difference approximation to the slope $\dot{z}(t_i)$.
+
+Lastly, curvature at a point ${\mbf p}_i$ can be estimated as\cite{clothoid3}
+$$
+\kappa({\mbf p}_i) \approx \frac{2\sin(\frac{\theta}{2})}{\sqrt{||{\mbf v}_1||\cdot ||{\mbf v}_2||}}
+$$
+where ${\mbf v}_1 = {\mbf p}_i-{\mbf p}_{i-1}$ and ${\mbf v}_2 = {\mbf p}_{i+1}-{\mbf p}_i$; i.e. ${\mbf v}_1$ and ${\mbf v}_2$ is the vectors between the neighboring points. This is made into a cost function by applying the curvature weight to it:
+$$
+c_{curvature} = w_{curvature}\kappa({\mbf p}_i)
+$$
+
+
 \subsubsection{Grid coarsening}
 Typically in an A* search every grid point is used as a node in the graph. For huge maps, say $4096\times 4096$, this approach becomes very slow due to the complex cost function used for procedural road generation. A more complex cost function makes it harder to make a heuristic that is both efficient and accurate for the distance to the goal, which causes A* to expand more nodes, and thus scale poorly with larger problems. A solution to this is to coarsen the grid used, so that instead of using every elevation point in the heightmap as a node, we use every $m$ nodes, as shown in figure \ref{fig:grid_coarsening}. This significantly reduces the number of nodes, making it viable to create paths through larger terrains.
 

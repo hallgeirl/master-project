@@ -12,6 +12,8 @@
 #include <sstream>
 #include <getopt.h>
 
+#include <sys/time.h>
+
 #include "util.h"
 #include "vec2.h"
 #include "terrain.h"
@@ -32,8 +34,15 @@ using namespace clothoid;
 
 #define PRINT_ALL(cont, counter, fmt, ...) for (size_t counter = 0; counter < cont.size(); counter++) printf(fmt, __VA_ARGS__);
 
-double weight_slope = 10000.f*1.,
-      weight_curvature = 50000.f*2,
+double getTime()
+{
+    timeval t;
+    gettimeofday(&t, 0);
+    return (double)t.tv_sec + (double)t.tv_usec / 1000000.;
+}
+
+double weight_slope = 100.f*1.,
+      weight_curvature = 100.f*1,
       weight_road = 1.f;
 
 //vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
@@ -92,16 +101,27 @@ inline double get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b
 {
     double dx = a.x-b.x, dy = a.y-b.y;
     double dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
+//    double length = sqrt(dx*dx+dy*dy);
     double slope = dz/sqrt(dx*dx+dy*dy);
 
     return slope;
 }
 
+inline double get_slope_no_norm(const terrain_t& terrain, const vec2d& a, const vec2d& b)
+{
+    double dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
+
+    return dz;
+}
+
 inline double transfer_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
+    if (weight_slope == 0) return 0;
+//    double k0 = 0.5;
     double k0 = 1;
-    
-    double slope = fabs(get_slope(terrain, a, b));
+
+//    double slope = fabs(get_slope(terrain, a, b));
+    double slope = fabs(get_slope_no_norm(terrain, a, b));
     if (slope > k0)
     {
 //        printf("slope is infinity\n");
@@ -109,11 +129,15 @@ inline double transfer_slope(const terrain_t& terrain, const vec2d& a, const vec
 //        return numeric_limits<double>::infinity();
     }
     
-    return weight_slope*(slope+slope*slope);
+
+    return weight_slope*slope;
+//    return slope;
+//    return weight_slope*(slope+slope*slope);
 }
 
 inline double transfer_curvature(const terrain_t& terrain, const vec2d& a, const vec2d& b, const vec2d& prev)
 {
+    if (weight_curvature == 0) return 0;
     vec2d vb = b-a;
     vec2d va = a-prev;
     double lenA = va.length();
@@ -133,10 +157,13 @@ inline double transfer_curvature(const terrain_t& terrain, const vec2d& a, const
         printf("theta is NAN! %f %f %f %f %f\n", va.dot(vb), va.x, va.y, vb.x, vb.y);
         fflush(stdout);
     }
-    
-//    printf("curvature %lf\n", 2.f*sin(theta/2.f)/sqrt(lenA*lenB));
 
-    return weight_curvature*2.f*sin(theta/2.f)/sqrt(lenA*lenB);
+//    double k0 = 0.01;
+    double curvature = 2.f*sin(theta/2.f)/sqrt(lenA*lenB);
+//    if (curvature > k0) 
+//        return numeric_limits<double>::infinity();
+
+    return weight_curvature*curvature;
 }
 
 //Transfer function for cost of making the road itself. This is dependent on the length of the road (how much material is used, basically)
@@ -145,65 +172,34 @@ inline double transfer_road(const terrain_t& terrain, const vec2d& a, const vec2
     double dx = a.x-b.x, dy = a.y-b.y;
     double dz = 0;
 //    double dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
-
     return weight_road*sqrt(dx*dx+dy*dy+dz*dz);
 }
 
 //Integrate the cost over the path segment 
-double cost(const terrain_t& terrain, const vec2d& a, const vec2d& v, const vec2d& b, const vec2d T0, bool first, bool last)
+double cost(const terrain_t& terrain, const vec2d& a, const vec2d& v, const vec2d& b, bool first, bool last)
 {
     //do we have enough points to make a curve? If not, return a cost of 0.
-//    if (v == a)
-//        return 0;
-//
-//    vec2d p0, p1, T1;
-//    if (first)
-//    {
-//        p0 = a;
-//    }
-//    else
-//    {
-//        p0 = (a+v)/2.;
-//    }
-//    
-//    if (last)
-//        p1 = b;
-//    else    
-//        p1 = (b+v)/2.;
-//
-//    T1 = (v-p1).normalized();
-//
-//    ClothoidPair c(p0, T0, p1, T1, v);
-//
-//    double step = 1.*terrain.point_spacing;
-//    double cost_slope = 0;
-//    for (double t = 0; t < c.length()-step; t += step)
-//    {
-//        double t1 = t, t2 = min(t+step, c.length()-1e-5);
-//        clothoid_point_t pt1 = c.lookup(t1), pt2 = c.lookup(t2);
-//        cost_slope += transfer_slope(terrain, pt1.pos, pt2.pos) * (t2-t1);
-//    }
-//
-//
-//    return c.length() * weight_road + c.integratedCurvature() * weight_curvature + cost_slope * weight_slope;
-
     
     double i = 0;
     double cost_slope = 0;
     vec2d dir = b-v;
 
-    const double step = 1.*terrain.point_spacing/dir.length();
-
-    for (double t = 0; t < 1.f; t = i*step, i++)
+    const double tn = dir.length();
+    dir = dir / tn;
+    const double step = 0.5*terrain.point_spacing;
+    for (double t = 0; t < tn; t = i*step, i++)
     {
         double t1 = t, t2 = t+step;
-        if (t2 > 1.f)
-            t2 = 1.f;
+        if (t2 > tn)
+            t2 = tn;
 
         vec2d _a = dir*t1 + v,
               _b = dir*t2 + v;
         
-        cost_slope += transfer_slope(terrain, _a, _b) * (t2-t1);
+        cost_slope += transfer_slope(terrain, _a, _b);
+//        cost_slope += transfer_slope(terrain, _a, _b) * (t2-t1);
+//        if (transfer_slope(terrain, _a, _b) > 4)
+//            printf("slope %lf, (%lf,%lf)-(%lf,%lf): %lf-%lf\n", transfer_slope(terrain, _a, _b), _a.x, _a.y, _b.x, _b.y, terrain.getPointBilinear(_a.x, _a.y), terrain.getPointBilinear(_b.x, _b.y));
     }
 
     double cost_road = transfer_road(terrain, v, b),
@@ -215,7 +211,7 @@ double cost(const terrain_t& terrain, const vec2d& a, const vec2d& v, const vec2
     return cost_road + cost_slope + cost_curvature;
 }
 
-vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density)
+vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int grid_density, int k)
 {
     map<vec2i, vec2i> predecessor;
     unordered_map<vec2i, double> in_open;
@@ -227,8 +223,6 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
     end.x = ((int)(end.x/grid_density))*grid_density;
     end.y = ((int)(end.y/grid_density))*grid_density;
 
-    // k = neighborhood radius
-    int k = 5;
 
     //Make a list of neighbors with gcd(i,j) == 1
     vector<vec2i> neighborhood;
@@ -282,13 +276,13 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         in_open.erase(current.p);
         closed[current.p] = true;
         
-        static int ii = 0;
-        ii++;
-        if (ii % 1000 == 0)
-        {
-            printf("current %d,%d\tnopen %zd\tnclosed %zd\tf %f\th %f\n", current.p.x, current.p.y, open.size(), closed.size(), current.cost_f(), current.cost_h);
-            fflush(stdout);
-        }
+//        static int ii = 0;
+//        ii++;
+//        if (ii % 1000 == 0)
+//        {
+//            printf("current %d,%d\tnopen %zd\tnclosed %zd\tf %f\th %f\n", current.p.x, current.p.y, open.size(), closed.size(), current.cost_f(), current.cost_h);
+//            fflush(stdout);
+//        }
 
 //        printf("Closed:\n");
 //        for (map<vec2i, bool>::iterator it = closed.begin(); it != closed.end(); it++)
@@ -300,6 +294,8 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         //Reached the end?
         if (current == end)
         {
+            //Get the final cost
+//            printf("Final cost %lf, %lf\n", current.cost_g, current.cost_h);
             break;
         }
 
@@ -315,25 +311,16 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
                     continue;
                 }
 
-                vec2d T0;
                 //First curve segment?
                 const vec2i& v = current.p;
                 const vec2i& pa = predecessor[current.p];
                 const vec2i& pb = pos;
                 
-                if (pa == start && pa != v)
-                    T0 = (terrain.gridToPoint(v)  - terrain.gridToPoint(pa)).normalized();
-                else if (pa != v)
-                    T0 = (terrain.gridToPoint(pa) - terrain.gridToPoint(predecessor[pa])).normalized();
-                else
-                    T0 = vec2d(0, 0);
-
                 node_t n(pos, 
                         current.cost_g + cost(terrain, 
                                               terrain.gridToPoint(pa), 
                                               terrain.gridToPoint(v), 
                                               terrain.gridToPoint(pb),
-                                              T0,
                                               predecessor[current.p] == start,
                                               pos == end),
                         h(terrain, terrain.gridToPoint(pos), terrain.gridToPoint(end)));
@@ -352,13 +339,15 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         }
     }
 
+
+
 //    printf("Predecessors (successor -> predecessor):\n");
 //    for (map<vec2i, vec2i>::iterator it = predecessor.begin(); it != predecessor.end(); it++)
 //    {
 //        printf("%d,%d <- %d,%d\n", it->first.x, it->first.y, it->second.x, it->second.y);
 //    }
 
-    cout << "Backtracing" << endl;
+//    cout << "Backtracking" << endl;
 
     //Backtrace
     vector<vec2d> result;
@@ -368,6 +357,7 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
 
     while (!(current_pos == start))
     {
+//        printf("current pos: %d %d\n", current_pos.x, current_pos.y);
         result.push_back(terrain.gridToPoint(current_pos));
         current_pos = predecessor[current_pos];
     }
@@ -491,16 +481,22 @@ int main(int argc, char** argv)
     string output_roadxml, output_ctrlpoints;
 
     //Terrain heights
-    double h_min = 0;
-    double h_max = 2700.3;
+    double h_min = 900;
+    double h_max = 2550;
 
     //Terrain dimensions
-    int h = 1024, w = 1024;
+//    int h = 768, w = h;
+    int h = 1024, w = h;
     double spacing = 10.;
     int grid_density = 4;
+    // k = neighborhood radius
+    int k = 5;
     
+    //timers
+    double t_pathfind;
+
     int c;
-    while ((c = getopt(argc, argv, "a:b:s:")) != EOF)
+    while ((c = getopt(argc, argv, "a:b:s:d:x:y:")) != EOF)
     {
         switch (c)
         {
@@ -509,6 +505,12 @@ int main(int argc, char** argv)
             break;
             case 'b':
                 h_max = atof(optarg);
+            break;
+            case 'x':
+                w = atoi(optarg);
+            break;
+            case 'y':
+                h = atoi(optarg);
             break;
             case 's':
                 spacing = atof(optarg);
@@ -529,9 +531,15 @@ int main(int argc, char** argv)
     terrain_t       terrain(h, w, spacing);
 
 
+    vec2i start,end;
     //Starting and ending points
-    vec2i end(150, 1000), start(900, 24);
+//    vec2i start(10, 750), end(400, 170);
+//    vec2i start(10, 360), end(750, 10);
+//    vec2i start(0, 0), end(4000, 4000);
 //    vec2i end(70, 570), start(900, 24);
+
+    start = vec2i(0,0);
+    end = vec2i(w-1,h-1);
 
     //Input and output filenames
     input_name = argv[optind], output_name = argv[optind+1];
@@ -552,7 +560,9 @@ int main(int argc, char** argv)
         }
     }
 
-    vector<vec2d> path = pathFind(terrain, start, end, grid_density);
+    t_pathfind = -getTime();
+    vector<vec2d> path = pathFind(terrain, start, end, grid_density, k);
+    t_pathfind += getTime();
 
 //    vector<vec2d> path;
 //    for (int i = 0; i < 5; i++)
@@ -601,7 +611,7 @@ int main(int argc, char** argv)
     for (double t = tmin; t < tmax; t += 5)
     {
         clothoid_point_t p = clothoidSpline.lookup(t);
-        printf("p %lf %lf %lf\n", p.pos.x, p.pos.y, clothoidSpline.length());
+//        printf("p %lf %lf %lf\n", p.pos.x, p.pos.y, clothoidSpline.length());
         double color = 255;
         double red = 1;
         double green = 1;
@@ -612,7 +622,29 @@ int main(int argc, char** argv)
         setPixelColor(bm, int(p.pos.x/terrain.point_spacing), int(p.pos.y/terrain.point_spacing), color*red, color*green,color*blue);
     }
 
-    printf("Length of curve: %lf\n", clothoidSpline.length());
+    //Find cost of curve
+    double step = 1;
+    double cost_road = clothoidSpline.length()*weight_road,
+           cost_slope = 0,
+           cost_curvature = 0;
+    for (double t = tmin; t < tmax; t += step)
+    {
+        double t0 = max(t-step, tmin), t1 = t, t2 = min(t+step, tmax-1e-5);
+        clothoid_point_t p0, p1, p2;
+        p0 = clothoidSpline.lookup(t0);
+        p1 = clothoidSpline.lookup(t1);
+        p2 = clothoidSpline.lookup(t2);
+        cost_curvature += weight_curvature*p1.curvature*(t2-t1);
+
+        cost_slope += transfer_slope(terrain, p1.pos, p2.pos);
+
+//        printf("%lf %lf %lf, %lf %lf\n", cost_slope, p1.pos.x, p1.pos.y, p2.pos.x, p2.pos.y);
+//        printf("cost %lf\n", cost_total);
+//double cost(const terrain_t& terrain, const vec2d& a, const vec2d& v, const vec2d& b, const vec2d T0, bool first, bool last)
+    }
+    double cost_total = cost_road + cost_slope + cost_curvature;
+//    printf("Total cost: %lf, Length of curve: %lf\n", cost_total, clothoidSpline.length());
+//    printf("Breakup of costs:\n\tLength:\t%lf\n\tSlope:\t%lf\n\tCurvature:\t%lf\n", cost_road, cost_slope, cost_curvature);
     
     for (size_t i = 0; i < path.size(); i++)
     {
@@ -623,13 +655,14 @@ int main(int argc, char** argv)
     }
 
     //Save image
-//    if (out != 0)
     {
-        printf("Saving image %s...\n", (output_name + ".png").c_str());
+//        printf("Saving image %s...\n", (output_name + ".png").c_str());
 
         FreeImage_Save(FIF_PNG, bm, (output_name + ".png").c_str());
 
     }
+
+    printf("%lf %lf\n", t_pathfind, cost_total);
 
     FreeImage_Unload(bm);
 

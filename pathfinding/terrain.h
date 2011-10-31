@@ -33,9 +33,14 @@ struct terrain_t
         float x_2 = ceil(x/point_spacing)*point_spacing;
         if (x_1 == x_2) x_2 += point_spacing;
 
+
         float fx_1 = getPointNearest(x_1, y_1)*(x_2-x)/(x_2-x_1) + getPointNearest(x_2, y_1)*(x-x_1)/(x_2-x_1);
         float fx_2 = getPointNearest(x_1, y_2)*(x_2-x)/(x_2-x_1) + getPointNearest(x_2, y_2)*(x-x_1)/(x_2-x_1);
         float fp = fx_1*(y_2-y)/(y_2-y_1) + fx_2*(y-y_1)/(y_2-y_1);
+
+//        float z1 = getPointNearest(x_1, y_1), z2 = getPointNearest(x_1, y_2), z3 =  getPointNearest(x_2, y_1), z4 = getPointNearest(x_2, y_2);
+
+//        printf("nearest: %lf %lf, %lf %lf, interpolated %lf\n", z1, z2, z3, z4, fp);
 
         return fp;
     }
