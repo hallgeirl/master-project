@@ -6,9 +6,20 @@ This chapter will describe my implementation of the procedural road generation a
 For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described. 
 
 \subsection{Implementation of A*}
-The A* search used for generating roads in this project first generates a discrete shortest path, described by $n$ points in space. When computing costs, it is assumed that these points form a piecewise linear curve $(x(t), y(t)$ with parameter $t$, which is the length of the curve. Eventually, a clothoid curve is generated from the same points, but this is not used for pathfinding.
+The A* search used for generating roads in this project first generates a discrete shortest path, described by $n$ points in space. When computing costs, it is assumed that these points form a piecewise linear curve where each point along the curve $(x(t), y(t))$ is a function of parameter $t$, which is the length of the curve. Eventually, a clothoid curve is generated from the same points, but this is not used for pathfinding.
 
-An A* search often has a very large amount of insertion operations to the $OPEN$ set, as it is used in algorithm \ref{alg:astar}. In addition, every iteration the node with the lowest $f$-cost must be retrieved from this set. Using an unsorted list gives a constant insertion time, but a really bad lookup-time when searching for the node with the lowest $f$-cost of $O(n)$. In the other extreme, a sorted list gives constant lookup-time, but insertion takes $O(n)$ time. Instead, typically a min-heap is used. A min-heap has a constant lookup-time because the next element to be extracted is always on top, but in addition the element must be removed, which takes $O(lg(n))$ time. Insertion takes in theory $O(lg(n))$ time, but due to the structure of the heap, in practice this cost is constant on average. In this implementation, a min-heap is used. 
+The A* algorithm is implemented as described by algorithm \ref{alg:astar}, with the edge weight $w$ being equal to the cost function described in the section "Cost functions". The following section will also describe the data structures used, and why they were chosen. 
+
+\subsubsection{Choice of data structures}
+The time complexity of A* is highly dependent on the data structures used in the implementation. In particular, the data structure used for the $OPEN$ and $CLOSED$ lists must be chosen carefully. In this implementation, a minimum heap with a supplementary hash map is used for the $OPEN$ list, and a hash map is used for the $CLOSED$ list.
+
+An A* search often has a very large amount of insertion operations to the $OPEN$ set, as it is used in algorithm \ref{alg:astar}. In addition, every iteration the node with the lowest $f$-cost must be retrieved from this set. Using an unsorted list gives a constant insertion time, but a really bad lookup-time when searching for the node with the lowest $f$-cost of $O(n)$. In the other extreme, a sorted list gives constant lookup-time, but insertion takes $O(n)$ time. 
+
+Instead, typically a min-heap is used. A min-heap has a constant lookup-time of the "smallest" element (smallest in this case being the node with the smallest f-cost) because the next element to be extracted is always on top, but in addition the element must be removed, which takes $O(lg(n))$ time. Insertion takes in theory $O(lg(n))$ time, but due to the structure of the heap, in practice this cost is constant on average. 
+
+However, the elements in a min-heap generally have no specified order other than the smallest item being on top, and the second smallest item being one of its children. Searching for an arbitrary item in a min-heap therefore requires us to search through the whole heap. Because this is something that is done regularily, to check for existance of an item in the $OPEN$ list (see the inner for-loop in algorithm \ref{alg:astar}), a supplementary hash map is used to keep track of which nodes exists in the heap. 
+
+A hash map has constant lookup and constant insertion time, although the items are in general unordered. Therefore, the $CLOSED$ list is implemented as a hash map, because all that list is used for, is inserting nodes, and looking up existance of nodes. This is also the reason why a hash map is well suited for augmenting the heap for the $OPEN$ list, to keep track of existance of nodes in the heap.
 
 \subsubsection{Cost functions}
 Three separate cost functions were implemented based on slope, curvature and road length. Given two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$, the cost to go from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ is defined as $C({\mbf p}_i \to {\mbf p}_{i+1}) = c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) + c_{curvature}({\mbf p}_{i-1}, {\mbf p}_i, {\mbf p}_{i+1})$. These cost functions attempt to approximate the actual cost of the road on a piecewise linear curve formed by the points defining the discrete shortest path. 
@@ -37,7 +48,6 @@ where ${\mbf v}_1 = {\mbf p}_i-{\mbf p}_{i-1}$ and ${\mbf v}_2 = {\mbf p}_{i+1}-
 $$
 c_{curvature} = w_{curvature}\kappa({\mbf p}_i)
 $$
-
 
 \subsubsection{Grid coarsening}
 Typically in an A* search every grid point is used as a node in the graph. For huge maps, say $4096\times 4096$, this approach becomes very slow due to the complex cost function used for procedural road generation. A more complex cost function makes it harder to make a heuristic that is both efficient and accurate for the distance to the goal, which causes A* to expand more nodes, and thus scale poorly with larger problems. A solution to this is to coarsen the grid used, so that instead of using every elevation point in the heightmap as a node, we use every $m$ nodes, as shown in figure \ref{fig:grid_coarsening}. This significantly reduces the number of nodes, making it viable to create paths through larger terrains.
@@ -168,7 +178,7 @@ The last step is to compute the position from the clothoid or straight line we f
 \centering
 \begin{tabular}{ccl}
 \hline
-{\tbf Part of curve} & {\tbf Reversed} & ${\mbf t_{ll}}$ \\
+\tbf {Part of curve} & \tbf {Reversed} & ${\mbf t_{ll}}$ \\
 \hline
 $S$ & No & $t_l$\\
 $S$ & Yes & $|S| - (t_l - |A_1| - |A_0|)$\\
