@@ -158,10 +158,10 @@ inline double transfer_curvature(const terrain_t& terrain, const vec2d& a, const
         fflush(stdout);
     }
 
-//    double k0 = 0.01;
+    double k0 = 0.03;
     double curvature = 2.f*sin(theta/2.f)/sqrt(lenA*lenB);
-//    if (curvature > k0) 
-//        return numeric_limits<double>::infinity();
+    if (curvature > k0) 
+        return numeric_limits<double>::infinity();
 
     return weight_curvature*curvature;
 }
@@ -362,7 +362,8 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
         current_pos = predecessor[current_pos];
     }
     result.push_back(terrain.gridToPoint(start));
-//    PRINT_ALL(result, i, "%lf, %lf\n", result[i].x, result[i].y);
+
+    reverse(result.begin(), result.end());
 
     return result;
 }
