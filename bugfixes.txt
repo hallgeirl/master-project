@@ -1,0 +1,6 @@
+Bugfix-list:
+Changed ax to ay and az in SnowSystemKernels.cu
+Fixed the random number generator
+Fixed the positioning of grid points when generating them
+
+Problem: Division by zero, line 150, SnowSystemKernels.cu
