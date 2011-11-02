@@ -22,7 +22,9 @@ However, the elements in a min-heap generally have no specified order other than
 A hash map has constant lookup and constant insertion time, although the items are in general unordered. Therefore, the $CLOSED$ list is implemented as a hash map, because all that list is used for, is inserting nodes, and looking up existance of nodes. This is also the reason why a hash map is well suited for augmenting the heap for the $OPEN$ list, to keep track of existance of nodes in the heap.
 
 \subsubsection{Cost functions}
-Three separate cost functions were implemented based on slope, curvature and road length. Given two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$, the cost to go from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ is defined as $C({\mbf p}_i \to {\mbf p}_{i+1}) = c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) + c_{curvature}({\mbf p}_{i-1}, {\mbf p}_i, {\mbf p}_{i+1})$. These cost functions attempt to approximate the actual cost of the road on a piecewise linear curve formed by the points defining the discrete shortest path. 
+Three separate cost functions were implemented based on slope, curvature and road length. Given two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$, the cost to go from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ is defined as 
+$$C({\mbf p}_i \to {\mbf p}_{i+1}) = c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) + c_{curvature}({\mbf p}_{i-1}, {\mbf p}_i, {\mbf p}_{i+1})$$
+These cost functions attempt to approximate the actual cost of the road on a piecewise linear curve formed by the points defining the discrete shortest path. 
 
 The cost for road length is given as 
 $$
@@ -32,13 +34,13 @@ where $w_{road}$ is the weight for road length; this is typically set to one in 
 
 Let $z(t)$ be the elevation in the terrain, at the coordinates $x(t), y(t)$ of the piecewise linear curve described above, where $t$ is the parameter of the curve. For slope, we need to numerically solve the integral
 $$
-c_{slope}(t) = w_{slope}\int_{t_1}^{t_2} \dot{z}(t)\; dt
+c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) = w_{slope}\int_{T_1}^{T_2} |\dot{z}(t)|\; dt
 $$
-where $\dot{z}(t)$ is the slope of the curve at $t$. This can be approximated by using the midpoint rule, with a discrete summation as
+where $\dot{z}(t)$ is the slope of the curve at $t$, and $T_1$ is the curve's parameter at ${\mbf p}_i$, and $T_2$ is the curve's parameter at ${\mbf p}_{i+1}$. This can be approximated by using the midpoint rule, with a discrete summation as
 $$
-c_{slope}(t) \approx w_{slope}h\sum_{i=0}^{(t_2-t_1)/h} \frac{z(t_i)+z(t_i+h)}{h} = w_{slope}\sum_{i=0}^{(t_2-t_1)/h} (z(t_i)+z(t_i+h))
+c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) \approx w_{slope}h\sum_{i=0}^{N-1} \frac{|z(t_{i+1})-z(t_i)|}{h} = w_{slope}\sum_{i=0}^{N-1} |z(t_{i+1})-z(t_i)|
 $$
-where $h$ is the step length used in the approximation. The smaller $h$ is, the better an approximation to the actual integral is achieved. $(z(t_i)+z(t_i+h))/h$ is the forward difference approximation to the slope $\dot{z}(t_i)$.
+where $h$ is the step length used in the approximation, and $t_i=T_1+ih$, and $N=(T_2-T_1)/h$. The smaller $h$ is, the better an approximation to the actual integral is achieved. $(z(t_{i+1})-z(t_i))/h$ is the forward difference approximation to the slope $\dot{z}(t_i)$.
 
 Lastly, curvature at a point ${\mbf p}_i$ can be estimated as\cite{clothoid3}
 $$
@@ -48,6 +50,31 @@ where ${\mbf v}_1 = {\mbf p}_i-{\mbf p}_{i-1}$ and ${\mbf v}_2 = {\mbf p}_{i+1}-
 $$
 c_{curvature} = w_{curvature}\kappa({\mbf p}_i)
 $$
+
+\subsubsection{Choice of heuristic function}
+The choice of the heuristic function can greatly influence the time it takes to find a path from the start node to the goal node. The more accurate the heuristic is, the fewer nodes are expanded in the search; however, of course, as mentioned in section \ref{sec:solving_shortest_path}, more accurate heuristics are typically more expensive to compute.
+
+In the road generator, assuming zero curvature, we can find a lower bound for the cost between two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$ using the cost due to the distance between the points plus the cost due to the elevation difference:
+\begin{align*}
+C({\mbf p}_i \to {\mbf p}_{i+1}) = & c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) + c_{curvature}({\mbf p}_{i-1}, {\mbf p}_i, {\mbf p}_{i+1})\\
+                                 \geq & c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) \\
+                                 = & w_{road}||{\mbf p}_{i+1} - {\mbf p}_i|| + w_{slope}\sum_{i=0}^{N-1} |z(t_{i+1})-z(t_i)|
+\end{align*}
+Because $|a+b| \leq |a|+|b|$, 
+$$
+\sum_{i=0}^{N-1} |z(t_{i+1})-z(t_i)| \geq \left|\sum_{i=0}^{N-1} (z(t_{i+1})-z(t_i))\right| = |z(t_{N})-z(t_0)| = |z(T_2)-z(T_1)|
+$$
+This gives a lower bound for the cost of moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$:
+$$
+C({\mbf p}_i \to {\mbf p}_{i+1}) \geq w_{road}||{\mbf p}_{i+1} - {\mbf p}_i|| + w_{slope}|z(T_2)-z(T_1)|
+$$
+Using the goal node ${\mbf v}_b$ as ${\mbf p}_{i+1}$, this defines the heuristic used in this project, i.e.
+$$
+h({\mbf p}_i) = w_{road}||{\mbf v}_b - {\mbf p}_i|| + w_{slope}|z({\mbf v}_b)-z({\mbf p}_i)|
+$$
+where $z({\mbf p})$ is the elevation at point ${\mbf p}$.
+
+In order to guarantee that the path that is found is optimal, the heuristic used must be consistent and admissible. $h$ as defined above is definitely admissible, because it is a lower bound of the cost, as proved above. It is also consistent, because moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ gives a change in $h$ that is less or equal to the actual cost for moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$, and thus the total cost $f(x) = g(x)+h(x)$ is always increasing. Using $h$ in $A*$ therefore results in an optimal path.
 
 \subsubsection{Grid coarsening}
 Typically in an A* search every grid point is used as a node in the graph. For huge maps, say $4096\times 4096$, this approach becomes very slow due to the complex cost function used for procedural road generation. A more complex cost function makes it harder to make a heuristic that is both efficient and accurate for the distance to the goal, which causes A* to expand more nodes, and thus scale poorly with larger problems. A solution to this is to coarsen the grid used, so that instead of using every elevation point in the heightmap as a node, we use every $m$ nodes, as shown in figure \ref{fig:grid_coarsening}. This significantly reduces the number of nodes, making it viable to create paths through larger terrains.
