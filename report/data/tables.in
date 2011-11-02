@@ -21,7 +21,12 @@ query select density, round(runningtime,2), round(speedup,2), round(cost,1), rou
 file astar_vs_dijkstra.tex
 separator &
 newline \\
-query select r1.testset, r1.runningtime as rt_dijkstra, r2.testset, r2.runningtime as rt_astar from results r1, results r2 where r1.testset = r2.testset and r1.name = 'astar_vs_dijkstra' and r2.name = r1.name and r1.heuristic_alpha = 0;
+query select r1.testset, round(r1.runningtime,2) as rt_dijkstra, round(r1.cost,2), round(r2.runningtime,2) as rt_astar, round(r2.cost,1), round(r2.runningtime/r1.runningtime,2) from results r1, results r2 where r1.testset = r2.testset and r1.name = 'astar_vs_dijkstra' and r2.name = r1.name and r2.heuristic_alpha = 0 and r2.heuristic_alpha < r1.heuristic_alpha;
+
+file astar_vs_dijkstra.dat
+separator 
+newline 
+query select r1.testset, r1.runningtime as rt_dijkstra, r2.runningtime as rt_astar from results r1, results r2 where r1.testset = r2.testset and r1.name = 'astar_vs_dijkstra' and r2.name = r1.name and r2.heuristic_alpha = 0 and r2.heuristic_alpha < r1.heuristic_alpha;
 
 #file test.tbl
 #separator &
