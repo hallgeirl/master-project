@@ -2,11 +2,16 @@ test densities
 path ./
 exec pathfind
 
+#start 0 128
+#end 0 134
+
 testset helens_before
 width 256
 height 256
 heightmap helens256b.raw
 spacing 30
+minelev 873
+maxelev 2951
 include densities.inc
 
 testset helens_after
@@ -14,6 +19,8 @@ width 768
 height 768
 heightmap helens768.raw
 spacing 10
+minelev 900
+maxelev 2550
 include densities.inc
 
 testset mountains
@@ -21,6 +28,8 @@ width 1024
 height 1024
 heightmap test4.raw
 spacing 10
+minelev 0
+maxelev 2700
 include densities.inc
 
 testset trondheim
@@ -28,5 +37,7 @@ width 4096
 height 4096
 heightmap trondheim4096.raw
 spacing 20
+minelev -5
+maxelev 842
 include densities.inc
 

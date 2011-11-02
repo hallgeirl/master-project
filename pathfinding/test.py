@@ -15,7 +15,7 @@ class Test:
         return str(self.__dict__)
 
 class Input:
-    def __init__(self, width, height, heightmap, density, spacing, testset, _file):
+    def __init__(self, width, height, heightmap, density, spacing, testset, minelev, maxelev, start, end, heuristic_alpha, _file):
         self.file = _file   #Set to filename if output is already stored in file
         self.density = density
         self.width = width
@@ -23,6 +23,11 @@ class Input:
         self.heightmap = heightmap
         self.spacing = spacing
         self.testset = testset
+        self.minelev = minelev
+        self.maxelev = maxelev
+        self.start = start
+        self.end = end
+        self.heuristic_alpha = heuristic_alpha
 
     def __str__(self):
         return str(self.__dict__)
@@ -87,7 +92,15 @@ def make(path, makeopts):
 
 def test_pathfind(test, _input, executable, reps):
  #29     ./$(PROGRAM) -x 4096 -y 4096 -a "-5" -b 842 trondheim4096.raw trondheim
-    return test_common(test, _input, reps, "(\S+)\s+(\S+)", os.path.join(test.path, test.executable) + " -x " + str(_input.width) + " -y " + str(_input.height) + " -d " + str(_input.density) + " -s " + str(_input.spacing) + " " + _input.heightmap + " " + _input.heightmap)
+    arglist = os.path.join(test.path, test.executable)
+    arglist = arglist + " -x " + str(_input.width) + " -y " + str(_input.height)
+    arglist = arglist + " -d " + str(_input.density) + " -s " + str(_input.spacing)
+    arglist = arglist + " -a " + str(_input.minelev) + " -b " + str(_input.maxelev)
+    arglist = arglist + ((" --startx=%d --starty=%d" % (_input.start[0], _input.start[1])) if _input.start is not None else "")
+    arglist = arglist + ((" --endx=%d --endy=%d" % (_input.end[0], _input.end[1])) if _input.end is not None else "")
+    arglist = arglist + (" -h %lf" % _input.heuristic_alpha)
+    arglist = arglist + " " + _input.heightmap + " " + _input.heightmap
+    return test_common(test, _input, reps, "(\S+)\s+(\S+)", arglist)
 
 def test_common(test, _input, reps, ex, executable):
     if _input.file == None:
@@ -146,7 +159,7 @@ def print_help():
     print("-r <#>, run for # iterations, use minimum time")
     print("-nots, disable timestamping of output files")
 
-def read_include(filename, width, height, heightmap, spacing, testset):
+def read_include(filename, width, height, heightmap, spacing, testset, minelev, maxelev, start, end, heuristic_alpha):
     inputdata = open(filename, "r")
     out = []
 
@@ -158,8 +171,14 @@ def read_include(filename, width, height, heightmap, spacing, testset):
         elif inp[0] == "height": height = int(inp[1])
         elif inp[0] == "heightmap": heightmap = ''.join(inp[1:])
         elif inp[0] == "spacing": spacing = int(inp[1])
+        elif inp[0] == "spacing": spacing = int(inp[1])
+        elif inp[0] == "minelev": minelev = int(inp[1])
+        elif inp[0] == "maxelev": maxelev = int(inp[1])
+        elif inp[0] == "testset": testset = ''.join(inp[1:])
+        elif inp[0] == "start": start = (int(inp[1]), int(inp[2]))
+        elif inp[0] == "end": end = (int(inp[1]), int(inp[2]))
 #        elif inp[0] == "file": out.append( Input(geom[0], geom[1], int(inp[0]), int(inp[1]), perthread, inp[1]))
-        else: out.append( Input(width, height, heightmap, int(inp[0]), spacing, testset, None) )
+        else: out.append( Input(width, height, heightmap, int(inp[0]), spacing, testset, minelev, maxelev, start, end, heuristic_alpha, None) )
 
     inputdata.close()
 
@@ -213,39 +232,40 @@ def main(args):
     width = 0
     height = 0
     spacing = 0
+    minelev = 0
+    maxelev = 1
     heightmap = ""
     testset = "default_set"
+    start = None
+    end = None
+    heuristic_alpha = 1
     for l in inputf:
         if len(l.strip()) == 0 or l.strip()[0] == "#": continue
         inp = l.strip().split()
-        inp[0] = inp[0].strip()
-        inp[1] = inp[1].strip()
-        if inp[0] == "test":
-            t.name = inp[1]
-        elif inp[0] == "path":
-            t.path = inp[1]
-        elif inp[0] == "exec":
-            t.executable = inp[1]
-        elif inp[0] == "makeflags":
-            t.makeflags = " ".join(inp[1:])
-        elif inp[0] == "width":
-            width = int(inp[1])
-        elif inp[0] == "height":
-            height = int(inp[1])
-        elif inp[0] == "heightmap":
-            heightmap = ''.join(inp[1:])
-        elif inp[0] == "spacing":
-            spacing = int(inp[1])
-        elif inp[0] == "testset":
-            testset = ''.join(inp[1:])
+        for ll in xrange(len(inp)):
+            inp[ll] = inp[ll].strip()
+
+        if inp[0] == "test": t.name = inp[1]
+        elif inp[0] == "path": t.path = inp[1]
+        elif inp[0] == "exec": t.executable = inp[1]
+        elif inp[0] == "makeflags": t.makeflags = " ".join(inp[1:])
+        elif inp[0] == "width": width = int(inp[1])
+        elif inp[0] == "height": height = int(inp[1])
+        elif inp[0] == "heightmap": heightmap = ''.join(inp[1:])
+        elif inp[0] == "spacing": spacing = int(inp[1])
+        elif inp[0] == "minelev": minelev = int(inp[1])
+        elif inp[0] == "maxelev": maxelev = int(inp[1])
+        elif inp[0] == "testset": testset = ''.join(inp[1:])
+        elif inp[0] == "start": start = (int(inp[1]), int(inp[2]))
+        elif inp[0] == "end": end = (int(inp[1]), int(inp[2]))
+        elif inp[0] == "alpha": heuristic_alpha = int(inp[1])
 #        elif inp[0] == "file":
 #            t.inputs.append( Input(geom[0], geom[1], 0, 0, perthread, inp[1]))
         elif inp[0] == "include":
-            ins = read_include(''.join(inp[1:]), width, height, heightmap, spacing, testset)
+            ins = read_include(''.join(inp[1:]), width, height, heightmap, spacing, testset, minelev, maxelev, start, end, heuristic_alpha)
             t.inputs += ins
-#            print [s.__dict__ for s in t.inputs]
         else:
-            t.inputs.append( Input(width, height, heightmap, int(inp[1]), spacing, testset, None) )
+            t.inputs.append( Input(width, height, heightmap, int(inp[0]), spacing, testset, minelev, maxelev, start, end, heuristic_alpha, None) )
     inputf.close()
     
 #    print [ s.__dict__ for s in t.inputs]
@@ -265,13 +285,13 @@ def main(args):
     # Write results to database
     db = sqlite3.connect(output)
     c = db.cursor()
-    c.execute("create table if not exists results (resultid int primary key, name varchar(255), testset varchar(255), width int, height int, heightmap varchar(255), density int, runningtime real, cost real, optimal real, speedup real)")
+    c.execute("create table if not exists results (resultid int primary key, name varchar(255), testset varchar(255), width int, height int, heightmap varchar(255), density int, runningtime real, cost real, heuristic_alpha real, optimal real, speedup real, startx, starty, endx, endy)")
 
     # Delete old test results
     c.execute("delete from results where name = '%s'" % (t.name))
     
     for r in results:
-        c.execute("insert into results (name, testset, width, height, heightmap, density, runningtime, cost) values ('%s', '%s', %d, %d, '%s', %d, %f, %f)" % (t.name, r.input.testset, r.input.width, r.input.height, r.input.heightmap, r.input.density, r.rt, r.cost))
+        c.execute("insert into results (name, testset, width, height, heightmap, density, runningtime, cost, heuristic_alpha, startx,starty,endx,endy) values ('%s', '%s', %d, %d, '%s', %d, %f, %f, %f, %d, %d, %d, %d)" % (t.name, r.input.testset, r.input.width, r.input.height, r.input.heightmap, r.input.density, r.rt, r.cost, r.input.heuristic_alpha, r.input.start[0], r.input.start[1], r.input.end[0], r.input.end[1]))
 
     db.commit()
 

@@ -310,7 +310,10 @@ namespace clothoid {
     {
         //Check that t is within the range of the spline
         if (t < 0 || t > lengths.back())
+        {
+            fprintf(stderr, "t=%lf, range=[%lf, %lf]\n", t, 0., lengths.back());
             throw runtime_error("Parameter t outside of curve range");
+        }
 
         //Determine which pair of clothoids we need by a binary search by finding the biggest length < t
         int lower = 0, upper = lengths.size()-1;

@@ -45,6 +45,9 @@ double weight_slope = 100.f*1.,
       weight_curvature = 100.f*1,
       weight_road = 1.f;
 
+double heuristic_alpha = 1;
+
+
 //vec2d transrot(const vec2d& p, const vec2d& dp, double rot);
 //
 ////Rotate, then translate
@@ -91,10 +94,10 @@ inline double h(const terrain_t& terrain, const vec2d& a, const vec2d& b)
 {
     double dx = a.x-b.x, dy = a.y-b.y;
 //          dz = 0;
-//        dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
+    double dz = terrain.getPointBilinear(b.x, b.y) - terrain.getPointBilinear(a.x, a.y);
     double len = sqrt(dx*dx+dy*dy);
 //    return len*weight_road + dz*weight_slope/len; // *weight_slope;
-    return len*weight_road; // *weight_slope;
+    return heuristic_alpha*(len*weight_road + fabs(dz)*weight_slope); // *weight_slope;
 }
 
 inline double get_slope(const terrain_t& terrain, const vec2d& a, const vec2d& b)
@@ -365,6 +368,9 @@ vector<vec2d> pathFind(const terrain_t& terrain, vec2i start, vec2i end, int gri
 
     reverse(result.begin(), result.end());
 
+    while (result.size() < 3)
+        result.push_back(result.back());
+
     return result;
 }
 
@@ -418,13 +424,14 @@ void writeRoadXML(string filename, const vector<vec2d>& controlPoints, const ter
 
     double step = 50;
     clothoid_point_t pos_prev = spline.lookup(0),
-          pos_next = spline.lookup(step);
+          pos_next = spline.lookup(min(step, spline.length()));
     output << "        <SZCurve>\n";
     output << "          <Polynomial>\n";
     output << "            <begin direction=\"" << get_slope(terrain, pos_prev.pos, pos_next.pos) << "\" x=\"0\" y=\"" << terrain.getPointBilinear(pos_prev.pos.x, pos_prev.pos.y) << "\" />\n";
 
-    for (int t = step; t < spline.length()-step-1e-6; t += step)
+    for (double t = step; t < spline.length()-step-1e-6; t += step)
     {
+//        fprintf(stderr, "foo %lf %lf\n", t, spline.length()-step-1e-6);
         pos_prev = pos_next;
         pos_next = spline.lookup(t+step);
 
@@ -472,6 +479,7 @@ void usage()
     printf("\t-b: Maximum elevation (default: 2700)\n");
     printf("\t-s: Resolution of heightmap (default: 10)\n");
     printf("\t-d: Density of grid points (default: 4)\n");
+    printf("\t-h: Heuristic scalar. Multiply h with this value. Set to 0 to run Dijkstra instead of A*.\n");
 }
 
 int main(int argc, char** argv)
@@ -496,11 +504,33 @@ int main(int argc, char** argv)
     //timers
     double t_pathfind;
 
+    static struct option long_options[] = {
+        {"startx", required_argument, NULL, 1},
+        {"starty", required_argument, NULL, 2},
+        {"endx", required_argument, NULL, 3},
+        {"endy", required_argument, NULL, 4},
+    };
+
+    //Starting and ending points
+    vec2i start(-1,-1),end(-1,-1);
+
     int c;
-    while ((c = getopt(argc, argv, "a:b:s:d:x:y:")) != EOF)
+    while ((c = getopt_long(argc, argv, "a:b:s:d:x:y:h:", long_options, NULL)) != EOF)
     {
         switch (c)
         {
+            case 1:
+                start.x = atoi(optarg);
+            break;
+            case 2:
+                start.y = atoi(optarg);
+            break;
+            case 3:
+                end.x = atoi(optarg);
+            break;
+            case 4:
+                end.y = atoi(optarg);
+            break;
             case 'a':
                 h_min = atof(optarg);
             break;
@@ -519,6 +549,9 @@ int main(int argc, char** argv)
             case 'd':
                 grid_density = atoi(optarg);
                 break;
+            case 'h':
+                heuristic_alpha = atof(optarg);
+                break;
             default:
                 usage();
                 exit(1);
@@ -527,20 +560,24 @@ int main(int argc, char** argv)
     }
     srand(time(0));
 
+    if (start.x < 0) start.x = 0;
+    if (start.y < 0) start.y = 0;
+    if (end.x < 0) end.x = w-1;
+    if (end.y < 0) end.y = h-1;
+
     //Terrain storage
     unsigned short* terrain_raw = new unsigned short[h*w];
     terrain_t       terrain(h, w, spacing);
 
 
-    vec2i start,end;
-    //Starting and ending points
 //    vec2i start(10, 750), end(400, 170);
 //    vec2i start(10, 360), end(750, 10);
 //    vec2i start(0, 0), end(4000, 4000);
 //    vec2i end(70, 570), start(900, 24);
 
-    start = vec2i(0,0);
-    end = vec2i(w-1,h-1);
+
+//    start = vec2i(128, 512);
+//    end = vec2i(1024-128, 512);
 
     //Input and output filenames
     input_name = argv[optind], output_name = argv[optind+1];

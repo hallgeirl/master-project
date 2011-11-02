@@ -18,6 +18,11 @@ separator &
 newline \\
 query select density, round(runningtime,2), round(speedup,2), round(cost,1), round(cost/optimal,2) from results where name='densities' and testset='mountains' order by density asc
 
+file astar_vs_dijkstra.tex
+separator &
+newline \\
+query select r1.testset, r1.runningtime as rt_dijkstra, r2.testset, r2.runningtime as rt_astar from results r1, results r2 where r1.testset = r2.testset and r1.name = 'astar_vs_dijkstra' and r2.name = r1.name and r1.heuristic_alpha = 0;
+
 #file test.tbl
 #separator &
 #newline \\

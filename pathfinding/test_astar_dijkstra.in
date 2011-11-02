@@ -1,0 +1,71 @@
+test astar_vs_dijkstra
+path ./
+exec pathfind
+
+# Helens before erruption
+width 256
+height 256
+heightmap helens256b.raw
+spacing 30
+minelev 873
+maxelev 2951
+start 40 40
+end 224 40
+testset helens_before
+
+alpha 1
+1
+
+alpha 0
+1
+
+# Helens after erruption
+width 768
+height 768
+heightmap helens768.raw
+spacing 10
+minelev 900
+maxelev 2550
+start 140 140
+end 640 140
+testset helens_after
+
+alpha 1
+1
+
+alpha 0
+1
+
+# Mountains
+width 1024
+height 1024
+heightmap test4.raw
+spacing 10
+minelev 0
+maxelev 2700
+start 900 64
+end 180 610
+testset mountains
+
+alpha 1
+1
+
+alpha 0
+1
+
+# Trondheim
+width 4096
+height 4096
+heightmap trondheim4096.raw
+spacing 20
+minelev -5
+maxelev 842
+start 1024 1024
+end 3584 3584
+testset trondheim
+
+alpha 1
+1
+
+alpha 0
+1
