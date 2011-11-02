@@ -48,9 +48,9 @@ After loading the model into the snow simulator and adjusting the terrain, we ca
 
 \begin{figure}[ht]
 \centering
-\subfloat[Terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/road_nosnow_1}}\\
-\subfloat[Detailed view of road]{\includegraphics[width=0.485\textwidth]{figure/screenshots/road_nosnow_2}}\quad
-\subfloat[Significant terrain adjustments]{\includegraphics[width=0.485\textwidth]{figure/screenshots/road_nosnow_3}}
+\subfloat[Terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/road_nosnow_1_resampled}}\\
+\subfloat[Detailed view of road]{\includegraphics[width=0.485\textwidth]{figure/screenshots/road_nosnow_2_resampled}}\quad
+\subfloat[Significant terrain adjustments]{\includegraphics[width=0.485\textwidth]{figure/screenshots/road_nosnow_3_resampled}}
 \caption{Road and terrain before snowcover}
 \label{fig:road_in_terrain_nosnow}
 \end{figure}
@@ -59,9 +59,9 @@ After some snow has fallen, as in figure \ref{fig:road_in_terrain_nosnow}, the t
 
 \begin{figure}[ht]
 \centering
-\subfloat[Snow covered terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/road_snow_1}}\\
-\subfloat[Snow from higher up covering road]{\label{fig:road_in_terrain_nosnow_2}\includegraphics[width=0.485\textwidth]{figure/screenshots/road_snow_2}}\quad
-\subfloat[Another case of snow sliding down on the road]{\label{fig:road_in_terrain_nosnow_3}\includegraphics[width=0.485\textwidth]{figure/screenshots/road_snow_3}}
+\subfloat[Snow covered terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/road_snow_1_resampled}}\\
+\subfloat[Snow from higher up covering road]{\label{fig:road_in_terrain_nosnow_2}\includegraphics[width=0.485\textwidth]{figure/screenshots/road_snow_2_resampled}}\quad
+\subfloat[Another case of snow sliding down on the road]{\label{fig:road_in_terrain_nosnow_3}\includegraphics[width=0.485\textwidth]{figure/screenshots/road_snow_3_resampled}}
 \caption{Road and terrain with snowcover}
 \label{fig:road_in_terrain_snow}
 \end{figure}
@@ -90,7 +90,10 @@ Trondheim & $4096\times 4096$ & $20$\\
 
 The weights for road length, slope and curvature is set to 1, 100 and 100, respectively. A threshold of maximum curvature was set to 0.03, which is roughly the curvature of a circle with a radius of 33 meters. Paths with an estimated curvature of more than 0.03 is not considered, because these would give unrealistically sharp turns. A neighborhood of $k=5$ is used for all test cases.  This gives 30 neighbors per node, except for the edge nodes which have less.
 
-\subsection{Test results}
+\subsection{Performance of Dijkstra vs A*}
+The main difference between Dijkstra's algorithm and the A* algorithm is that A* takes an estimated guess of the distance to the goal, and uses this, together with the cost to reach the next node from the start, in deciding which node to expand next. With a good heuristic, A* may expand far fewer nodes than Dijkstra's algorithm, typically resulting in a lower search time. In this section I present results where the performance using Dijkstra's algorithm, and the A* algorithm with the heuristic in equation \ref{eq:astar_heuristic} in section \ref{sec:impl_astar}.
+
+\subsection{Effect of grid coarsening}
 In this section I present performance results for different densities of grid points. The time used to generate the shortest path and also the optimality of the path, compared to using a density of 1, i.e. where every height point is considered a node in the search graph. The results are presented in table \ref{tab:effect_of_density}. 
 
 \begin{table}[ht]

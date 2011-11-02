@@ -4,8 +4,12 @@ SVGPDF=$(subst .svg,.pdf,$(shell ls *.svg))
 
 .PHONY: clean
 .PHONY: trajectories
+.PHONY: screenshots
 
-all: $(SVGPDF) $(TRAJECTORIES) plots
+all: $(SVGPDF) $(TRAJECTORIES) plots screenshots
+
+screenshots:
+	$(MAKE) -C screenshots/
 
 trajectories:
 	cp ../../pathfinding/helens256b.raw.png trajectory_helens_before.png 
@@ -17,7 +21,7 @@ trajectories:
 	inkscape --export-pdf=$(subst .svg,.pdf,$<) --export-dpi=600 --export-area-drawing $<
 
 plots:
-	make -C ../data
+	$(MAKE) -C ../data
 	cp ../data/*.pdf ./
 
 clean:

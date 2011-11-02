@@ -6,6 +6,7 @@ This chapter will describe my implementation of the procedural road generation a
 For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described. 
 
 \subsection{Implementation of A*}
+\label{sec:impl_astar}
 The A* search used for generating roads in this project first generates a discrete shortest path, described by $n$ points in space. When computing costs, it is assumed that these points form a piecewise linear curve where each point along the curve $(x(t), y(t))$ is a function of parameter $t$, which is the length of the curve. Eventually, a clothoid curve is generated from the same points, but this is not used for pathfinding.
 
 The A* algorithm is implemented as described by algorithm \ref{alg:astar}, with the edge weight $w$ being equal to the cost function described in the section "Cost functions". The following section will also describe the data structures used, and why they were chosen. 
@@ -60,7 +61,7 @@ C({\mbf p}_i \to {\mbf p}_{i+1}) = & c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_
                                  \geq & c_{length}({\mbf p}_i, {\mbf p}_{i+1}) + c_{slope}({\mbf p}_i, {\mbf p}_{i+1}) \\
                                  = & w_{road}||{\mbf p}_{i+1} - {\mbf p}_i|| + w_{slope}\sum_{i=0}^{N-1} |z(t_{i+1})-z(t_i)|
 \end{align*}
-Because $|a+b| \leq |a|+|b|$, 
+Because $|a+b| \leq |a|+|b|$, it follows that
 $$
 \sum_{i=0}^{N-1} |z(t_{i+1})-z(t_i)| \geq \left|\sum_{i=0}^{N-1} (z(t_{i+1})-z(t_i))\right| = |z(t_{N})-z(t_0)| = |z(T_2)-z(T_1)|
 $$
@@ -69,9 +70,10 @@ $$
 C({\mbf p}_i \to {\mbf p}_{i+1}) \geq w_{road}||{\mbf p}_{i+1} - {\mbf p}_i|| + w_{slope}|z(T_2)-z(T_1)|
 $$
 Using the goal node ${\mbf v}_b$ as ${\mbf p}_{i+1}$, this defines the heuristic used in this project, i.e.
-$$
+\begin{equation}
 h({\mbf p}_i) = w_{road}||{\mbf v}_b - {\mbf p}_i|| + w_{slope}|z({\mbf v}_b)-z({\mbf p}_i)|
-$$
+\label{eq:astar_heuristic}
+\end{equation}
 where $z({\mbf p})$ is the elevation at point ${\mbf p}$.
 
 In order to guarantee that the path that is found is optimal, the heuristic used must be consistent and admissible. $h$ as defined above is definitely admissible, because it is a lower bound of the cost, as proved above. It is also consistent, because moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ gives a change in $h$ that is less or equal to the actual cost for moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$, and thus the total cost $f(x) = g(x)+h(x)$ is always increasing. Using $h$ in $A*$ therefore results in an optimal path.
