@@ -13,7 +13,7 @@ all: main.pdf
 #figure/%.pdf: figure/crop/%.ps
 #	cat $< | ps2eps -c -n -P | epstopdf --filter > $@
 
-main.pdf: $(TEXFILES) $(BIBFILES) figures tables
+main.pdf: $(TEXFILES) $(BIBFILES) tables figures 
 	pdflatex main
 	makeglossaries main
 	pdflatex main
@@ -26,7 +26,7 @@ figures:
 	$(MAKE) -C figure/
 
 tables:
-	$(MAKE) -C data/
+	make -j1 -C data/
 
 .PHONY: clean
 

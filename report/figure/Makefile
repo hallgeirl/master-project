@@ -1,10 +1,12 @@
 SVGPDF=$(subst .svg,.pdf,$(shell ls *.svg))
+DATAFILES=$(patsubst %,../data/%,$(shell cat ../data/tables.in |egrep ^file|sed s/file\ //g))
 
 .SUFFIXES: .pdf .svg
 
 .PHONY: clean
 .PHONY: trajectories
 .PHONY: screenshots
+.PHONY: plots
 
 all: $(SVGPDF) $(TRAJECTORIES) plots screenshots
 
@@ -20,10 +22,12 @@ trajectories:
 .svg.pdf:
 	inkscape --export-pdf=$(subst .svg,.pdf,$<) --export-dpi=600 --export-area-drawing $<
 
-plots:
-	$(MAKE) -C ../data
+$(DATAFILES):
+	make -j1 -C ../data
+
+plots: $(DATAFILES)
 	cp ../data/*.pdf ./
 
 clean:
-	rm -f $(SVGPDF) $(subst ../data/,,$(shell ls ../data/*.pdf))
-	
+	rm -f $(SVGPDF) $(subst ../data/,,$(shell ls ../data/*.pdf 2>/dev/null))
+	make -C screenshots/ clean
