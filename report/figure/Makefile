@@ -26,8 +26,10 @@ $(DATAFILES):
 	make -j1 -C ../data
 
 plots: $(DATAFILES)
-	cp ../data/*.pdf ./
+	mkdir -p plots/
+	cp ../data/*.pdf ./plots
 
 clean:
 	rm -f $(SVGPDF) $(subst ../data/,,$(shell ls ../data/*.pdf 2>/dev/null))
 	make -C screenshots/ clean
+	rm -rf plots

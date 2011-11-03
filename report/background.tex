@@ -67,7 +67,7 @@ Combining these values gives the {\textit f-cost} $f(x) = g(x)+h(x)$, which is t
 \label{alg:astar}
 \end{algorithm}
 
-The main difference from the regular Dijkstra's algorithm, is how nodes are picked from the queue. Instead of picking the node with the lowest $g(x)$ as we do with Dijkstra, we pick the node with the lowest f-cost, $f(x) = g(x) + h(x)$. This way we prefer nodes that are "closer" to the goal. As a side note, if we set $h(x)=0$, the A* algorithm is reduced to Dijkstra's algorithm. If we use the example of finding the shortest route from Oslo to Trondheim, if we use Dijkstra, nodes will be expanded in all directions, i.e. Dijkstra will search both south, west and east, which is unneccesary work. If we instead use A*, nodes south of Oslo may still have a small distance from the start, but will have a higher $h(x)$ than those to the north, and thus may not be selected for expansion. Figure \ref{fig:astar_vs_dijkstra} shows the expanded nodes for a simple shortest path problem where $w(v,w)=1$ for all pairs of neighbors $v,w$, and the neighbors are the neighboring four nodes.
+The main difference from the regular Dijkstra's algorithm, is how nodes are picked from the queue. Instead of picking the node with the lowest $g(x)$ as we do with Dijkstra, we pick the node with the lowest f-cost, $f(x) = g(x) + h(x)$. This way we prefer nodes that are "closer" to the goal. As a side note, if we set $h(x)=0$, the A* algorithm is reduced to Dijkstra's algorithm. If we use the example of finding the shortest route from Oslo to Trondheim, if we use Dijkstra, nodes will be expanded in all directions, i.e. Dijkstra will search both south, west and east, which is unneccesary work. If we instead use A*, nodes south of Oslo may still have a small distance from the start, but will have a higher $h(x)$ than those to the north, and thus may not be selected for expansion. Figure \ref{fig:astar_vs_dijkstra_expansion} shows the expanded nodes for a simple shortest path problem where $w(v,w)=1$ for all pairs of neighbors $v,w$, and the neighbors are the neighboring four nodes.
 
 \begin{figure}[ht]
 \centering
@@ -75,7 +75,7 @@ The main difference from the regular Dijkstra's algorithm, is how nodes are pick
 \qquad
 \subfloat[Dijkstra expansions]{\includegraphics[width=0.40\textwidth]{figure/dijkstra_expansion}}
 \caption{Expanded nodes in A* vs. Dijkstra}
-\label{fig:astar_vs_dijkstra}
+\label{fig:astar_vs_dijkstra_expansion}
 \end{figure}
 
 \subsubsection{Designing the heuristic. Admissibility and consistency}

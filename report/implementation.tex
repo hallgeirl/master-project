@@ -66,10 +66,11 @@ $$
 \sum_{i=0}^{N-1} |z(t_{i+1})-z(t_i)| \geq \left|\sum_{i=0}^{N-1} (z(t_{i+1})-z(t_i))\right| = |z(t_{N})-z(t_0)| = |z(T_2)-z(T_1)|
 $$
 This gives a lower bound for the cost of moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$:
-$$
+\begin{equation}
 C({\mbf p}_i \to {\mbf p}_{i+1}) \geq w_{road}||{\mbf p}_{i+1} - {\mbf p}_i|| + w_{slope}|z(T_2)-z(T_1)|
-$$
-Using the goal node ${\mbf v}_b$ as ${\mbf p}_{i+1}$, this defines the heuristic used in this project, i.e.
+\label{eq:cost_lowerbound}
+\end{equation}
+Substituting ${\mbf p}_{i+1}$ for the goal node ${\mbf v}_b$ in equation \ref{eq:cost_lowerbound} gives the heuristic used in this project, i.e.
 \begin{equation}
 h({\mbf p}_i) = w_{road}||{\mbf v}_b - {\mbf p}_i|| + w_{slope}|z({\mbf v}_b)-z({\mbf p}_i)|
 \label{eq:astar_heuristic}
