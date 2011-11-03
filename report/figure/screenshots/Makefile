@@ -1,11 +1,16 @@
-RESAMPLED_IMAGES = $(subst .png,_resampled.png,$(shell ls *.png|grep -v _resampled.png))
+RESAMPLED_IMAGES = $(patsubst %.png,resampled/%.png,$(shell ls *.png))
 
 .PHONY: clean
 
 all: $(RESAMPLED_IMAGES)
 
-%_resampled.png: %.png
-	convert $< -resize 800x512 $@
+resampled/%.png: %.png
+	convert $< -resize 800x512 -quality 105 $@
 
 clean:
 	rm -f $(RESAMPLED_IMAGES)
+
+resampled:
+	mkdir -p resampled
+
+$(RESAMPLED_IMAGES): resampled

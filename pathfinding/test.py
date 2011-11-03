@@ -291,7 +291,7 @@ def main(args):
     c.execute("delete from results where name = '%s'" % (t.name))
     
     for r in results:
-        c.execute("insert into results (name, testset, width, height, heightmap, density, runningtime, cost, heuristic_alpha, startx,starty,endx,endy) values ('%s', '%s', %d, %d, '%s', %d, %f, %f, %f, %d, %d, %d, %d)" % (t.name, r.input.testset, r.input.width, r.input.height, r.input.heightmap, r.input.density, r.rt, r.cost, r.input.heuristic_alpha, r.input.start[0], r.input.start[1], r.input.end[0], r.input.end[1]))
+        c.execute("insert into results (name, testset, width, height, heightmap, density, runningtime, cost, heuristic_alpha, startx,starty,endx,endy) values ('%s', '%s', %d, %d, '%s', %d, %f, %f, %f, %d, %d, %d, %d)" % (t.name, r.input.testset, r.input.width, r.input.height, r.input.heightmap, r.input.density, r.rt, r.cost, r.input.heuristic_alpha, (r.input.start[0] if r.input.start is not None else -1), (r.input.start[1] if r.input.start is not None else -1), (r.input.end[0] if r.input.end is not None else -1), (r.input.end[1] if r.input.end is not None else -1)))
 
     db.commit()
 

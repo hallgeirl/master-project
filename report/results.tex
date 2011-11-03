@@ -44,13 +44,13 @@ First, we look at the road trajectories that are generated for different height 
 %\label{fig:trajectory_trondheim}
 %\end{figure}
 
-After loading the model into the snow simulator and adjusting the terrain, we can see the roads as it curves through the terrain. Figure \ref{fig:road_in_terrain_nosnow} shows the road and the terrain without snow cover. We clearly see the effects of the terrain adjustments in the bottom two screenshots, i.e. figures \ref{fig:road_in_terrain_nosnow_2} and \ref{fig:road_in_terrain_nosnow_3}. Note that snow rendering was disabled on the overview image (figure \ref{fig:road_in_terrain_nosnow_1}) in order to improve visibility of the road. 
+After loading the model into the snow simulator and adjusting the terrain, we can see the roads as it curves through the terrain. Figure \ref{fig:road_in_terrain_nosnow} shows the road and the terrain without snow cover for the random generated fractal terrain. We clearly see the effects of the terrain adjustments in the bottom two screenshots, i.e. figures \ref{fig:road_in_terrain_nosnow_2} and \ref{fig:road_in_terrain_nosnow_3}. Note that snow rendering was disabled on the overview image (figure \ref{fig:road_in_terrain_nosnow_1}) in order to improve visibility of the road. 
 
 \begin{figure}[ht]
 \centering
-\subfloat[Terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/road_nosnow_1_resampled}}\\
-\subfloat[Detailed view of road]{\includegraphics[width=0.485\textwidth]{figure/screenshots/road_nosnow_2_resampled}}\quad
-\subfloat[Significant terrain adjustments]{\includegraphics[width=0.485\textwidth]{figure/screenshots/road_nosnow_3_resampled}}
+\subfloat[Terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/resampled/road_nosnow_1}}\\
+\subfloat[Detailed view of road]{\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_nosnow_2}}\quad
+\subfloat[Significant terrain adjustments]{\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_nosnow_3}}
 \caption{Road and terrain before snowcover}
 \label{fig:road_in_terrain_nosnow}
 \end{figure}
@@ -59,13 +59,30 @@ After some snow has fallen, as in figure \ref{fig:road_in_terrain_nosnow}, the t
 
 \begin{figure}[ht]
 \centering
-\subfloat[Snow covered terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/road_snow_1_resampled}}\\
-\subfloat[Snow from higher up covering road]{\label{fig:road_in_terrain_nosnow_2}\includegraphics[width=0.485\textwidth]{figure/screenshots/road_snow_2_resampled}}\quad
-\subfloat[Another case of snow sliding down on the road]{\label{fig:road_in_terrain_nosnow_3}\includegraphics[width=0.485\textwidth]{figure/screenshots/road_snow_3_resampled}}
+\subfloat[Snow covered terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/resampled/road_snow_1}}\\
+\subfloat[Snow from higher up covering road]{\label{fig:road_in_terrain_nosnow_2}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_snow_2}}\quad
+\subfloat[Another case of snow sliding down on the road]{\label{fig:road_in_terrain_nosnow_3}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_snow_3}}
 \caption{Road and terrain with snowcover}
 \label{fig:road_in_terrain_snow}
 \end{figure}
 
+Another map that was used was Mt. St. Helens before and after the erruption. These are shown in figures \ref{fig:helens_road_closeup} and \ref{fig:helens_overview_snow}.
+
+\begin{figure}[H]
+\centering
+\subfloat[Before erruption]{\label{fig:helens_road_closeup_before}\includegraphics[width=\textwidth]{figure/screenshots/resampled/helens_before_nosnow}}\\
+\subfloat[After erruption]{\label{fig:helens_road_closeup_after}\includegraphics[width=\textwidth]{figure/screenshots/resampled/helens_after_nosnow}}\\
+\caption{Closeup of road in the Mt. St. Helens terrain}
+\label{fig:helens_road_closeup}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\subfloat[Before erruption]{\label{fig:helens_overview_before}\includegraphics[width=\textwidth]{figure/screenshots/resampled/helens_before_snow}}\\
+\subfloat[After erruption]{\label{fig:helens_overview_after}\includegraphics[width=\textwidth]{figure/screenshots/resampled/helens_after_snow}}\\
+\caption{Overlooking of Mt. St. Helens with heavy snow}
+\label{fig:helens_overview_snow}
+\end{figure}
 \section{Performance of road generator}
 In this section, I present results from performance testing of the road generator. 
 
