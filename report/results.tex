@@ -49,19 +49,19 @@ After loading the model into the snow simulator and adjusting the terrain, we ca
 \begin{figure}[ht]
 \centering
 \subfloat[Terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/resampled/road_nosnow_1}}\\
-\subfloat[Detailed view of road]{\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_nosnow_2}}\quad
-\subfloat[Significant terrain adjustments]{\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_nosnow_3}}
+\subfloat[Detailed view of road]{\label{fig:road_in_terrain_nosnow_2}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_nosnow_2}}\quad
+\subfloat[Significant terrain adjustments]{\label{fig:road_in_terrain_nosnow_3}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_nosnow_3}}
 \caption{Road and terrain before snowcover}
 \label{fig:road_in_terrain_nosnow}
 \end{figure}
 
-After some snow has fallen, as in figure \ref{fig:road_in_terrain_nosnow}, the terrain has been more or less covered in snow except for some shadowed areas. The snow height is continously "smoothed", so that snow that falls in areas with a steep gradient in the terrain, is moved downwards along the gradient, simulating sliding snow (think of it as a mini avalanche). We clearly see this effect on the road in figures \ref{fig:road_in_terrain_nosnow_2} and \ref{fig:road_in_terrain_nosnow_3}.
+After some snow has fallen, as in figure \ref{fig:road_in_terrain_snow}, the terrain has been more or less covered in snow except for some shadowed areas. The snow height is continously "smoothed", so that snow that falls in areas with a steep gradient in the terrain, is moved downwards along the gradient, simulating sliding snow (think of it as a mini avalanche). We clearly see this effect on the road in figures \ref{fig:road_in_terrain_snow_2} and \ref{fig:road_in_terrain_snow_3}.
 
 \begin{figure}[ht]
 \centering
-\subfloat[Snow covered terrain overview]{\label{fig:road_in_terrain_nosnow_1}\includegraphics[width=\textwidth]{figure/screenshots/resampled/road_snow_1}}\\
-\subfloat[Snow from higher up covering road]{\label{fig:road_in_terrain_nosnow_2}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_snow_2}}\quad
-\subfloat[Another case of snow sliding down on the road]{\label{fig:road_in_terrain_nosnow_3}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_snow_3}}
+\subfloat[Snow covered terrain overview]{\label{fig:road_in_terrain_snow_1}\includegraphics[width=\textwidth]{figure/screenshots/resampled/road_snow_1}}\\
+\subfloat[Snow from higher up covering road]{\label{fig:road_in_terrain_snow_2}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_snow_2}}\quad
+\subfloat[Another case of snow sliding down on the road]{\label{fig:road_in_terrain_snow_3}\includegraphics[width=0.485\textwidth]{figure/screenshots/resampled/road_snow_3}}
 \caption{Road and terrain with snowcover}
 \label{fig:road_in_terrain_snow}
 \end{figure}
@@ -112,7 +112,7 @@ The main difference between Dijkstra's algorithm and the A* algorithm is that A*
 
 In this section I present a comparison of the performance using Dijkstra's algorithm, and the A* algorithm with the heuristic in equation \ref{eq:astar_heuristic} in section \ref{sec:impl_astar}. Since the algorithms are identical except for the heuristic, Dijkstra's algorithm is simply A* with $h=0$. In the Dijkstra runs, the heuristic is therefore simply set to zero, but the algorithm is identical otherwise.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{figure/plots/astar_vs_dijkstra}
 \caption{A* vs. Dijkstra's algorithm. Runningtimes are relative to that of Dijkstra's algorithm}

@@ -429,7 +429,7 @@ The DEM file format allows quadrangles that are not square or axis aligned. For 
 
 The first step of generating the cropped heightmap is to align each column from the B-records in a grid. In order to do this, we first must compute the dimensions of the bounding box of the quadrangle in order to hold all the data points. The number of B-records (width) is given by the A-record, but each B-record may differ in size, and even if they don't, datapoint $i$ from B-record 1 may not correspond to the same vertical position as datapoint $i$ in B-record 2. 
 
-The corners of the quadrangle in world coordinates is described in the A-record (see appendix \ref{app:usgsdem}). Since we know the spacing between points, we can therefore compute the number of rows $m$ as
+The corners of the quadrangle in world coordinates is described in the A-record (see \cite{usgsdem}). Since we know the spacing between points, we can therefore compute the number of rows $m$ as
 $$
 m = \left\lceil\frac{y_{world,max}-y_{world,min}}{res_y}\right\rceil
 $$
