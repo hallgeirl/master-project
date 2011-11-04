@@ -12,12 +12,6 @@ TEX=pdflatex $(TEXFLAGS)
 
 all: $(REPORT).pdf
 
-#figure/crop/%.ps: figure/crop/%.pdf
-#	pdf2ps $< $@
-
-#figure/%.pdf: figure/crop/%.ps
-#	cat $< | ps2eps -c -n -P | epstopdf --filter > $@
-
 %.pdf: %.tex
 	@echo "Compiling $(*F).tex..."
 	@- $(TEX) $(*F) > $(*F).stdout
@@ -41,12 +35,6 @@ all: $(REPORT).pdf
         fi\
     fi
 
-#while grep "Rerun" main.log; do pdflatex $(*F) > /dev/null; done
-#pdflatex main
-#makeglossaries main
-#pdflatex main
-#while grep "Rerun" main.log; do pdflatex main; done
-#bibtex main
 figures:
 	$(MAKE) -C figure/
 

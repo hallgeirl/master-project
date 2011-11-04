@@ -1,3 +1,31 @@
 \chapter{Future work}
 \label{chap:futurework}
+There are several ways this project could be extended, both in the snow simulator and in the road generation tool. 
 
+\section{Waypoints and multiple destinations in road generator}
+
+\section{Parallellization of cost computation}
+
+\section{Using snow data as a cost function}
+When building roads, it makes sense to avoid building it where snow buildup is significant. This may for instance be right below mountain sides where snow would fall down on the road. Using data generated from snow simulations, we could use the snow depth at each point in the terrain as a cost function for where to put the road. 
+
+Given two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$, this cost can be expressed mathematically as
+$$
+c_{snow}({\mbf p}_i, {\mbf p}_{i+1}) = w_{snow}\int_{0}^{1} s((1-t){\mbf p}_i+t{\mbf p}_{i+1}) dt
+$$
+where $s({\mbf p})$ is the snow height of the terrain at point ${\mbf p}$. This can, as with the cost for slope described in \ref{sec:impl_astar}, be solved numerically as
+$$
+c_{snow}({\mbf p}_i, {\mbf p}_{i+1}) \approx w_{snow}\sum_{j=0}^{N-1} hs((1-t_j){\mbf p}_i+t_j{\mbf p}_{i+1}) 
+$$
+where $t_j=jh$ and $N=1/h$.
+
+This feature would require us to first run the snow simulator for a given amount of time, extract the snow height map to a file, and then load this file into the road generation tool, causing there to be an extra step in the road generation process, but in turn it would give more realistic trajectories based on real concerns.
+
+
+\section{Integration of USGS DEM parser into the snow simulator}
+
+%\section{Texture blending in snow simulator}
+
+\section{Road model generation in snow simulator}
+
+\section{Integration of road generator in the snow simulator}
