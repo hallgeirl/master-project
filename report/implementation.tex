@@ -3,6 +3,7 @@
 This chapter will describe my implementation of the procedural road generation algorithm, how the roads produced here is integrated with the snow simulator with all the changes to the snow simulator this entails, and lastly it describes the details about my implementation of the USGS DEM to height map converter application.
 
 \section{Procedural road generation}
+\label{sec:impl_procroad}
 For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described. 
 
 \subsection{Implementation of A*}
@@ -51,10 +52,14 @@ where $h$ is the step length used in the approximation, and $t_i=ih$, and $N=1/h
 
 Lastly, curvature at a point ${\mbf p}_i$ can be estimated as\cite{clothoid3}
 \begin{equation}
-\kappa({\mbf p}_i) \approx \frac{2\sin(\frac{\theta}{2})}{\sqrt{||{\mbf v}_1||\cdot ||{\mbf v}_2||}}
+\kappa({\mbf p}_i) \approx \frac{2\sin\left(\frac{\theta}{2}\right)}{\sqrt{||{\mbf v}_1||\cdot ||{\mbf v}_2||}}
 \label{eq:curvature_approx}
 \end{equation}
-where ${\mbf v}_1 = {\mbf p}_i-{\mbf p}_{i-1}$ and ${\mbf v}_2 = {\mbf p}_{i+1}-{\mbf p}_i$; i.e. ${\mbf v}_1$ and ${\mbf v}_2$ is the vectors between the neighboring points. This is made into a cost function by applying the curvature weight to it:
+where ${\mbf v}_1 = {\mbf p}_i-{\mbf p}_{i-1}$ and ${\mbf v}_2 = {\mbf p}_{i+1}-{\mbf p}_i$; i.e. ${\mbf v}_1$ and ${\mbf v}_2$ is the vectors between the neighboring points, and $\theta$ is the angle between these points, i.e.
+$$
+\theta = \cos^{-1}\left(\frac{{\mbf v}_1}{||{\mbf v}_1||} \cdot \frac{{\mbf v}_2}{||{\mbf v}_2||} \right)
+$$
+This is made into a cost function by applying the curvature weight to it:
 \begin{equation}
 c_{curvature} = w_{curvature}\kappa({\mbf p}_i)
 \label{eq:cost_curvature}

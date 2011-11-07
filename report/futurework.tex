@@ -1,12 +1,24 @@
 \chapter{Future work}
 \label{chap:futurework}
-There are several ways this project could be extended, both in the snow simulator and in the road generation tool. 
+There are several ways the work from this project could be extended, both in the snow simulator and in the road generation tool. In this section I present some possible future projects for the snow simulator and the pathfinding application. Two of the major topics of these projects is more flexible and more efficient road generation, and a higher degree of integration of the road generator into the snow simulator.
 
-\section{Waypoints and multiple destinations in road generator}
+\section{Waypoints, multiple destinations and influence maps in road generator}
+In this project, roads are generated from two endpoints with no way of adding multiple destination, or otherwise modifying the path other than adjusting the weights of the cost functions. A future project could be to implement waypoints in the road generator, so that we can force the road to go through certain points, e.g. for connecting cities or making roads that go up to landmarks. 
+
+The RoadXML format already supports road intersections. This could be used with an extended version of the current road generation algorithm to add multiple destinations. Given multiple end points, find a "good" road that connects all end points. This could be modelled as a minimum spanning tree over the same graph as used in this project for pathfinding
+
+Another interesting project would be implementing procedurally generated hierarchical road networks as described in \ref{roadgen2}. Here, there is a certain number of "levels" of roads: Highways, connecting big cities, major roads connecting big and small cities, and minor roads connecting small cities. Each of these types of roads have different requirements. For instance, highways may have a smaller tolerance for curvature due to the higher speed limits than major and minor roads. 
+
 
 \section{Parallellization of cost computation}
+\label{sec:future_parallelization}
+Each node used in the A* search has a significant number of neighbors, the number of which is dependent on the value of $k$ when constructing the neighborhood mask, as shown in algorithm \ref{alg:neighborhoodmask} in section \ref{sec:impl_astar}, and also described in section \ref{sec:roadgen_shortestpath}. \cite{roadgen} uses $k=5$, which results in 30 neighbors per node. Computing the cost functions described in \ref{sec:impl_astar} then becomes fairly expensive, partly because of the sheer number of neighbors, but also because computing the cost to each neighbor involves doing numerical integration over the line segment connecting the two nodes.
 
-\section{Using snow data as a cost function}
+It becomes obvious that if we were to compute the cost between all nodes and their neighbors, this would be an embarrasingly parallel problem, and thus may be well suited for parallellization on e.g. a GPU. We could then precompute the cost to every neighbor, store this cost in a two-dimensional array, and then simply look up the cost in the array when computing the shortest path. 
+
+Precomputing the costs does imply that some extra work is done, namely computing the costs for nodes that would not be expanded by the A* algorithm in the first place. These costs would not be used. The assumption neccesary for this approach to be viable is that the GPU has enough computing power to keep the cost of doing this extra work lower than computing the cost serially for each expanded node. 
+
+\section{Using data from snow simulator as a cost function}
 When building roads, it makes sense to avoid building it where snow buildup is significant. This may for instance be right below mountain sides where snow would fall down on the road. Using data generated from snow simulations, we could use the snow depth at each point in the terrain as a cost function for where to put the road. 
 
 Given two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$, this cost can be expressed mathematically as
@@ -23,9 +35,15 @@ This feature would require us to first run the snow simulator for a given amount
 
 
 \section{Integration of USGS DEM parser into the snow simulator}
+\label{sec:future_usgsdem}
+In this project, the USGS DEM parser was developed as a standalone Python script. Python, since it is an interpreted language, is generally slower than a compiled language like C++. However, it could be viable to implement the USGS DEM parser in C++, and then integrate it with the snow simulator in order to be able to load DEM files directly, without having to convert them to 16 bit RAW first as an intermediate step. The viability of this is limited by the performance of the DEM parser because if parsing takes an unreasonable amount of time, this becomes an annoyance to the users of the snow simulator.
 
-%\section{Texture blending in snow simulator}
+\section{Texture blending in snow simulator}
+With the support for real-world digital elevation maps through parsing of USGS DEM files, it is natural that additional realism is added by implementing texture blending in the terrain. Texture blending can be used, for instance, to have a different texture on steep hills (like mountain sides), plains (like grass plains or fields) or high mountain tops. In the real world, mountain sides and summits are not covered by grass, like in the snow simulator, which makes it look unrealistic.
 
 \section{Road model generation in snow simulator}
+\label{sec:future_roadmodel}
+In \cite{roadgen} they generate the road model directly from the control points given by the discrete shortest path (see section \ref{sec:impl_procroad}) without going through a third-party application like Octal SCANeR that was used in this project. This is also desireable for the roads in the snow simulator, but this was not the focus of this project due to time constraints. Performance is of course a concern here as unreasonable startup times of the snow simulator may cause annoyance among the users.
 
 \section{Integration of road generator in the snow simulator}
+Right now the road trajectory generator, i.e. the shortest path algorithm to generate the control points for the clothoid spline used to define the road trajectory, is implemented in a separate C++ application. This application could be eliminated completely by doing the pathfinding in the snow simulator itself. Combined with integration of the USGS DEM parser (see section \ref{sec:future_usgsdem}), road model generation in the snow simulator (see section \ref{sec:future_roadmodel}) and accellerated cost function evaluation using GPUs (see section \ref{sec:future_parallellization}), the snow simulator would be much more flexible in that it would not need any intermediate steps in order to load a DEM, generate a road through the terrain, and finally generate the road model.
