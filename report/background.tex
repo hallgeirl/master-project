@@ -103,7 +103,22 @@ TODO: Figure
 
 
 \subsubsection{Memory model}
-All vector cores may access a global memory, analogous to a regular computer's main memory. However, even though the bandwidth is huge (> 100GB/s for modern NVIDIA Tesla GPUs), the latency is enormous, of hundreds of cycles. This neccessitates a closer and faster memory. On NVIDIA GPUs this memory is called \textit{shared memory}. The difference between shared memory and a traditional cache is that shared memory must be managed manually; i.e. movement of words in and out of shared memory is done explicitly in code.
+All vector cores may access a global memory, analogous to a regular computer's main memory. However, even though the bandwidth is huge (> 100GB/s for modern NVIDIA Tesla GPUs)\cite{foocite}, the latency is enormous, of hundreds of cycles.\cite{gpumemlatency} This neccessitates faster on-chip memory. 
+
+NVIDIA GPUs have an on-chip memory is called \textit{shared memory}. The difference between shared memory and a traditional cache is that shared memory must be managed manually; i.e. movement of words in and out of shared memory is done explicitly in code. In addition, a texture cache is available, that in addition to caching, can perform interpolation and wrapping. The texture cache is read only.
+
+In addition to shared memory, each thread running on the GPU has access to a very fast register memory. This is analogous to the CPU registers, in that it's used to store local variables, intermediate results and so on. A third type of fast memory is the constant memory. This is basically a cached read-only memory.
+
+Figure \ref{fig:gpu_memory_model} shows an overview of the memory model of a pre-Fermi GPU. 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{figure/gpu_memory_model}
+\caption{GPU memory model}
+\label{fig:gpu_memory_model}
+\end{figure}
+
+
 
 \subsubsection{Improvements with Fermi}
 In the pre-Fermi architectures like NVIDIA Tesla C1060, the only fast on-chip memory available was constant memory, a read-only texture cache, and shared memory. Shared memory demands quite a bit of the programmer, as the programmer must recognize the locality properties of the memory accesses in each program. Both constant memory and the texture cache is limited both in size, and in that both are read only.
@@ -124,7 +139,6 @@ TODO: Figure
 A procedure that is executed on the GPU is called a kernel. A kernel is called from the host code that runs on the CPU; the host code also specifies the number of thread blocks to execute and how many threads to use in each thread block. The total number of threads executed is then $\mbox{grid size}\times \mbox{block size}$. 
 
 CUDA is an extension to the C++ language developed by NVIDIA, for NVIDIA GPUs for general purpose computing. A CUDA program consists of host code and a device code; the host code is mostly regular C++; program initialization, memory allocation (for both host and device) goes in the host code. Device code is code that runs on the "device", i.e. the GPU. Although the device code is syntactically C, the execution model is different, as the function is executed on an enormous number of threads at once. Each thread gets a thread ID, and each block gets a block ID; the thread ID and block ID together defines the global thread ID, i.e. the position of the thread in the grid. Typically, this global ID is directly mapped to the position in the data array being processed.
-
 
 \section{Newton's method}
 \label{sec:newtons_method}
