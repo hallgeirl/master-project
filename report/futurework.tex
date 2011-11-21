@@ -7,11 +7,11 @@ In this project, roads are generated from two endpoints with no way of adding mu
 
 The RoadXML format already supports road intersections. This could be used with an extended version of the current road generation algorithm to add multiple destinations. Given multiple end points, find a "good" road that connects all end points. This could be modelled as a minimum spanning tree over the same graph as used in this project for pathfinding
 
-Another interesting project would be implementing procedurally generated hierarchical road networks as described in \ref{roadgen2}. Here, there is a certain number of "levels" of roads: Highways, connecting big cities, major roads connecting big and small cities, and minor roads connecting small cities. Each of these types of roads have different requirements. For instance, highways may have a smaller tolerance for curvature due to the higher speed limits than major and minor roads. 
+Another interesting project would be implementing procedurally generated hierarchical road networks as described in \cite{roadgen2}. Here, there is a certain number of "levels" of roads: Highways, connecting big cities, major roads connecting big and small cities, and minor roads connecting small cities. Each of these types of roads have different requirements. For instance, highways may have a smaller tolerance for curvature due to the higher speed limits than major and minor roads. 
 
 
 \section{Parallellization of cost computation}
-\label{sec:future_parallelization}
+\label{sec:future_parallellization}
 Each node used in the A* search has a significant number of neighbors, the number of which is dependent on the value of $k$ when constructing the neighborhood mask, as shown in algorithm \ref{alg:neighborhoodmask} in section \ref{sec:impl_astar}, and also described in section \ref{sec:roadgen_shortestpath}. \cite{roadgen} uses $k=5$, which results in 30 neighbors per node. Computing the cost functions described in \ref{sec:impl_astar} then becomes fairly expensive, partly because of the sheer number of neighbors, but also because computing the cost to each neighbor involves doing numerical integration over the line segment connecting the two nodes.
 
 It becomes obvious that if we were to compute the cost between all nodes and their neighbors, this would be an embarrasingly parallel problem, and thus may be well suited for parallellization on e.g. a GPU. We could then precompute the cost to every neighbor, store this cost in a two-dimensional array, and then simply look up the cost in the array when computing the shortest path. 

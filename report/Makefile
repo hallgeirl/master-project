@@ -13,22 +13,29 @@ TEX=pdflatex $(TEXFLAGS)
 all: $(REPORT).pdf
 
 %.pdf: %.tex
+	rm -f $(*F).stdout
 	@echo "Compiling $(*F).tex..."
 	@- $(TEX) $(*F) > $(*F).stdout
-	@if [ -n "`cat $(*F).stdout|egrep -e '^!'`" ]; then\
+	@if [ -n "`cat $(*F).stdout|egrep -e '^\!'`" ]; then\
 		echo "\nErrors found!";\
 		echo "-------------";\
 		cat $(*F).stdout|egrep -A2 -B2 -e '^!' 1>&2;\
+		rm $@;\
 	else\
 		echo "Compiling bibliography...";\
 		bibtex $(*F) > /dev/null; \
 		echo "Rerunning pdflatex to fix references...";\
 		$(TEX) $(*F) > /dev/null;\
 		$(TEX) $(*F) > $(*F).stdout;\
-	    if [ -n "`cat $(*F).stdout|grep 'Warning'`" ]; then\
+		if [ -n "`cat $(*F).stdout|egrep -e '^\!'`" ]; then\
+			echo "\nErrors found!";\
+			echo "-------------";\
+			cat $(*F).stdout|egrep -A2 -B2 -e '^!' 1>&2;\
+			rm $@;\
+	    elif [ -n "`cat $(*F).stdout|grep 'Warning'`" ]; then\
 			echo "\nWarnings:";\
 			echo "---------";\
-			cat $(*F).stdout|grep -B1 'Warning';\
+			cat $(*F).stdout|grep -B2 'Warning';\
 		else\
 		    echo "-------------------------------------";\
 		    echo "Completed with no errors or warnings!";\

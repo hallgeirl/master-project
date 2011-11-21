@@ -95,15 +95,10 @@ Although this project is not particularly about GPU computing, the snow simulato
 \subsection{Physical layout of a GPU}
 GPUs (Graphics Processing Units) are accellerators originally intended for highly efficient rendering of 3D graphics on a computer. Rendering is a highly parallel process, where each pixel can be rendered more or less independently from every other pixel. Because of this, GPUs are designed to be highly parallel devices with hundreds of simple vector cores where each vector core typically work on a single pixel. All vector cores may access a global memory with a capacity of hundreds of megabytes up to some gigabytes of memory, but there is also a faster cache available which is shared among groups of size 8 to 32 vector cores, depending on the architecture.
 
-\subsubsection{GPU core organization and properties}
-A GPU has hundreds of vector cores called {\textit streaming processor cores} (SPs). These cores are grouped into {\textit streaming multiprocessors} (SMs); each SM has between 8 to 32 SPs depending on the architecture; pre-Fermi architectures had 8, while Fermi-GPUs have 32 SPs per SM. Each of those SPs are a very simple processor, that may perform common floating point and integer operations. All of the SPs in a SM must perform the same instruction, but they may be performed on different data (SIMD, Single Instruction Multiple Data). In other words, each SM can be seen as a vector processor processing a vector of length 8 or 32 each.
-
-TODO: Figure
-
-
+A GPU has hundreds of vector cores called {\textit streaming processor cores} (SPs). These cores are grouped into {\textit streaming multiprocessors} (SMs); each SM has between 8 to 32 SPs depending on the architecture; pre-Fermi architectures had 8, while Fermi-GPUs have 32 SPs per SM. Each of those SPs are a very simple processor, that may perform common floating point and integer operations. All of the SPs in a SM must perform the same instruction, but they may be performed on different data (SIMD, Single Instruction Multiple Data). In other words, each SM can be seen as a vector processor processing a vector of length 8 or 32 each. 
 
 \subsubsection{Memory model}
-All vector cores may access a global memory, analogous to a regular computer's main memory. However, even though the bandwidth is huge (> 100GB/s for modern NVIDIA Tesla GPUs)\cite{foocite}, the latency is enormous, of hundreds of cycles.\cite{gpumemlatency} This neccessitates faster on-chip memory. 
+All vector cores may access a global memory, analogous to a regular computer's main memory. However, even though the bandwidth is huge (> 100GB/s for modern NVIDIA Tesla GPUs)\cite{tesla2070product}, the latency is very large, 400-800 clock cycles.\cite[p. 87]{cudaprogguide} This neccessitates faster on-chip memory. 
 
 NVIDIA GPUs have an on-chip memory is called \textit{shared memory}. The difference between shared memory and a traditional cache is that shared memory must be managed manually; i.e. movement of words in and out of shared memory is done explicitly in code. In addition, a texture cache is available, that in addition to caching, can perform interpolation and wrapping. The texture cache is read only.
 
@@ -113,32 +108,35 @@ Figure \ref{fig:gpu_memory_model} shows an overview of the memory model of a pre
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.5\textwidth]{figure/gpu_memory_model}
+\includegraphics[width=0.9\textwidth]{figure/gpu_memory_model}
 \caption{GPU memory model}
 \label{fig:gpu_memory_model}
 \end{figure}
 
+\subsection{General Purpose GPU Computing and CUDA}
+General purpose computing on GPUs are today an active topic of research. One reason why it's attractive is the enormous peak GFLOPS rate; Intel Core i7 980 XE, a high-end CPU at the time of writing this report, may perform at up to 109 GFLOPS\cite{inteli7flops} in double precision. As a comparison, a NVIDIA Tesla C2070, a high-end GPU specifically designed for general purpose computing, have a peak performance at 515.2 GFLOPS in double precision, a factor of 4.7 higher. In single precision it achieves 1.03 TFLOPS. However, despite the higher GFLOPS rate, GPUs are not well suited for solving all classes of problems. 
 
+GPUs get their power from large amount of data parallellism, as each SP in an SM must perform the same instruction at any given time; this means, if an application does not have any, or very little parallellism, GPUs are inferior to CPUs, which is built to be very fast on serial tasks. One can perform any task on the GPU but serial tasks is very slow because of lack of architectual features like pipelining, a slower clock rate, a smaller cache and a higher memory latency.
+
+General purpose computing on GPUs is typically performed using a massive amount of very light weight threads with no scheduling overhead; in other words, the GPU can context switch between threads at no cost. Each thread typically handles one or more data element. Threads are grouped into thread blocks, which is an 1D, 2D or 3D structuring of threads. Thread blocks are again grouped into a 1D or 2D grid. A thread block is executed on one SM, which means it may utilize the fast on-chip memory in an SM for thread communication and data sharing. A thread is executed on one SP. Figure \ref{fig:gpu_thread_model} shows the logical thread organization in CUDA; this matches closely to the physical layout on the GPU.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{figure/gpu_thread_model}
+\caption{GPU thread model}
+\label{fig:gpu_thread_model}
+\end{figure}
+
+A procedure that is executed on the GPU is called a kernel. A kernel is called from the host code that runs on the CPU; the host code also specifies the number of thread blocks to execute and how many threads to use in each thread block. The total number of threads executed is then $\mbox{grid size}\times \mbox{block size}$. 
+
+CUDA is an extension to the C++ language developed by NVIDIA, for NVIDIA GPUs for general purpose computing. A CUDA program consists of host code and a device code; the host code is mostly regular C++: program initialization and memory allocation (for both host and device) goes in the host code. Device code is code that runs on the "device", i.e. the GPU. Although the device code is syntactically C, the execution model is different, as the function is executed on an enormous number of threads at once. Each thread gets a thread ID, and each block gets a block ID; the thread ID and block ID together defines the global thread ID, i.e. the position of the thread in the grid. Typically, this global ID is directly mapped to one or more indices in the data array being processed.
 
 \subsubsection{Improvements with Fermi}
 In the pre-Fermi architectures like NVIDIA Tesla C1060, the only fast on-chip memory available was constant memory, a read-only texture cache, and shared memory. Shared memory demands quite a bit of the programmer, as the programmer must recognize the locality properties of the memory accesses in each program. Both constant memory and the texture cache is limited both in size, and in that both are read only.
 
 Fermi introduced a cache that resembles the traditional cache in a CPU. The cache is handled by the GPU, and is transparent to the programmer. However, the programmer may still want to utilize techniques like blocking for cache, but this is typically less verbose than explicitly reading and writing to shared memory. 
 
-In addition to introducing a cache, Fermi has increased double precision performance over previous architectures.\cite{fermiwhitepaper} In pre-Fermi architectures, like Tesla C1060, double precision peak performance was $1/8$th of peak single precision performance in terms of GFLOPS, while on Fermi it's between $1/4$ and $1/2$ of peak single precision performance.\cite{fermidoubleprecision}
-
-\subsection{General Purpose GPU Computing and CUDA}
-General purpose computing on GPUs are today an active topic of research. One reason why it's attractive is the enormous peak GFLOPS rate; Intel (??), a high-end CPU at the time of writing this paper may perform at up to (??) GFLOPS\cite{intel??specs}. As a comparison, a NVIDIA Tesla C2070, a high-end GPU specifically designed for general purpose computing, have a peak performance at (??) GFLOPS, a factor of ?? higher. However, despite the higher GFLOPS rate, GPUs are not well suited for solving all classes of problems. 
-
-GPUs get their power from large amount of data parallellism, as each SP in an SM must perform the same instruction at any given time; this means, if an application does not have any, or very little parallellism, GPUs are inferior to CPUs, which is built to be very fast on serial tasks. One can perform any task on the GPU but serial tasks is very slow because of lack of architectual features like pipelining, a slower clock rate, a smaller cache and a higher memory latency.
-
-General purpose computing on GPUs is typically performed using a massive amount of very light weight threads with no scheduling overhead; in other words, the GPU can context switch between threads at no cost. Each thread typically handles one or more data element. Threads are grouped into thread blocks, which is an 1D, 2D or 3D structuring of threads. Thread blocks are again grouped into a 1D or 2D grid. A thread block is executed on one SM, which means it may utilize the fast on-chip memory in an SM for thread communication and data sharing. A thread is executed on one SP.
-
-TODO: Figure
-
-A procedure that is executed on the GPU is called a kernel. A kernel is called from the host code that runs on the CPU; the host code also specifies the number of thread blocks to execute and how many threads to use in each thread block. The total number of threads executed is then $\mbox{grid size}\times \mbox{block size}$. 
-
-CUDA is an extension to the C++ language developed by NVIDIA, for NVIDIA GPUs for general purpose computing. A CUDA program consists of host code and a device code; the host code is mostly regular C++; program initialization, memory allocation (for both host and device) goes in the host code. Device code is code that runs on the "device", i.e. the GPU. Although the device code is syntactically C, the execution model is different, as the function is executed on an enormous number of threads at once. Each thread gets a thread ID, and each block gets a block ID; the thread ID and block ID together defines the global thread ID, i.e. the position of the thread in the grid. Typically, this global ID is directly mapped to the position in the data array being processed.
+In addition to introducing a cache, Fermi has increased double precision performance over previous architectures.\cite[p. 9]{fermiwhitepaper} In pre-Fermi architectures, like Tesla C1060, double precision peak performance was $1/8$th of peak single precision performance in terms of GFLOPS, while on Fermi it's up to about $1/2$ of peak single precision performance.\cite[p. 9]{fermiwhitepaper}
 
 \section{Newton's method}
 \label{sec:newtons_method}
