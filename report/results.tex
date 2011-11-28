@@ -133,7 +133,14 @@ Figure \ref{fig:astar_vs_dijkstra} shows the running time of Dijkstra's algorith
 We see that for Mt. st. Helens, there is more than two times speedup for using A*, while the Trondheim and fractal maps show more modest improvements. The Mt. St. Helens maps are generally simpler maps with only one major elevation peak, which makes the heuristic more accurate. The heuristic does not account for a rough terrain, but rather the difference in elevation between the start and end node. Both the mountains and Trondheim maps contain significant elevation changes throughout the terrain, which makes the heuristic less accurate.
 
 \subsection{Effect of grid coarsening}
-In this section I present performance results for different densities of grid points. The time used to generate the shortest path and also the optimality of the path, compared to using a density of 1, i.e. where every height point is considered a node in the search graph. The results are presented in table \ref{tab:effect_of_density}. 
+In this section I present performance results for different densities of grid points. The time used to generate the shortest path and also the optimality of the path, compared to using a density of 1, i.e. where every height point is considered a node in the search graph. The results are presented in table \ref{tab:effect_of_density}, and a plot of the relative cost increase due to grid coarsening with respect to the density is presented in figure \ref{fig:effect_of_density}. 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figure/plots/densities}
+\caption{Effect of grid coarsening on optimal path cost}
+\label{fig:effect_of_density}
+\end{figure}
 
 \begin{table}[ht]
 \centering

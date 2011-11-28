@@ -25,6 +25,9 @@ trajectories:
 $(DATAFILES):
 	make -j1 -C ../data
 
+%.pdf:../data/%.pdf
+	cp $< $@
+
 plots: $(DATAFILES)
 	mkdir -p plots/
 	cp ../data/*.pdf ./plots

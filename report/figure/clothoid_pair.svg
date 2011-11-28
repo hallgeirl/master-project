@@ -25,7 +25,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -45,16 +45,6 @@
          transform="matrix(0.4,0,0,0.4,4,0)"
          inkscape:connector-curvature="0" />
     </marker>
-    <filter
-       inkscape:collect="always"
-       id="filter4013"
-       color-interpolation-filters="sRGB">
-      <feBlend
-         inkscape:collect="always"
-         mode="multiply"
-         in2="BackgroundImage"
-         id="feBlend4015" />
-    </filter>
   </defs>
   <sodipodi:namedview
      pagecolor="#ffffff"
@@ -65,13 +55,13 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1920"
-     inkscape:window-height="1125"
+     inkscape:window-width="1366"
+     inkscape:window-height="693"
      id="namedview3041"
      showgrid="false"
      inkscape:zoom="5.6786114"
-     inkscape:cx="247.54437"
-     inkscape:cy="135.18541"
+     inkscape:cx="275.72027"
+     inkscape:cy="142.22939"
      inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="1"
@@ -162,7 +152,7 @@
          sodipodi:role="line"
          id="tspan3892"
          x="209.73436"
-         y="205.13429">p<tspan
+         y="205.13429">P<tspan
    style="font-size:65.00091553%;baseline-shift:sub"
    id="tspan3894">1</tspan></tspan></text>
     <text
@@ -175,7 +165,7 @@
          sodipodi:role="line"
          id="tspan3898"
          x="10.918161"
-         y="409.49762">p<tspan
+         y="409.49762">P<tspan
    style="font-size:65.00091553%;baseline-shift:sub"
    id="tspan3900">0</tspan></tspan></text>
     <text

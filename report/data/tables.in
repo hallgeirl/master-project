@@ -28,7 +28,8 @@ separator
 newline 
 query select replace(r1.testset,'_','\\_'), r1.runningtime as rt_dijkstra, r2.runningtime as rt_astar from results r1, results r2 where r1.testset = r2.testset and r1.name = 'astar_vs_dijkstra' and r2.name = r1.name and r2.heuristic_alpha = 0 and r2.heuristic_alpha < r1.heuristic_alpha;
 
-#file test.tbl
-#separator &
-#newline \\
-#query select r1.n, r1.tx||'x'||r1.ty, round(r1.gflops, 3), round(100*r1.gflops/1405, 2), r2.tx||'x'||r2.ty, round(r2.gflops, 3), round(100*r2.gflops/1405, 2) from results r1, results r2 where r1.name='Testing' and r2.name='Testing_vert' and r1.n = r2.n
+file densities.dat
+separator 
+newline 
+query select a.density, round(a.cost/a.optimal,2), round(b.cost/b.optimal,2), round(c.cost/c.optimal,2), round(d.cost/d.optimal,2) from results a, results b, results c, results d where a.name='densities' and a.name=b.name and a.name=c.name and a.name=d.name and a.density=b.density and a.density=c.density and a.density=d.density and a.testset='helens_before' and b.testset='helens_after' and c.testset='mountains' and d.testset='trondheim' order by a.density asc
+

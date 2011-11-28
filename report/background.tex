@@ -183,7 +183,7 @@ A plot of a clothoid is shown in figure \ref{fig:back_clothoid}, plotted from $t
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.4\textwidth]{figure/cornu}
-\caption{Plot of a clothoid}
+\caption{Plot of a clothoid for $t\in [0,\infty)$}
 \label{fig:back_clothoid}
 \end{figure}
 
@@ -215,12 +215,6 @@ The notation used for this section is based on \cite{clothoid}. The points where
 
 The clothoids starting at ${\mbf P}_0$ and ${\mbf P}_1$ are labelled $A_0$ and $A_1$ respectively; any straight line segment that has been appended before $A_0$ is referred to as $S$. The lengths of these curves are $|A_0|$, $|A_1|$ and $|S|$, respectively. The control vertices in a spline with $n$ vertices are referred to as ${\mbf v}_0, ..., {\mbf v}_n$, and the connection points are referred to as ${\mbf p}_0, ..., {\mbf p}_{n-1}$. Note the difference between ${\mbf p}_0$ as the first connection point in the spline, and ${\mbf P}_0$ as the point local to a clothoid pair.
 
-TODO: FIGURE
-
-\subsection{Clothoid splines}
-\label{sec:clothoid_spline}
-Clothoids can be used to form splines, given a set of control points $\mbf{v}_1, \mbf{v}_2, ..., \mbf{v}_n$.\cite{clothoid} One way of achieving this is first by noting that clothoids have a curvature in the beginning of the curve $\kappa(0) = 0$. Assume that we are given three points $\mbf{V}$, $\mbf{P}_0$ and $\mbf{P}_1$, and the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively. If we can find a pair of clothoids $A_0$ and $A_1$ that start at $\mbf{P}_0$ and $\mbf{P}_1$, respectively, in the direction of their tangents, so that they are joined at some point $\mbf{P}$ with equal curvature, then we can construct a spline using three or more control points.\cite{clothoid} 
-
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{figure/clothoid_pair}
@@ -228,6 +222,9 @@ Clothoids can be used to form splines, given a set of control points $\mbf{v}_1,
 \label{fig:clothoid_pair}
 \end{figure}
 
+\subsection{Clothoid splines}
+\label{sec:clothoid_spline}
+Clothoids can be used to form splines, given a set of control points $\mbf{v}_1, \mbf{v}_2, ..., \mbf{v}_n$.\cite{clothoid} One way of achieving this is first by noting that clothoids have a curvature in the beginning of the curve $\kappa(0) = 0$. Assume that we are given three points $\mbf{V}$, $\mbf{P}_0$ and $\mbf{P}_1$, and the tangent vectors of ${\mbf P}_0$ ${\mbf P}_1$ are ${\mbf T}_0$ and ${\mbf T}_1$, respectively. If we can find a pair of clothoids $A_0$ and $A_1$ that start at $\mbf{P}_0$ and $\mbf{P}_1$, respectively, in the direction of their tangents, so that they are joined at some point $\mbf{P}$ with equal curvature, then we can construct a spline using three or more control points.\cite{clothoid} 
 
 The first step in constructing the spline is to define the vertices where the clothoid pairs meet with zero curvature. One way of choosing these is to use the first and last control vertex as the first and last vertex, and use the midpoint between two control vertices for all the middle points. This is a typical way of doing it, although there may be other ways of choosing the connection vertices. The tangents of each point is chosen so that the last tangent in a clothoid pair points in the direction of the control vertex $\mbf{v}$ from $\mbf{P}_1$, and the very first tangent is chosen in the direction of $\mbf{v}$ from $\mbf{p}_0$. 
 %Now, for each control vertex, we may define a clothoid pair from that vertex, and its adjecent connection vertices. 
@@ -333,9 +330,9 @@ A major part of this project is to extending the snow simulator developed at the
 
 
 \subsection{Terrain}
-Terrains are in many applications represented by a height map, which is nothing more than a bitmap of a certain width and height, where each element represent a height in the terrain. In the snow simulator, a 16 bit integer height map is used; this means, each height value is an integer of 16 bits, which is then mapped to an actual height value in the model. 
+Terrains are in many applications represented by a height map, which is nothing more than a bitmap of a certain width and height, where each element represent a height in the terrain. In the snow simulator, a 16 bit integer height map is used; this means, each height value is an integer of 16 bits, which is then mapped to an actual height value in meters in the snow simulator. 
 
-The height map is stored as raw data, with no header, in row-major order; that is, the elements within a row is stored sequentially in the file, so row 1 is stored first, followed by row 2, etc. The map is loaded by first reading all the values of the file, then generating vertices for a triangle mesh that will be used as rendering. In the original snow simulator that this project aims to extend, the integers are mapped to a floating point value between 0 and 64. This means that a value of zero represents an y vertex position of zero, and a value of $2^{16}-1$ is mapped to a vertex y-position of 64. Figure \ref{fig:heightmap} shows a visualizeation of a height map.
+The height map is stored as raw data, with no header, in row-major order; that is, the elements within a row is stored sequentially in the file, so row 1 is stored first, followed by row 2, etc. The map is loaded by first reading all the values of the file, then generating vertices for a triangle mesh that will be used as rendering. Figure \ref{fig:heightmap} shows a visualizeation of a height map.
 
 \begin{figure}[ht]
 \centering
@@ -343,6 +340,8 @@ The height map is stored as raw data, with no header, in row-major order; that i
 \caption{A heightmap of a terrain}
 \label{fig:heightmap}
 \end{figure}
+
+In the original snow simulator the integers are mapped to a floating point value between 0 and 64. This means that a value of zero represents an vertex y-position $y=0$, and a value of $2^{16}-1$ is mapped to $y=64$. For this project, for the terrains to have the correct proportions when loaded from real-world data, and also for the roads to be laid out correctly in the terrain, the 16 bit height values are in principle mapped to an actual height value between $h_{min}$ to $h_{max}$, where $h_{min}$ and $h_{max}$ is the lowest and highest points in the terrain, respectively. In practice though, it is convenient to have the lower point at $y=0$ so that the simulation box does not have to be translated to cover the terrain. So instead, the height values are mapped to a value between $0$ and $h_{max}-h_{min}$.
 
 \subsection{Wind simulation}
 Wind in the snow simulator is modelled by the incompressible Euler equations, which is derived from the Navier-Stokes equations by setting the viscosity to zero and density to one,
@@ -355,9 +354,7 @@ where ${\mbf p}$ is the pressure, and ${\mbf u}$ is the velocity vector field.
 This equation is simulated numerically by first solving for advection (movemenet of the fluid along its own motion), then solving for pressure which involves solving the poisson equation $\nabla^2 p = \nabla\cdot {\mbf u}^*$ (where ${\mbf u}^*$ is a temporary velocity field generated from the advection step), and finally projecting these velocities into a divergence-free (mass conserving) field\cite{snowsim1}.
 
 \subsection{Particle updates}
-Snow particles are updated according to their current velocity, wind velocity at their position and gravity.\cite{snowsim1} First, the wind velocity is interpolated from the wind field. Then, a circular velocity of the snow particle is computed, which causes them to rotate around a central axis. Then the accelleration is computed from the drag (a function of the difference between the velocities of the wind and snow particles), and gravity. 
-
-TODO 
+Snow particles are updated according to their current velocity, wind velocity at their position and gravity.\cite{snowsim1} First, the wind velocity is interpolated from the wind field by a texture lookup in the GPU. Then, a circular velocity of the snow particle is computed, which causes them to rotate around a central axis. Then the accelleration is computed from the drag (a function of the difference between the velocities of the wind and snow particles), and gravity. Each particle is updated by exactly one thread on the GPU.
 
 \section{USGS DEM Format}
 USGS DEM is a file format for storing elevation data. It is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data.\cite{usgsdem}
