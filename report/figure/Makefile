@@ -20,7 +20,7 @@ trajectories:
 	cp ../../pathfinding/trondheim4096.raw.png trajectory_trondheim.png 
 
 .svg.pdf:
-	inkscape --export-pdf=$(subst .svg,.pdf,$<) --export-dpi=600 --export-area-drawing $<
+	inkscape --export-pdf=$@ --export-dpi=600 --export-area-drawing $<
 
 $(DATAFILES):
 	make -j1 -C ../data
