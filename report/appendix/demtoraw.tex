@@ -1,0 +1,46 @@
+\chapter{USGS DEM to RAW converter reference}
+
+\section*{Synopsis}
+\texttt{./usgstoraw.py [OPTIONS]}
+
+\section*{Description}
+usgstoraw is a program for converting USGS DEM files to 16 bit RAW files. Without any options, usgstoraw.py reads a DEM file from standard input and outputs a RAW file to standard input. 
+
+\section*{Options}
+The various options that can be given to usgstoraw.py is listed below. Many options have both short and long versions, e.g. the input file can be specified by both \texttt{-f} and \texttt{-{-}inputfile}; in these cases, the alternative options are separated by a comma.
+
+\begin{description}
+\item[\texttt{-f FILE}, \texttt{-{-}inputfile=FILE}] \hfill \\
+FILE is name of USGS DEM file to read as input. If not set, usgstoraw.py reads from standard input.
+
+\item[\texttt{-o FILE}, \texttt{-{-}outputfile=FILE}] \hfill \\
+FILE is name of file to write the output to. If not set, usgstoraw.py writes to standard output.
+
+\item[\texttt{-x N}, \texttt{-{-}cropwidth=N}] \hfill \\
+N is the final width of the output RAW file. The DEM will be cropped to this width. If not set, the DEM will be cropped minimally, as described in algorithm \ref{alg:demtoraw} in section \ref{sec:usgscropping}. It is an error to specify a size larger than the width given by the minimally cropped DEM.
+
+\item[\texttt{-y N}, \texttt{-{-}cropheight=N}] \hfill \\
+N is the final height of the output RAW file. The DEM will be cropped to this height. If not set, the DEM will be cropped minimally, as described in algorithm \ref{alg:demtoraw} in section \ref{sec:usgscropping}. It is an error to specify a size larger than the height given by the minimally cropped DEM.
+
+\item[\texttt{-{-}cropx=N}] \hfill \\
+N specifies which side that should be cropped if the width of the DEM should be cropped. A value of $0$ crops both sides, alternately, $1$ crops the left side and $2$ crops the right side.
+
+\item[\texttt{-{-}cropy=N}] \hfill \\
+N specifies which side that should be cropped if the height of the DEM should be cropped. A value of $0$ crops both top and bottom, alternately, $1$ crops the top side and $2$ crops the bottom side.
+
+\end{description}
+
+\section*{Examples}
+
+\begin{description}
+\item[\texttt{./usgstoraw.py < test.dem > test.raw}] \hfill\\
+reads test.dem, passes it to standard input of usgstoraw.py and outputs raw data through standard output, which is redirected to test.raw.
+
+\item[\texttt{./usgstoraw.py -f test.dem -o test.raw}] \hfill\\
+does the same as above, but reads test.dem directly through file IO inside the script, and writes directly to test.raw. This is preferred.
+
+\item[\texttt{./usgstoraw.py -f test.dem -o test.raw -x 512 -y 512 --cropx=2 --cropy=1}]
+does the same as above, but crops the final RAW to $512\times 512$ by cropping the right and top sides.
+
+\end{description}
+

@@ -430,6 +430,7 @@ $$
 where $d_y$ is the height datum and $e_{max}$ and $e_{min}$ is the maximum and minimum elevation, respectively. $unit$ is the number of meters per unit specified in the A-record; $unit=1$ for meters, or $0.3048$ for feet.
 
 \subsection{Placing elevation data points and cropping}
+\label{sec:usgscropping}
 The DEM file format allows quadrangles that are not square or axis aligned. For instance, a DEM file may describe a heightmap of the shape shown in figure \ref{fig:dem_quadrangle_raw}, or the quadrangle may be rectangular, or many other polygons described by four vertices. The goal is to convert the DEM to a rectangular heightmap that can be used in other applications, like the snow simulator; in other words, the data points from the heightmap must be aligned in a grid, and finally cropped, as shown in figure \ref{fig:dem_quadrangle_processed}. In this figure, the gray box represents the final grid. The points outside of this box are removed in the cropping process.
 
 \begin{figure}[ht]

@@ -278,13 +278,22 @@ Road generation can be formulated as a shortest-path problem in the following ma
 
 Next, we must define the edges of the graph. Those edges define, naturally, which nodes that can be reached from each node. The most naive ways of defining this neighborhood is either to choose ALL nodes to be reachable from every other node, or only the immediate eight neighbors. The first approach would be computationally infeasible due to the sheer amount of nodes in the graph. The other approach has a severe restriction on angles (the so-called limit on direction problem\cite{roadgen}), as the pathfinding algorithm can only take turns in multiples of 45 degrees, resulting in a fairly jagged path. 
 
-The solution to this problem of limit on direction, as presented in\cite{roadgen}, is to not only use the immediate neighbors, but use a neighborhood mask to define the neighbors. This mask is defined as follows: The neighbors of a point $p_{a,b}$ is defined as all points $p_{a+i,b+j}$ where $i,j$ are integers, $gcd(i,j) = 1$ and $i,j \in [-k,k]$. That $gcd(i,j)=1$ requirement is not a requirement for correctness, but to avoid unneccesary cost function evaluations for overlapping paths. Figure \ref{fig:neighbormask} illustrates the neighborhood of a grid point with a mask size of $k=2$.
+The solution to this problem of limit on direction, as presented in\cite{roadgen}, is to not only use the immediate neighbors, but use a neighborhood mask to define the neighbors. This mask is defined as follows: The neighbors of a point $p_{a,b}$ is defined as all points $p_{a+i,b+j}$ where $i,j$ are integers, $gcd(i,j) = 1$ and $i,j \in [-k,k]$. That $gcd(i,j)=1$ requirement is not a requirement for correctness, but to avoid unneccesary cost function evaluations for overlapping paths. Figure \ref{fig:neighbormask} illustrates the neighborhood of a grid point with a mask size of $k=2$. Figure \ref{fig:neighbormask_effect} shows the effect this mask has on the shortest path. The gray box is an obstacle. We see that both the curvature and total length of the path is reduced.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.5\textwidth]{figure/neighbormask}
+\includegraphics[width=0.3\textwidth]{figure/neighbormask}
 \caption{Neighborhood of grid point (middle).}
 \label{fig:neighbormask}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfloat[Only eight neighbors]{\includegraphics[width=0.45\textwidth]{figure/neighbormask_no_effect}}
+\qquad
+\subfloat[Neighborhood mask with $k=2$]{\includegraphics[width=0.45\textwidth]{figure/neighbormask_effect}}
+\caption{Effect of neighborhood mask}
+\label{fig:neighbormask_effect}
 \end{figure}
 
 In order to define the weights of each edge, we define the cost of building an infinitesimal portion of road from point ${\mbf p}$, in the direction $\dot{\mbf p}$ and rate of change of the direction $\ddot{\mbf p}$ as $c({\mbf p}, \dot{{\mbf p}}, \ddot{{\mbf p}})$. Now, in order to evaluate the cost of a particular trajectory, simply integrate over the curve as shown in equation \ref{eq:roadcost}. Here, $t_1$ and $t_2$ define the segment end points of the parametric curve defined by the whole trajectory, as illustrated in figure \ref{fig:trajectory_segment}. $t_1$ and $t_2$ correspond to the grid points ${\mbf p}_{i_1,j_1}$ and ${\mbf p}_{i_2,j_2}$, respectively.
