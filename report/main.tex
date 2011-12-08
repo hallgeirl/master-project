@@ -13,9 +13,10 @@
 
 \frontmatter
 
-\pagenumbering{roman}
-\pagestyle{headings}
+%\pagenumbering{roman}
+%\pagestyle{headings}
 
+\pagestyle{headings}
 \input{titlepage}
 \input{problemdescription}
 \input{abstract}
@@ -31,6 +32,8 @@
 \listofalgorithms
 \addcontentsline{toc}{chapter}{List of algorithms}
 
+
+%\pagestyle{empty}
 % *************** Main matter ***************
 \mainmatter
 \input{introduction}
@@ -41,9 +44,6 @@
 \input{futurework}
 \input{conclusion}
 
-\bibliographystyle{ieeetr}
-\bibliography{references}
-
 % Appendices
 \appendixpage
 \appendix
@@ -51,6 +51,10 @@
 %\input{lists/glossary}
 
 \input{appendix/appendix}
+
+\backmatter
+\bibliographystyle{ieeetr}
+\bibliography{references}
 
 \end{document}
 

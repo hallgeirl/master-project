@@ -185,8 +185,10 @@
 \setsubsubsecheadstyle{\normalfont\bfseries}
 \setparaheadstyle{\normalfont}
 
-\makeevenhead{headings}{\thepage}{}{\small\slshape\leftmark}
-\makeoddhead{headings}{\small\slshape\rightmark}{}{\thepage}
+\makeevenhead{empty}{\thepage}{}{\small\slshape\leftmark}
+\makeoddhead{empty}{\small\slshape\rightmark}{}{\thepage}
+\makeoddfoot{empty}{}{}{}
+\makeheadrule{empty}{\textwidth}{0.02cm}
 
 % *************** Table of contents style ***************
 \setsecnumdepth{subsection}
