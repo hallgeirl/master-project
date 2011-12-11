@@ -4,7 +4,7 @@
 \texttt{./pathfind [OPTIONS] <heightmap filename> <output filename w/o extension>}
 
 \section*{Description}
-pathfind is a program for creating a road trajectory through a terrain using an A* search. The output is a roadxml file, as well as a simple list of control points. The terrain is in form of a heightmap read from a RAW file. The time spent finding the path as well as the total cost of the path is output to standard output right before the program exits. On completion, pathfind outputs the following files, assuming the output filename was set to "out".
+pathfind is a program for creating a road trajectory through a terrain using an A* search. The output is a RoadXML file, as well as a simple list of control points. The terrain is in form of a height map read from a RAW file. The time spent finding the path as well as the total cost of the path is output to standard output right before the program exits. On completion, pathfind outputs the following files, assuming the output filename was set to "out".
 \begin{description}
 \item[out.rnd] \hfill \\
 The RoadXML file describing the trajectory.
@@ -19,16 +19,16 @@ The various options that can be given to pathfind is listed below. The options \
 
 \begin{description}
 \item[\texttt{-x N}] \hfill \\
-\textit{REQUIRED}. Width of the heightmap in the number of points. 
+\textit{REQUIRED}. Width of the height map in the number of points. 
 
 \item[\texttt{-y N}] \hfill \\
-\textit{REQUIRED}. Height of the heightmap in the number of points. 
+\textit{REQUIRED}. Height of the height map in the number of points. 
 
 \item[\texttt{-a N}] \hfill \\
-Height (in meters) represented by the value 0 (zero) in the heightmap. Default is 0.
+Height (in meters) represented by the value 0 (zero) in the height map. Default is 0.
 
 \item[\texttt{-b N}] \hfill \\
-Height (in meters) represented by the value 65535 ($2^{16}-1$) in the heightmap. Default is 2700.
+Height (in meters) represented by the value 65535 ($2^{16}-1$) in the height map. Default is 2700.
 
 \item[\texttt{-s N}] \hfill \\
 Resolution of height map, in meters between height points. For instance, if this value is 10, then there are 10 meters between two neighboring values in the height map.
@@ -57,7 +57,7 @@ N specifies the ending Y position for the search.
 
 \begin{description}
 \item[\texttt{./pathfind -x 768 -y 768 -a 0 -b 1500 -s 10 test.raw output}] \hfill\\
-reads test.raw as the heightmap, maps each of the height values to a value between 0 and 1500, and outputs output.rd and output.rnd. A resolution of 10 meters is assumed. The full height map resolution is used. The default starting and ending coordinates is used, i.e. start in the top-left corner and end in bottom-right corner.
+reads test.raw as the height map, maps each of the height values to a value between 0 and 1500, and outputs output.rd and output.rnd. A resolution of 10 meters is assumed. The full height map resolution is used. The default starting and ending coordinates is used, i.e. start in the top-left corner and end in bottom-right corner.
 
 \end{description}
 

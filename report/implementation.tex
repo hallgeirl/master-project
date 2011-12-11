@@ -4,11 +4,11 @@ This chapter will describe my implementation of the procedural road generation a
 
 \section{Procedural road generation}
 \label{sec:impl_procroad}
-For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a heightmap, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described. 
+For this project, I implemented the road generation algorithm described by \cite{roadgen} for generating a road through a terrain described by a discrete height map. The road generator is a separate program written in C++ implementing an A* search algorithm which takes in a terrain in form of a height map, and outputs a file in the RoadXML format (see \cite{roadxml}). This section will first present the particular A* implementation, then it will describe how the clothoid spline is generated. Lastly, the RoadXML export code is described. 
 
 \subsection{Implementation of A*}
 \label{sec:impl_astar}
-The A* search used for generating roads in this project first generates a discrete shortest path, described by $n$ points in space. When computing costs, it is assumed that these points form a piecewise linear curve where each point along the curve $(x(t), y(t))$ is a function of parameter $t$, which is the length of the curve. Eventually, a clothoid curve is generated from the same points, but this is not used for pathfinding.
+The A* search used for generating roads in this project first generates a discrete shortest path, described by $n$ points in space. When computing costs, it is assumed that these points form a piecewise linear curve where each point along the curve $(x(t), y(t))$ is a function of parameter $t$, which is the length of the curve. Eventually, a clothoid curve is generated from the same points, but this is not used for path finding.
 
 The A* algorithm is implemented as described by algorithm \ref{alg:astar}, with the edge weight $w$ being equal to the cost function described in the section "Cost functions". The following section will also describe the data structures used, and why they were chosen. 
 
@@ -19,9 +19,9 @@ An A* search often has a very large amount of insertion operations to the $OPEN$
 
 Instead, typically a min-heap is used. A min-heap has a constant lookup-time of the "smallest" element (smallest in this case being the node with the smallest f-cost) because the next element to be extracted is always on top, but in addition the element must be removed, which takes $O(lg(n))$ time. Insertion takes in theory $O(lg(n))$ time, but due to the structure of the heap, in practice this cost is constant on average. 
 
-However, the elements in a min-heap generally have no specified order other than the smallest item being on top, and the second smallest item being one of its children. Searching for an arbitrary item in a min-heap therefore requires us to search through the whole heap. Because this is something that is done regularily, to check for existance of an item in the $OPEN$ list (see the inner for-loop in algorithm \ref{alg:astar}), a supplementary hash map is used to keep track of which nodes exists in the heap. 
+However, the elements in a min-heap generally have no specified order other than the smallest item being on top, and the second smallest item being one of its children. Searching for an arbitrary item in a min-heap therefore requires us to search through the whole heap. Because this is something that is done regularly, to check for existence of an item in the $OPEN$ list (see the inner for-loop in algorithm \ref{alg:astar}), a supplementary hash map is used to keep track of which nodes exists in the heap. 
 
-A hash map has constant lookup and constant insertion time, although the items are in general unordered. Therefore, the $CLOSED$ list is implemented as a hash map, because all that list is used for, is inserting nodes, and looking up existance of nodes. This is also the reason why a hash map is well suited for augmenting the heap for the $OPEN$ list, to keep track of existance of nodes in the heap.
+A hash map has constant lookup and constant insertion time, although the items are in general unordered. Therefore, the $CLOSED$ list is implemented as a hash map, because all that list is used for, is inserting nodes, and looking up existence of nodes. This is also the reason why a hash map is well suited for augmenting the heap for the $OPEN$ list, to keep track of existence of nodes in the heap.
 
 \subsubsection{Cost functions}
 Three separate cost functions were implemented based on slope, curvature and road length. Given two points ${\mbf p}_i$ and ${\mbf p}_{i+1}$, the cost to go from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ is defined as 
@@ -100,7 +100,7 @@ where $z({\mbf p})$ is the elevation at point ${\mbf p}$.
 In order to guarantee that the path that is found is optimal, the heuristic used must be consistent and admissible. $h$ as defined above is definitely admissible, because it is a lower bound of the cost, as proved above. It is also consistent, because moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$ gives a change in $h$ that is less or equal to the actual cost for moving from ${\mbf p}_i$ to ${\mbf p}_{i+1}$, and thus the total cost $f(x) = g(x)+h(x)$ is always increasing. Using $h$ in $A*$ therefore results in an optimal path.
 
 \subsubsection{Grid coarsening}
-Typically in an A* search every grid point is used as a node in the graph. For huge maps, say $4096\times 4096$, this approach becomes very slow due to the complex cost function used for procedural road generation. A more complex cost function makes it harder to make a heuristic that is both efficient and accurate for the distance to the goal, which causes A* to expand more nodes, and thus scale poorly with larger problems. A solution to this is to coarsen the grid used, so that instead of using every elevation point in the heightmap as a node, we use every $m$ nodes, as shown in figure \ref{fig:grid_coarsening}. This significantly reduces the number of nodes, making it viable to create paths through larger terrains.
+Typically in an A* search every grid point is used as a node in the graph. For huge maps, say $4096\times 4096$, this approach becomes very slow due to the complex cost function used for procedural road generation. A more complex cost function makes it harder to make a heuristic that is both efficient and accurate for the distance to the goal, which causes A* to expand more nodes, and thus scale poorly with larger problems. A solution to this is to coarsen the grid used, so that instead of using every elevation point in the height map as a node, we use every $m$ nodes, as shown in figure \ref{fig:grid_coarsening}. This significantly reduces the number of nodes, making it viable to create paths through larger terrains.
 
 \begin{figure}[ht]
 \centering
@@ -114,7 +114,7 @@ Typically in an A* search every grid point is used as a node in the graph. For h
 \subsubsection{Neighborhood mask creation}
 A typical A* implementation for use with a grid like the discretization of a terrain often use eight neighbors. \cite{roadgen} propose that not only the immediate eight neighbors are used per node, but instead use a larger neighborhood as described in section \ref{sec:roadgen_shortestpath}, and as shown in figure \ref{fig:neighbormask}. 
 
-The naive implementation of utilizing this would be to for each node loop over each neighboring node within a distance $k$, check if $gcd(i,j)=1$, and if so, compute the cost to that node and add it to the $OPEN$ list. This does a lot of uneccesary checks as many of those neighbors will not be selected for expansion because $gcd(i,j)\neq 1$. Instead, the neighborhood mask are precomputed before the search starts and put in an an array. This allows us to instead loop over the array, with exactly as many elements as there is neighbors that will actually be expanded. The pseudocode for the generation of neighborhood masks are given in algorithm \ref{alg:neighborhoodmask}.
+The naive implementation of utilizing this would be to for each node loop over each neighboring node within a distance $k$, check if $gcd(i,j)=1$, and if so, compute the cost to that node and add it to the $OPEN$ list. This does a lot of unnecessary checks as many of those neighbors will not be selected for expansion because $gcd(i,j)\neq 1$. Instead, the neighborhood mask are precomputed before the search starts and put in an array. This allows us to instead loop over the array, with exactly as many elements as there is neighbors that will actually be expanded. The pseudo code for the generation of neighborhood masks are given in algorithm \ref{alg:neighborhoodmask}.
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -135,12 +135,12 @@ The naive implementation of utilizing this would be to for each node loop over e
     \ENDFOR
 \ENDFOR
 \end{algorithmic}
-\caption{Pseudocode for constructing the neighborhood mask}
+\caption{Pseudo code for constructing the neighborhood mask}
 \label{alg:neighborhoodmask}
 \end{algorithm}
 
 \subsection{Trajectory generation} 
-A clothoid spline can be used to model the road trajectoy, as this gives smooth curves with linearly varying curvature. The method described in \cite{clothoid} is used (see section \ref{sec:back_clothoid}). A class {\texttt ClothoidPair} was written to take care of constructing each clothoid pair in the spline, while the class {\texttt ClothoidSpline} contains one or more clothoid pairs that makes up the spline.
+A clothoid spline can be used to model the road trajectory, as this gives smooth curves with linearly varying curvature. The method described in \cite{clothoid} is used (see section \ref{sec:back_clothoid}). A class {\texttt ClothoidPair} was written to take care of constructing each clothoid pair in the spline, while the class {\texttt ClothoidSpline} contains one or more clothoid pairs that makes up the spline.
 
 \subsubsection{Constructing the clothoid spline}
 After the control points have been generated by the A* search as described above, these are passed on to the ClothoidSpline constructor. This constructor will first determine the connection points ${\mbf p}_0, ..., {\mbf p}_n$, i.e. where the clothoid pairs begin and end; this is done as described in section \ref{sec:clothoid_spline}. The end points are used as connection points as well. These points are then removed from the control vertex list. The tangents are then determined as 
@@ -153,13 +153,13 @@ After the control points have been generated by the A* search as described above
 \label{eq:connector_tangents}
 \end{equation}
 
-The next step is to  construct a clothoid pair that begins and ends at the connecting vertices for each control vertex, such that the tangent of the clothoid at the endpoints are the same as the tangent for the endpoints themselves. 
+The next step is to construct a clothoid pair that begins and ends at the connecting vertices for each control vertex, such that the tangent of the clothoid at the endpoints are the same as the tangent for the endpoints themselves. 
 
-If the control points and its corresponding connection points are colinear, we simply use a straight line between the points. Otherwise, note that the starting point of clothoids have a tangent of ${\mbf T} = (1,0)$ and position $(0,0)$; this means that the clothoids must be translated and rotated rotated  to coincide with the points and tangents at the end points. Note also that we do not need to rotate and translate the points themselves, only the final clothoids. 
+If the control points and its corresponding connection points are co-linear, we simply use a straight line between the points. Otherwise, note that the starting point of clothoids have a tangent of ${\mbf T} = (1,0)$ and position $(0,0)$; this means that the clothoids must be translated and rotated rotated  to coincide with the points and tangents at the end points. Note also that we do not need to rotate and translate the points themselves, only the final clothoids. 
 
-In each clothoid pair, one clothoid must be flipped; this is because the clothoids have different signs on the derivative of their curvature; i.e. $Sgn(\frac{d\kappa_{0}}{dt})\neq Sgn(\frac{d\kappa_{1}}{dt})$.  To test for which clothoid needs flipping, it is sufficient to check the sign of the third component in the cross product ${\mbf g}\times {\mbf h}$ where ${\mbf g}$ and ${\mbf h}$ are the vectors representing the longest and shortest vectors, respectively, of ${\mbf v}-{\mbf P}_0$ and ${\mbf P}_1 - {\mbf v}$. If the sign is negative, the clothoid starting in ${\mbf P}_0$ must be flipped; otherwise, the other clothoid must be flipped.
+In each clothoid pair, one clothoid must be flipped; this is because the clothoids have different signs on the derivative of their curvature; i.e. $Sgn(\frac{d\kappa_{0}}{dt})\neq Sgn(\frac{d\kappa_{1}}{dt})$.  To test for which clothoid needs flipping, it is sufficient to check the sign of the third component in the cross product ${\mbf g}\times {\mbf h}$ where ${\mbf g}$ and ${\mbf h}$ are the vectors representing the longest and shortest vectors, respectively, of ${\mbf V}-{\mbf P}_0$ and ${\mbf P}_1 - {\mbf V}$. If the sign is negative, the clothoid starting in ${\mbf P}_0$ must be flipped; otherwise, the other clothoid must be flipped.
 
-Finally, the scaling factors $a_0$ and $a_1$, and the tangent angle deviation for the first clothoid at the meeting point $\theta_0$ are computed. Note that $\theta_1$ is computed using $\theta_1 = \alpha - \theta_0$ because $\theta_0 + \theta_1 = \alpha$\cite{clothoid}. $\theta_0$ is found by using Newton's method described in \ref{sec:newtons_method} to solve equation \ref{eq:theta0equation} in section \ref{sec:clothoid_spline}. An intial guess of $x=\alpha/2$ is used, which is reasonable because $\theta_0$ is somewhere between $0$ and $\alpha$.\cite{clothoid}. The scaling factors is found by solving equation \ref{eq:a0equation} for $a_0$, also in section \ref{sec:clothoid_spline}. $a_1$ is found using the formula given in equation \ref{eq:a1equation}. The complete pseudocode for constructing the clothoid spline is seen in algorithm \ref{alg:clothoid_spline_construct}.
+Finally, the scaling factors $a_0$ and $a_1$, and the tangent angle deviation for the first clothoid at the meeting point $\theta_0$ are computed. Note that $\theta_1$ is computed using $\theta_1 = \alpha - \theta_0$ because $\theta_0 + \theta_1 = \alpha$\cite{clothoid}. $\theta_0$ is found by using Newton's method described in \ref{sec:newtons_method} to solve equation \ref{eq:theta0equation} in section \ref{sec:clothoid_spline}. An initial guess of $x=\alpha/2$ is used, which is reasonable because $\theta_0$ is somewhere between $0$ and $\alpha$, and is exactly $\alpha/2$ for symmetric clothoid pairs.\cite{clothoid}. The scaling factors is found by solving equation \ref{eq:a0equation} for $a_0$, also in section \ref{sec:clothoid_spline}. $a_1$ is found using the formula given in equation \ref{eq:a1equation}. The complete pseudo code for constructing the clothoid spline is seen in algorithm \ref{alg:clothoid_spline_construct}.
 
 \begin{algorithm}[ht]
 \centering
@@ -171,7 +171,7 @@ Finally, the scaling factors $a_0$ and $a_1$, and the tangent angle deviation fo
 \STATE $C := $ new clothoid pair
 \STATE ${\mbf P}_0 := \argmax_{{\mbf p}} \{||{\mbf v}_i-{\mbf p}_{i-1}||_2, ||{\mbf v}_i-{\mbf p}_i||_2\}$
 \STATE ${\mbf P}_1 := \argmin_{{\mbf p}} \{||{\mbf v}_i-{\mbf p}_{i-1}||_2, ||{\mbf v}_i-{\mbf p}_i||_2\}$
-\IF{${\mbf P}_0, {\mbf v}_i, {\mbf P}_1$ is colinear}
+\IF{${\mbf P}_0, {\mbf v}_i, {\mbf P}_1$ is co-linear}
 \STATE $C.length := C.|S| := ||{\mbf P}_1 - {\mbf P}_0||_2$
 \STATE $C.t_0 := C.t_1 := 0$, $C.a_0 := C.a_1 := 1$
 \ENDIF
@@ -203,12 +203,12 @@ Finally, the scaling factors $a_0$ and $a_1$, and the tangent angle deviation fo
 \label{alg:clothoid_spline_construct}
 \end{algorithm}
 
-\subsubsection{Generating cartesian points from the spline}
-Given a clothoid spline constructed using the methods above, we need to be able to look up the position in cartesian coordinates for each value of the parameter $t$ of the curve. This allows us to render the spline, by starting at $t=0$, ending at $t=t_{max}$ and incrementing $t$ with sufficiently small increments. It also allows us to look up height values at every point of the spline, which is important when generating a RoadXML file, as described in section \ref{sec:roadxmlgen}.
+\subsubsection{Generating Cartesian points from the spline}
+Given a clothoid spline constructed using the methods above, we need to be able to look up the position in Cartesian coordinates for each value of the parameter $t$ of the curve. This allows us to render the spline, by starting at $t=0$, ending at $t=t_{max}$ and incrementing $t$ with sufficiently small increments. It also allows us to look up height values at every point of the spline, which is important when generating a RoadXML file, as described in section \ref{sec:roadxmlgen}.
 
 Looking up a point in the spline is done in three steps. First, find the clothoid pair that corresponds to the parameter $t$ as given. Then, it must be determined which clothoid or straight line segment of the clothoid pair corresponds to $t$. Finally, the point is computed by evaluating the Fresnel integrals, and then rotate, flip and translate the point to the correct position.  
 
-Finding the clothoid pair corresponding to $t$ is done using a binary search into a precomputed \texttt{lengths} array. This array contains the cummulative lengths of the curve before each clothoid pair has been added. As an example, say a spline has three clothoid pairs with the lengths $140$, $90$ and $125$. The \texttt{lengths} array then contains the values $0$, $140$, $230$ and $355$, in that order. The index of the largest length $l\in lengths$ such that $l < t$ then is the index of the clothoid pair corresponding to $t$. In general, given $n$ clothoid pairs $C_1, ..., C_n$, the length entries is given as
+Finding the clothoid pair corresponding to $t$ is done using a binary search into a precomputed \texttt{lengths} array. This array contains the cumulative lengths of the curve before each clothoid pair has been added. As an example, say a spline has three clothoid pairs with the lengths $140$, $90$ and $125$. The \texttt{lengths} array then contains the values $0$, $140$, $230$ and $355$, in that order. The index of the largest length $l\in lengths$ such that $l < t$ then is the index of the clothoid pair corresponding to $t$. In general, given $n$ clothoid pairs $C_1, ..., C_n$, the length entries is given as
 $$
 l_i = 
 \begin{cases}
@@ -220,9 +220,9 @@ where $|C_i|$ is the length of $C_i$.
 
 A clothoid pair consists of two clothoids $A_0$ and $A_1$, and possibly a straight line segment $S$. $S$ connects $A_0$ to $P_0$, and $A_1$ connects $A_0$ to $P_1$. Figuring out which part of the clothoid pair $t$ corresponds to is more tricky, because it is unclear which clothoid comes first in the curve of $A_0$ and $A_1$, as $A_0$ always starts at ${\mbf P}_0$, i.e. the endpoint of the longest segment. This information is recorded when the clothoid pair is constructed in form of a reversed-flag.
 
-We construct a \texttt{local\_lengths} table with the cummulative lengths of all the parts of the clothoid pair ($S$, $A_0$ and $A_1$). If the clothoid pair is not reversed, that is, $A_0$ comes first in the curve, we get the cummulative lengths $0$, $|S|$, $S+|A_0|$ and $S+|A_0|+|A_1|$ in this order, where $|X|$ means the length of $|X|$. If the clothoid pair IS reversed, we instead get $0$, $|A_1|$, $|A_1|+|A_0|$ and $|A_1|+|A_0|+|S|$. Using this, we can determine which clothoid/straight line segment corresponds to $t$, by finding the "local" $t_l = t-l_i$ and using this the same way as we found the correct clothoid pair (however, a binary search is not neccesary here).
+We construct a \texttt{local\_lengths} table with the cumulative lengths of all the parts of the clothoid pair ($S$, $A_0$ and $A_1$). If the clothoid pair is not reversed, that is, $A_0$ comes first in the curve, we get the cumulative lengths $0$, $|S|$, $S+|A_0|$ and $S+|A_0|+|A_1|$ in this order, where $|X|$ means the length of $|X|$. If the clothoid pair IS reversed, we instead get $0$, $|A_1|$, $|A_1|+|A_0|$ and $|A_1|+|A_0|+|S|$. Using this, we can determine which clothoid/straight line segment corresponds to $t$, by finding the "local" $t_l = t-l_i$ and using this the same way as we found the correct clothoid pair (however, a binary search is not necessary here).
 
-The last step is to compute the position from the clothoid or straight line we found in the previous step. The parameter $t_l$ must be transformed into $t_{ll}$ local to the clothoid or straight line. How this is done, depends on which segment of the clothoid pair we are in, and wether or not the clothoid pair is reversed. Table \ref{tab:transform_local_t} shows all possibilities.
+The last step is to compute the position from the clothoid or straight line we found in the previous step. The parameter $t_l$ must be transformed into $t_{ll}$ local to the clothoid or straight line. How this is done, depends on which segment of the clothoid pair we are in, and whether or not the clothoid pair is reversed. Table \ref{tab:transform_local_t} shows all possibilities.
 
 \begin{table}[ht]
 \centering
@@ -299,26 +299,26 @@ For this project, a polynomial is generated for intervals of length 50 as this s
 
 \section{Integration with snow simulator}
 \label{sec:impl_snowsim}
-This section presents the modifications done to the snow simulator to accommodate road models and real-life terrains. First, the scaling of the terrain was modified, and this is described in section \ref{sec:terrain_scaling}. Then, the mesh loader is described. Finally, the terrain adjustments neccesary to accommodate the road models are described.
+This section presents the modifications done to the snow simulator to accommodate road models and real-life terrains. First, the scaling of the terrain was modified, and this is described in section \ref{sec:terrain_scaling}. Then, the mesh loader is described. Finally, the terrain adjustments necessary to accommodate the road models are described.
 %, as well as other improvements and modifications to the snow simulator.
 
 \subsection{Scaling of terrain and model}
 \label{sec:terrain_scaling}
-The original snow simulator used a fixed value for the maximum elevation given by a height map, without taking into consideration the scale of the map. In fact, there was no parameters describing the physical dimensions of the map; a height map was simply taken in, placed within a square of a certain dimension, and the height of each point was scaled statically to a value between 0 and 64. In reality, we want the height of each point in the height map to be proprtionally correct to the actual widths and heights of the map. In other words, if we have a map of some mountain, say mt. Everest, and the height map defines an area of $10km\times 10km$, and is contained within a square of $512\times 512$ in the snow simulator's coordinate system, we want the $y$ coordinate of the highest peak to be $8.848\cdot 512/10 = 453.0176$, again in the snow simulator's coordinate system.
+The original snow simulator used a fixed value for the maximum elevation given by a height map, without taking into consideration the scale of the map. In fact, there was no parameters describing the physical dimensions of the map; a height map was simply taken in, placed within a square of a certain dimension, and the height of each point was scaled statically to a value between 0 and 64. In reality, we want the height of each point in the height map to be proportionally correct to the actual widths and heights of the map. In other words, if we have a map of some mountain, say mt. Everest, and the height map defines an area of $10km\times 10km$, and is contained within a square of $512\times 512$ in the snow simulator's coordinate system, we want the $y$ coordinate of the highest peak to be $8.848\cdot 512/10 = 453.0176$, again in the snow simulator's coordinate system.
 
 To achieve this, a few extra parameters was introduced to the snow simulator:
 \begin{itemize}
 \item Resolution of the height map, in meters, in the X and Z direction ($R_x$, $R_z$).
 \item Minimum and maximum elevation defined by the height map, in meters ($e_{min}$, $e_{max}$ (for mt. Everest, this could be $0$ and $8848$)
 \end{itemize}
-Using this we can now find the elevation $e$ at each height map point, which is as given by equation \ref{eq:elevation_scaling_factor}. $R_x$ is the resolution of the heightmap in the $x$ direction, and $S_x$ is the size of the scene in the $x$ dimension. $E$ is the elevation computed from the height map. $d$ is the 16-bit integer stored in the heightmap; $d\in [0,2^{16}-1]$. $n$ is the number of elevation points in the $x$ direction.
+Using this we can now find the elevation $e$ at each height map point, which is as given by equation \ref{eq:elevation_scaling_factor}. $R_x$ is the resolution of the height map in the $x$ direction, and $S_x$ is the size of the scene in the $x$ dimension. $E$ is the elevation computed from the height map. $d$ is the 16-bit integer stored in the height map; $d\in [0,2^{16}-1]$. $n$ is the number of elevation points in the $x$ direction.
 \begin{align}
 E =& \frac{d(e_{max}-e_{min})}{2^{16}}+e_{min}\\
 e =& \frac{(E-e_{min})S_x}{nR_x} = \frac{d}{2^{16}}\cdot \frac{(e_{max}-e_{min})Sx}{nRx} \label{eq:elevation_scaling_factor}
 \end{align}
 
 \subsection{Model loader and format}
-The models used for roads and other meshes in the snow simulator is the Wavefront OBJ format, which is a plaintext format containing information about the material used, positions of vertices, texture coordinates, faces and normals. In the snow simulator, the vertices, normals and texture coordinates are stored in flat arrays, $V$, $N$, $T$, respectively, as they are loaded from the OBJ file. Faces are stored as an array where each element has nine indices into these arrays $(i_{[vnt]}, j_{[vnt]}, k_{[vnt]})$.  A triangle's vertices are then $V(i_v)$, $V(j_v)$ and $V(k_v)$, and for normals it is similar, but with the normal indices instead. This format saves quite a bit of memory, as vertices can be shared between multiple faces, and a face takes up one third of the space of the vertices, normals and texture coordinates that define it.
+The models used for roads and other meshes in the snow simulator is the Wavefront OBJ format, which is a plain text format containing information about the material used, positions of vertices, texture coordinates, faces and normals. In the snow simulator, the vertices, normals and texture coordinates are stored in flat arrays, $V$, $N$, $T$, respectively, as they are loaded from the OBJ file. Faces are stored as an array where each element has nine indices into these arrays $(i_{[vnt]}, j_{[vnt]}, k_{[vnt]})$.  A triangle's vertices are then $V(i_v)$, $V(j_v)$ and $V(k_v)$, and for normals it is similar, but with the normal indices instead. This format saves quite a bit of memory, as vertices can be shared between multiple faces, and a face takes up one third of the space of the vertices, normals and texture coordinates that define it.
 
 Wavefront OBJ files has a very simple structure. The first word on each line indicates what data is contained on that line, e.g. vertex coordinates, texture coordinates, or similar. The rest of the line has the data itself; for a vertex, this would be three floating point values indicating the vertex' position. A list of "keywords" (i.e. words that begin a line) is listed in table \ref{tab:obj_file_keywords}. The data format in this table is the expected format of the data following the keyword. Note that the list is not a complete reference of the OBJ format; faces may have more than three vertices, and there are more keywords supported, but for the snow simulator, this is sufficient.
 
@@ -367,7 +367,7 @@ map\_Kd & Diffuse reflectance map (texture) & Filename\\
 \subsection{Terrain adjustments}
 The generated road model may not fit the terrain perfectly due to various reasons. For instance, when sampling elevations along the curve when generating the RoadXML, bilinear interpolation is used to look up a height value because a point on the curve may not correspond exactly to a grid point. The elevation given by this interpolation does not correspond exactly to the height of the point on the corresponding triangle in the triangle mesh that is generated in the snow simulator. In addition, the road has a width as well, while the trajectory generated by the road generator has an infinitesimal width, which causes many vertices to be placed above or below the terrain.
 
-When adjusting the terrain, we want to adjust the heightmap elevation points so that if grid point $(x,z)$ is near the road surface in the xz-plane, the elevation at that point should be set to the elevation of the closest vertex in the road mesh. Figure \ref{fig:terrain_adjustment} shows this idea. The small dots represent grid points in the terrain, and the large dots are road mesh vertices. The color of the grid points indicate from which road vertex their height is extracted from. So a gray grid point's height is set to the nearby gray road vertex's y-value. In reality, of course there are a much higher density of vertices in the road model.
+When adjusting the terrain, we want to adjust the height map elevation points so that if grid point $(x,z)$ is near the road surface in the xz-plane, the elevation at that point should be set to the elevation of the closest vertex in the road mesh. Figure \ref{fig:terrain_adjustment} shows this idea. The small dots represent grid points in the terrain, and the large dots are road mesh vertices. The color of the grid points indicate from which road vertex their height is extracted from. So a gray grid point's height is set to the nearby gray road vertex's y-value. In reality, of course there are a much higher density of vertices in the road model.
 
 \begin{figure}[ht]
 \centering
@@ -378,7 +378,7 @@ When adjusting the terrain, we want to adjust the heightmap elevation points so 
 
 It is not sufficient to go through each road vertex and set the closest grid point's elevation to that vertex' y-value. The reason is that if we first set grid point $(x,z)$'s height to $v_1.y$, we may later find a new vertex $v_2$ that are further away, but still has $(x,z)$ as the closest grid point, and thus will overwrite the previous height value $v_1.y$ with $v_2.y$. It is also not a good solution to go through all the grid points close to the trajectory and check the distance to all road vertices, as there may be hundreds of thousand of vertices, and hundreds or thousands of grid points, giving a very inefficient solution. 
 
-Instead, terrain adjustment may be done in two passes. In the first pass, a distance map is created. In the second pass, the information stored in this distance map is used to determine what height each grid point should have. The distance map is simply a 2D array of the same dimensions as the terrain heightmap, where each element contains two values: the distance to the closest road vertex, and that road vertex' elevation. 
+Instead, terrain adjustment may be done in two passes. In the first pass, a distance map is created. In the second pass, the information stored in this distance map is used to determine what height each grid point should have. The distance map is simply a 2D array of the same dimensions as the terrain height map, where each element contains two values: the distance to the closest road vertex, and that road vertex' elevation. 
 
 Initially, all distances are set to infinity. Then, we traverse the vertex list of the mesh, and for each vertex, check the distance to the closest grid point and the immediate eight neighboring grid points to that vertex, and update the distance map accordingly. Adjusting the heights is then done by simply iterating through the distance map, and if an element has a non-infinite distance, set the height of each grid point to the height specified in the distance map. This algorithm, described in algorithm \ref{alg:terrain_adjustment}, has an asymptotic running time of $O(|V|+mn)$ where $|V|$ is the number of road vertices, and $m$ and $n$ is the size of the height map.
 
@@ -415,15 +415,15 @@ Initially, all distances are set to infinity. Then, we traverse the vertex list 
 %\subsection{Other improvements}
 
 \section{USGS DEM converter}
-Real-world height maps are often stored in the USGS Digital Elevation Model (DEM) format. Among the users are Kartverket in Norway, who provides digital elevation maps of Norway. There is also a considerable amount of elevation data in the DEM format for the United States, although it has been mostly superceded by the SDTS format, also developed by the USGS\cite{wiki_usgsdem}. However, the snow simulator uses raw 16 bit integer heightmaps, for simplicity. Converting a USGS DEM map to 16 bit RAW takes time, and as such, it was decided that instead of directly supporting DEMs in the snow simulator, the best approach was to create a stand-alone converter from DEM to RAW.
+Real-world height maps are often stored in the USGS Digital Elevation Model (DEM) format. Among the users are Kartverket in Norway, who provides digital elevation maps of Norway. There is also a considerable amount of elevation data in the DEM format for the United States, although it has been mostly superseded by the SDTS format, also developed by the USGS\cite{wiki_usgsdem}. However, the snow simulator uses raw 16 bit integer height maps, for simplicity. Converting a USGS DEM map to 16 bit RAW takes time, and as such, it was decided that instead of directly supporting DEMs in the snow simulator, the best approach was to create a stand-alone converter from DEM to RAW.
 
 
 \subsection{Parsing the DEM file format}
-USGS DEM is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header, contained in one block; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data. We are here concerned about the A and B records since these contain the actual data and metadata. 
+USGS DEM is a format in human readable ASCII characters, and the files are segmented into blocks of 1024 bytes. There are three types of records in a DEM file: one A-record, which is the header, contained in one block; multiple B-records, where each B-record store one column of elevation data and one C-record, which stores statistics of errors and accuracy of the data. We are here concerned about the A and B records since these contain the actual data and meta data. 
 
-Each data element in the DEM format is contained within two offsets in a record. For instance, the spatial resolutions are contained 816 bytes into the A-record, and ending at byte 851. This area contains three values, the x, y and z resolution of the DEM. Since the format is so regular, parsing each field is very straight forward. First, read the block from file (1024 bytes), and store it in a string. Then, with Python, this string is easily sliced at the field boundaries and then split into separate elements, and finally each element is parsed as numbers.
+Each data element in the DEM format is contained within two offsets in a record. For instance, the spatial resolutions are contained 816 bytes into the A-record, and ending at byte 851. This area contains three values; the x, y and z resolution of the DEM. Since the format is so regular, parsing each field is very straight forward. First, read the block from file (1024 bytes), and store it in a string. Then, this string is easily sliced at the field boundaries and then split into separate elements, and finally each element is parsed as numbers.
 
-For the elevation data in the B-record, the following conversion must be done, in order to map the data to actual heights, just as described in section \ref{sec:back_brecord}.
+For the elevation data in the B-record, the following conversion must be done, in order to map the data to actual heights, just as described in section \ref{sec:back_brecord}:
 $$
 h_i = ((e_{max}-e_{min})\cdot y_i+ d_y)\cdot res_y \cdot unit
 $$
@@ -431,7 +431,7 @@ where $d_y$ is the height datum and $e_{max}$ and $e_{min}$ is the maximum and m
 
 \subsection{Placing elevation data points and cropping}
 \label{sec:usgscropping}
-The DEM file format allows quadrangles that are not square or axis aligned. For instance, a DEM file may describe a heightmap of the shape shown in figure \ref{fig:dem_quadrangle_raw}, or the quadrangle may be rectangular, or many other polygons described by four vertices. The goal is to convert the DEM to a rectangular heightmap that can be used in other applications, like the snow simulator; in other words, the data points from the heightmap must be aligned in a grid, and finally cropped, as shown in figure \ref{fig:dem_quadrangle_processed}. In this figure, the gray box represents the final grid. The points outside of this box are removed in the cropping process.
+The DEM file format allows quadrangles that are not square or axis aligned. For instance, a DEM file may describe a height map of the shape shown in figure \ref{fig:dem_quadrangle_raw}, or the quadrangle may be rectangular, or many other polygons described by four vertices. The goal is to convert the DEM to a rectangular height map that can be used in other applications, like the snow simulator; in other words, the data points from the height map must be aligned in a grid, and finally cropped, as shown in figure \ref{fig:dem_quadrangle_processed}. In this figure, the gray box represents the final grid. The points outside of this box are removed in the cropping process.
 
 \begin{figure}[ht]
 \centering
@@ -448,13 +448,13 @@ The DEM file format allows quadrangles that are not square or axis aligned. For 
 \label{fig:dem_quadrangle}
 \end{figure}
 
-The first step of generating the cropped heightmap is to align each column from the B-records in a grid. In order to do this, we first must compute the dimensions of the bounding box of the quadrangle in order to hold all the data points. The number of B-records (width) is given by the A-record, but each B-record may differ in size, and even if they don't, datapoint $i$ from B-record 1 may not correspond to the same vertical position as datapoint $i$ in B-record 2. 
+The first step of generating the cropped height map is to align each column from the B-records in a grid. In order to do this, we first must compute the dimensions of the bounding box of the quadrangle in order to hold all the data points. The number of B-records (width) is given by the A-record, but each B-record may differ in size, and even if they don't, data point $i$ from B-record 1 may not correspond to the same vertical position as data point $i$ in B-record 2. 
 
 The corners of the quadrangle in world coordinates is described in the A-record (see \cite{usgsdem}). Since we know the spacing between points, we can therefore compute the number of rows $m$ as
 $$
 m = \left\lceil\frac{y_{world,max}-y_{world,min}}{res_y}\right\rceil
 $$
-where $y_{world,max}$ and $y_{world,min}$ is the maximum and minimum quadrangle y-values in world coordinates, and $res_y$ is the resolution in the $y$ direction in meters. This is illustrated in figure \ref{fig:dem_quadrangle}. Now, after generating a grid of $m\times n$ elements that can hold all datapoints, for each B-record, we compute the starting row as
+where $y_{world,max}$ and $y_{world,min}$ is the maximum and minimum quadrangle y-values in world coordinates, and $res_y$ is the resolution in the $y$ direction in meters. This is illustrated in figure \ref{fig:dem_quadrangle}. Now, after generating a grid of $m\times n$ elements that can hold all data points, for each B-record, we compute the starting row as
 
 $$
 row_{0,j} = \left\lfloor \frac{y_{0,j}-y_{world,min}}{res_y}\right\rfloor
@@ -465,15 +465,16 @@ row_{k,j} = row_{k-1,j} + 1
 $$
 where $i_{k,j}$ is the row of the $k$'th data point in the $j$'th B-record. 
 
-If the heightmap from the DEM is not rectangular, it must be cropped in order to produce a rectangular map, as illustrated in \ref{fig:dem_quadrangle}; otherwise, we end up with a lot of bogus data points where the DEM does not contain any data. Another consideration is that we want to remove as few {\textit real} data points as possible. For instance, in figure \ref{fig:dem_quadrangle_raw}, in order to create a rectangular map, we may
+If the height map from the DEM is not rectangular, it must be cropped in order to produce a rectangular map, as illustrated in figure \ref{fig:dem_quadrangle}, or else we end up with a lot of bogus data points where the DEM does not contain any data, or a more complex data format would be required to describe the shape of the boundaries of the terrain. Another consideration is that we want to remove as few {\textit real} data points as possible. For instance, in figure \ref{fig:dem_quadrangle_raw}, in order to create a rectangular map, we may
 \begin{enumerate}
 \item Crop the left-most and right-most columns, and the two bottom-most rows (removing 23 data points)
-\item OR, crop the 8 bottom rows (removing 96 data points)
-\item OR, crop the top 7 rows, and bottom 2 rows
+\item Or, crop the 8 bottom rows (removing 96 data points)
+\item Or, crop the top 7 rows, and bottom 2 rows (removing 113 data points)
+\item Or any other combination that produces a rectangular map.
 \end{enumerate}
-or any other combination that produces a rectangular map. Here, number 1 is clearly preferrable. One way of finding the optimal way of cropping is representing this as a search in state space, and find a shortest path through the graph generated by the nodes (state, i.e. the intermediate grid) and the edges (removal of one row or column) with weights equal to the number of real data points being removed. However, this is time consuming, so a simpler method was used, where the row or column with the highest ratio of real data points over the length of the row or column was used. This appears to work very well in practice.
+Here, alternative 1 is clearly preferable. One way of finding the optimal way of cropping is representing the problem as a search in state space, and find a shortest path through the graph generated by the nodes (state, i.e. the intermediate grid) and the edges (removal of one row or column) with weights equal to the number of real data points being removed. However, this is time consuming, so a simpler method was used, where the row or column with the highest ratio of real data points over the length of the row or column was used. This appears to work very well in practice.
 
-The pseudocode for placing the DEM data points in a grid and outputing a RAW can be seen in algorithm \ref{alg:demtoraw}. Since the parsing itself is trivial (it's simply a string sliceing, splitting and casting operation), this is assumed to be done already.
+The pseudo code for placing the DEM data points in a grid and outputting a RAW can be seen in algorithm \ref{alg:demtoraw}. Since the parsing itself is trivial (it's simply a string slicing, splitting and casting operation), this is assumed to be done already.
 
 \begin{algorithm}[ht]
 \begin{algorithmic}
