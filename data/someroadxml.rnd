@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<RoadXML version="2.2.1" versionRevision="2.2.1-$Revision: 21364 $-$Date: 2010-11-04 15:35:40 +0100 (jeu., 04 nov. 2010) $" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Network name="" traffic="right-hand">
+    <Ground granulosity="0.5" grip="1" name="Asphalt" type="cobblestone"/>
+    <Ground granulosity="0.5" grip="1" name="Concrete" type="concrete"/>
+    <Ground granulosity="0.5" grip="1" name="Grass" type="grass"/>
+    <Ground granulosity="0.5" grip="1" name="Cobblestone" type="cobblestone"/>
+    <Ground granulosity="0.5" grip="1" name="Asphalt 2" type="asphalt"/>
+    <Marking leftToRight="can" lineLength="2" name="Marking" rightToLeft="can" totalLength="6" width="0.2">
+      <Material>
+        <Diffuse>
+          <Texture path="textures/marking.png"/>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Diffuse>
+        <Ambient>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Ambient>
+        <Specular>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Specular>
+        <Emissive>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Emissive>
+      </Material>
+      <UVMapping leftU="0" lengthV="1" rightU="1"/>
+    </Marking>
+    <Marking leftToRight="cannot" lineLength="6" name="Marking 2" rightToLeft="cannot" totalLength="6" width="0.2">
+      <Material>
+        <Diffuse>
+          <Texture path="textures/marking.png"/>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Diffuse>
+        <Ambient>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Ambient>
+        <Specular>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Specular>
+        <Emissive>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Emissive>
+      </Material>
+      <UVMapping leftU="0" lengthV="1" rightU="1"/>
+    </Marking>
+    <Marking leftToRight="cannot" lineLength="3" name="1012_20cm" rightToLeft="cannot" totalLength="3" width="0.2">
+      <Material>
+        <Diffuse>
+          <Texture path="textures/marking.png"/>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Diffuse>
+        <Ambient>
+          <Color alpha="1" blue="1" green="1" red="1"/>
+        </Ambient>
+        <Specular>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Specular>
+        <Emissive>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Emissive>
+      </Material>
+      <UVMapping leftU="0" lengthV="1" rightU="1"/>
+    </Marking>
+    <Marking leftToRight="can" lineLength="3" name="1000_G_90" rightToLeft="can" totalLength="12" width="0.15">
+      <Material>
+        <Diffuse>
+          <Texture path="textures/marking.png"/>
+          <Color alpha="1" blue="0" green="1" red="1"/>
+        </Diffuse>
+        <Ambient>
+          <Color alpha="1" blue="0" green="1" red="1"/>
+        </Ambient>
+        <Specular>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Specular>
+        <Emissive>
+          <Color alpha="1" blue="0" green="0" red="0"/>
+        </Emissive>
+      </Material>
+      <UVMapping leftU="0" lengthV="1" rightU="1"/>
+    </Marking>
+    <Profile name="defaultNoMotorvei" type="none">
+      <LaneBorder distance="-10.15" height="0" markingOffset="0.15"/>
+      <Lane Ground="Asphalt 2" circulationWay="none" name="Lane" speedLimit="0" type="shoulder">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/nationale_ferme_herbe_to_gravier1.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="-9.15" height="0.2" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 2" speedLimit="0" type="shoulder">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="-8.15" height="0.2" markingName="1012_20cm" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="inverse" name="Lane 3" speedLimit="25" type="paved">
+        <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="20" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="-4.65" height="0.2" markingName="1000_G_90" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="direct" name="Lane 4" speedLimit="25" type="paved">
+        <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="20" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="-1.15" height="0.2" markingName="1012_20cm" markingOffset="0"/>
+      <Lane Ground="Asphalt 2" circulationWay="none" name="Lane 5" speedLimit="0" type="median">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="20" rightU="0.05"/>
+      </Lane>
+      <LaneBorder distance="-0.95" height="0.2" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="both" name="Lane 6" speedLimit="3" type="sidewalk">
+        <VehicleType categories="pedestrian,bicycle"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/sidewalkside.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="-0.85" height="0.3" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 7" speedLimit="0" type="land">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/defaultterrain.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="10" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="0.65" height="0.3" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="both" name="Lane 8" speedLimit="3" type="sidewalk">
+        <VehicleType categories="pedestrian,bicycle"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/sidewalkside.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="0.75" height="0.2" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 9" speedLimit="0" type="median">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="20" rightU="0.05"/>
+      </Lane>
+      <LaneBorder distance="0.95" height="0.2" markingName="1012_20cm" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="direct" name="Lane 10" speedLimit="25" type="paved">
+        <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="20" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="4.45" height="0.2" markingName="1000_G_90" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="direct" name="Lane 11" speedLimit="25" type="paved">
+        <VehicleType categories="bicycle,moped,motorcycle,car,trail,caravan,bus,agricultural vehicle,goods transport,poluting transport,dangerous transport,nailed tires,truck,police,firefighter,ambulance"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="20" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="7.95" height="0.2" markingName="1012_20cm" markingOffset="0"/>
+      <Lane Ground="Asphalt" circulationWay="none" name="Lane 12" speedLimit="0" type="shoulder">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/macadam.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="0" lengthV="1" rightU="1"/>
+      </Lane>
+      <LaneBorder distance="8.95" height="0.2" markingOffset="0"/>
+      <Lane Ground="Asphalt 2" circulationWay="none" name="Lane 13" speedLimit="0" type="shoulder">
+        <VehicleType categories="none"/>
+        <Material>
+          <Diffuse>
+            <Texture path="textures/nationale_ferme_herbe_to_gravier1.png"/>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Diffuse>
+          <Ambient>
+            <Color alpha="1" blue="1" green="1" red="1"/>
+          </Ambient>
+          <Specular>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Specular>
+          <Emissive>
+            <Color alpha="1" blue="0" green="0" red="0"/>
+          </Emissive>
+        </Material>
+        <UVMapping leftU="1" lengthV="1" rightU="0"/>
+      </Lane>
+      <LaneBorder distance="9.95" height="0" markingOffset="0"/>
+    </Profile>
+    <SubNetwork heading="0" name="Sub Network" x="0" y="0" z="0">
+      <Track endNode="" name="Track" startNode="">
+        <XYCurve direction="2.03444" x="680" y="5680">
+          <ClothoidSpline type="spline">
+            <Vectord2 x="680" y="5680" />
+            <Vectord2 x="640" y="5760" />
+            <Vectord2 x="800" y="5720" />
+            <Vectord2 x="1000" y="5640" />
+            <Vectord2 x="1120" y="5480" />
+            <Vectord2 x="1280" y="5280" />
+            <Vectord2 x="1440" y="5080" />
+            <Vectord2 x="1640" y="5000" />
+            <Vectord2 x="1760" y="4920" />
+            <Vectord2 x="1960" y="4840" />
+            <Vectord2 x="2120" y="4800" />
+            <Vectord2 x="2320" y="4760" />
+            <Vectord2 x="2440" y="4720" />
+            <Vectord2 x="2640" y="4680" />
+            <Vectord2 x="2840" y="4520" />
+            <Vectord2 x="3040" y="4400" />
+            <Vectord2 x="3240" y="4360" />
+            <Vectord2 x="3400" y="4160" />
+            <Vectord2 x="3560" y="4200" />
+            <Vectord2 x="3760" y="4120" />
+            <Vectord2 x="3960" y="4000" />
+            <Vectord2 x="4080" y="3960" />
+            <Vectord2 x="4280" y="3880" />
+            <Vectord2 x="4360" y="3680" />
+            <Vectord2 x="4440" y="3560" />
+            <Vectord2 x="4560" y="3400" />
+            <Vectord2 x="4640" y="3200" />
+            <Vectord2 x="4760" y="3040" />
+            <Vectord2 x="4760" y="3000" />
+            <Vectord2 x="4800" y="2800" />
+            <Vectord2 x="4840" y="2640" />
+            <Vectord2 x="4920" y="2440" />
+            <Vectord2 x="5040" y="2240" />
+            <Vectord2 x="5240" y="2080" />
+            <Vectord2 x="5440" y="1960" />
+            <Vectord2 x="5560" y="1920" />
+            <Vectord2 x="5720" y="1800" />
+            <Vectord2 x="5840" y="1720" />
+            <Vectord2 x="5880" y="1520" />
+            <Vectord2 x="5920" y="1400" />
+            <Vectord2 x="6080" y="1200" />
+            <Vectord2 x="6280" y="1080" />
+            <Vectord2 x="6280" y="1040" />
+            <Vectord2 x="6240" y="840" />
+            <Vectord2 x="6440" y="800" />
+            <Vectord2 x="6640" y="840" />
+            <Vectord2 x="6680" y="800" />
+            <Vectord2 x="6720" y="800" />
+            <Vectord2 x="6920" y="760" />
+            <Vectord2 x="7000" y="800" />
+            <Vectord2 x="7200" y="960" />
+            <Vectord2 x="7400" y="1000" />
+            <Vectord2 x="7600" y="1080" />
+            <Vectord2 x="7680" y="1040" />
+            <Vectord2 x="7880" y="880" />
+            <Vectord2 x="7920" y="840" />
+            <Vectord2 x="7960" y="800" />
+            <Vectord2 x="8000" y="720" />
+            <Vectord2 x="8200" y="600" />
+            <Vectord2 x="8400" y="640" />
+            <Vectord2 x="8440" y="680" />
+            <Vectord2 x="8480" y="680" />
+            <Vectord2 x="8680" y="560" />
+            <Vectord2 x="8800" y="360" />
+            <Vectord2 x="9000" y="240" />
+          </ClothoidSpline>
+        </XYCurve>
+        <SZCurve>
+          <Polynomial>
+            <begin direction="0.356556" x="0" y="330.821" />
+            <end direction="0.10468" x="89.4427" y="362.713" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.10468" x="89.4427" y="362.713" />
+            <end direction="0.464814" x="254.367" y="345.449" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.464814" x="254.367" y="345.449" />
+            <end direction="0.200454" x="469.774" y="245.324" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.200454" x="469.774" y="245.324" />
+            <end direction="0.0529269" x="669.774" y="205.234" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0529269" x="669.774" y="205.234" />
+            <end direction="0.00353915" x="925.898" y="191.678" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.00353915" x="925.898" y="191.678" />
+            <end direction="0.0170241" x="1182.02" y="192.584" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0170241" x="1182.02" y="192.584" />
+            <end direction="0.106278" x="1397.43" y="196.251" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.106278" x="1397.43" y="196.251" />
+            <end direction="0.0141548" x="1541.65" y="180.924" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0141548" x="1541.65" y="180.924" />
+            <end direction="0.056462" x="1757.06" y="183.973" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.056462" x="1757.06" y="183.973" />
+            <end direction="0.075554" x="1921.98" y="193.285" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.075554" x="1921.98" y="193.285" />
+            <end direction="0.184044" x="2125.94" y="208.695" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.184044" x="2125.94" y="208.695" />
+            <end direction="0.141209" x="2252.43" y="185.415" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.141209" x="2252.43" y="185.415" />
+            <end direction="0.244364" x="2456.4" y="156.614" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.244364" x="2456.4" y="156.614" />
+            <end direction="0.162525" x="2712.52" y="94.0259" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.162525" x="2712.52" y="94.0259" />
+            <end direction="0.037777" x="2945.76" y="56.1189" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.037777" x="2945.76" y="56.1189" />
+            <end direction="0.0360353" x="3149.72" y="48.4139" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0360353" x="3149.72" y="48.4139" />
+            <end direction="0.0227347" x="3405.84" y="57.6434" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0227347" x="3405.84" y="57.6434" />
+            <end direction="0.177509" x="3570.77" y="53.8939" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.177509" x="3570.77" y="53.8939" />
+            <end direction="0.0572371" x="3786.18" y="15.6573" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0572371" x="3786.18" y="15.6573" />
+            <end direction="0.00390889" x="4019.41" y="2.30739" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.00390889" x="4019.41" y="2.30739" />
+            <end direction="0.254596" x="4145.9" y="1.81295" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.254596" x="4145.9" y="1.81295" />
+            <end direction="0.460415" x="4361.31" y="56.6545" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.460415" x="4361.31" y="56.6545" />
+            <end direction="0.159131" x="4576.72" y="155.831" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.159131" x="4576.72" y="155.831" />
+            <end direction="0.327566" x="4720.94" y="132.881" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.327566" x="4720.94" y="132.881" />
+            <end direction="0.374147" x="4920.94" y="198.394" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.374147" x="4920.94" y="198.394" />
+            <end direction="0.634119" x="5136.35" y="278.988" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.634119" x="5136.35" y="278.988" />
+            <end direction="0.00721054" x="5336.35" y="405.811" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.00721054" x="5336.35" y="405.811" />
+            <end direction="0.533726" x="5376.35" y="406.1" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.533726" x="5376.35" y="406.1" />
+            <end direction="0.0911888" x="5580.31" y="514.959" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0911888" x="5580.31" y="514.959" />
+            <end direction="1.01762" x="5745.23" y="499.92" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="1.01762" x="5745.23" y="499.92" />
+            <end direction="0.151396" x="5960.64" y="280.718" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.151396" x="5960.64" y="280.718" />
+            <end direction="0.160228" x="6193.88" y="316.029" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.160228" x="6193.88" y="316.029" />
+            <end direction="0.313391" x="6450" y="357.068" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.313391" x="6450" y="357.068" />
+            <end direction="0.255707" x="6683.24" y="430.163" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.255707" x="6683.24" y="430.163" />
+            <end direction="0.528432" x="6809.73" y="462.507" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.528432" x="6809.73" y="462.507" />
+            <end direction="0.37483" x="7009.73" y="568.194" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.37483" x="7009.73" y="568.194" />
+            <end direction="0.434738" x="7153.95" y="622.252" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.434738" x="7153.95" y="622.252" />
+            <end direction="0.517928" x="7357.91" y="710.922" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.517928" x="7357.91" y="710.922" />
+            <end direction="0.653944" x="7484.4" y="776.435" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.653944" x="7484.4" y="776.435" />
+            <end direction="0.947415" x="7740.53" y="943.927" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.947415" x="7740.53" y="943.927" />
+            <end direction="0.272974" x="7973.77" y="1164.9" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.272974" x="7973.77" y="1164.9" />
+            <end direction="1.21977" x="8013.77" y="1175.82" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="1.21977" x="8013.77" y="1175.82" />
+            <end direction="1.01331" x="8217.73" y="1424.6" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="1.01331" x="8217.73" y="1424.6" />
+            <end direction="0.934323" x="8421.69" y="1631.28" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.934323" x="8421.69" y="1631.28" />
+            <end direction="0.465435" x="8625.65" y="1821.85" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.465435" x="8625.65" y="1821.85" />
+            <end direction="0.486203" x="8682.22" y="1848.17" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.486203" x="8682.22" y="1848.17" />
+            <end direction="0.0816155" x="8722.22" y="1828.73" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0816155" x="8722.22" y="1828.73" />
+            <end direction="0.255208" x="8926.18" y="1845.37" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.255208" x="8926.18" y="1845.37" />
+            <end direction="0.184198" x="9015.62" y="1822.55" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.184198" x="9015.62" y="1822.55" />
+            <end direction="0.354335" x="9271.75" y="1869.72" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.354335" x="9271.75" y="1869.72" />
+            <end direction="0.321927" x="9475.71" y="1941.99" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.321927" x="9475.71" y="1941.99" />
+            <end direction="0.00829108" x="9691.11" y="2011.34" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.00829108" x="9691.11" y="2011.34" />
+            <end direction="0.217337" x="9780.56" y="2010.6" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.217337" x="9780.56" y="2010.6" />
+            <end direction="0.129648" x="10036.7" y="2066.26" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.129648" x="10036.7" y="2066.26" />
+            <end direction="0.483641" x="10093.2" y="2058.93" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.483641" x="10093.2" y="2058.93" />
+            <end direction="0.650002" x="10149.8" y="2086.29" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.650002" x="10149.8" y="2086.29" />
+            <end direction="0.489166" x="10239.3" y="2144.43" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.489166" x="10239.3" y="2144.43" />
+            <end direction="0.0395955" x="10472.5" y="2030.33" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0395955" x="10472.5" y="2030.33" />
+            <end direction="0.388956" x="10676.5" y="2038.41" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.388956" x="10676.5" y="2038.41" />
+            <end direction="0.301813" x="10733" y="2016.41" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.301813" x="10733" y="2016.41" />
+            <end direction="0.661229" x="10773" y="2004.33" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.661229" x="10773" y="2004.33" />
+            <end direction="0.156872" x="11006.3" y="2158.56" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.156872" x="11006.3" y="2158.56" />
+            <end direction="0.0441642" x="11239.5" y="2195.15" />
+          </Polynomial>
+          <Polynomial>
+            <begin direction="0.0441642" x="11239.5" y="2195.15" />
+            <end direction="0" x="11472.7" y="2184.85" />
+          </Polynomial>
+        </SZCurve>
+        <BankingCurve>
+          <Polynomial>
+            <begin direction="0" x="0" y="0" />
+            <end direction="0" x="11472.7" y="0" />
+          </Polynomial>
+        </BankingCurve>
+        <Portion endDistance="11472.7" endProfile="defaultNoMotorvei" name="" startProfile="defaultNoMotorvei"/>
+        <Portion endDistance="2531.87272362457" endProfile="defaultNoMotorvei" name="" startProfile="defaultNoMotorvei"/>
+      </Track>
+      <!-- <ExternalElement path="mesh/example.obj"/> -->
+    </SubNetwork>
+  </Network>
+
+</RoadXML>
+

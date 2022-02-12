@@ -1,0 +1,36 @@
+newmtl material_1
+       Ka 1 1 1 1
+       Kd 1 1 1 1
+       Ks 0 0 0 1
+       map_Kd E:\OKTAL/SCANeRstudio_1.1/data/DEFAULT/terrain/textures/nationale_ferme_herbe_to_gravier1.png
+
+newmtl material_2
+       Ka 1 1 1 1
+       Kd 1 1 1 1
+       Ks 0 0 0 1
+       map_Kd E:\OKTAL/SCANeRstudio_1.1/data/DEFAULT/terrain/textures/macadam.png
+
+newmtl material_4
+       Ka 1 1 1 1
+       Kd 1 1 1 1
+       Ks 0 0 0 1
+       map_Kd E:\OKTAL/SCANeRstudio_1.1/data/DEFAULT/terrain/textures/defaultterrain.png
+
+newmtl material_3
+       Ka 1 1 1 1
+       Kd 1 1 1 1
+       Ks 0 0 0 1
+       map_Kd E:\OKTAL/SCANeRstudio_1.1/data/DEFAULT/terrain/textures/sidewalkside.png
+
+newmtl material_6
+       Ka 1 1 0 1
+       Kd 1 1 0 1
+       Ks 0 0 0 1
+       map_Kd E:\OKTAL/SCANeRstudio_1.1/data/DEFAULT/terrain/textures/marking.png
+
+newmtl material_5
+       Ka 1 1 1 1
+       Kd 1 1 1 1
+       Ks 0 0 0 1
+       map_Kd E:\OKTAL/SCANeRstudio_1.1/data/DEFAULT/terrain/textures/marking.png
+
